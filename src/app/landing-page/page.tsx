@@ -4,9 +4,9 @@ import MobileMenu from '@/components/common/MobileMenu';
 import LandingPageInteractive from './components/LandingPageInteractive';
 
 export const metadata: Metadata = {
-  title: 'TableReserve - Experience Fine Dining at Its Best',
+  title: 'TableReserve - สัมผัสประสบการณ์อาหารมื้อพิเศษที่ดีที่สุด',
   description:
-    'Book your table at TableReserve and experience exceptional cuisine, elegant atmosphere, and outstanding service. Reserve online now for a memorable dining experience.',
+    'จองโต๊ะที่ TableReserve และสัมผัสกับอาหารรสเลิศ บรรยากาศที่หรูหรา และการบริการที่ยอดเยี่ยม จองออนไลน์ได้ทันทีเพื่อประสบการณ์การรับประทานอาหารที่น่าจดจำ',
 };
 
 export default function LandingPage() {

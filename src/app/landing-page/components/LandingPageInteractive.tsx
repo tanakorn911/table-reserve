@@ -12,6 +12,7 @@ import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 import HolidayAnnouncements from './HolidayAnnouncements';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
+import { Line } from 'recharts';
 
 interface DaySchedule {
     day: string;
@@ -202,8 +203,8 @@ const LandingPageInteractive: React.FC = () => {
             phone: '054-466-666',
             email: 'contact@up.ac.th',
             address: 'มหาวิทยาลัยพะเยา 19 หมู่ 2 ต.แม่กา อ.เมือง จ.พะเยา 56000',
-            mapLat: 19.0277,
-            mapLng: 99.8975,
+            mapLat: 40.7580,
+            mapLng: -73.9855
         },
         socialLinks: [
             { name: 'Facebook', icon: 'GlobeAltIcon', url: 'https://facebook.com' },
