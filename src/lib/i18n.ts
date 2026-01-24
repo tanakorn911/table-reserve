@@ -47,6 +47,8 @@ export const translations = {
 
     'hours.title': 'เวลาทำการ',
     'hours.subtitle': 'เราพร้อมให้บริการคุณตลอดทั้งสัปดาห์',
+    'hours.openNow': 'เปิดให้บริการในขณะนี้',
+    'hours.closedNow': 'ขณะนี้ร้านปิดให้บริการ',
     'day.monday': 'จันทร์',
     'day.tuesday': 'อังคาร',
     'day.wednesday': 'พุธ',
@@ -199,6 +201,8 @@ export const translations = {
 
     'hours.title': 'Opening Hours',
     'hours.subtitle': 'We are ready to serve you all week.',
+    'hours.openNow': 'Open Now',
+    'hours.closedNow': 'Currently Closed',
     'day.monday': 'Monday',
     'day.tuesday': 'Tuesday',
     'day.wednesday': 'Wednesday',

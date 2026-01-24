@@ -75,6 +75,13 @@ const LandingPageInteractive: React.FC = () => {
     const [holidays, setHolidays] = useState<any[]>([]);
     const supabase = React.useMemo(() => createClientSupabaseClient(), []);
 
+    const getThailandTime = () => {
+        const now = new Date();
+        const thailandOffset = 7 * 60;
+        const localOffset = now.getTimezoneOffset();
+        return new Date(now.getTime() + (thailandOffset + localOffset) * 60000);
+    };
+
     // Memoize day names to avoid recreation
     const dayNames = React.useMemo(() => [
         t('day.sunday'),
@@ -104,15 +111,10 @@ const LandingPageInteractive: React.FC = () => {
                     hoursData = json.data.value;
                 }
 
-                const getThailandDay = () => {
-                    const now = new Date();
-                    const thailandOffset = 7 * 60;
-                    const localOffset = now.getTimezoneOffset();
-                    const thailandTime = new Date(now.getTime() + (thailandOffset + localOffset) * 60000);
-                    return thailandTime.getDay();
-                };
+                const thailandTime = getThailandTime();
+                const currentDayIndex = thailandTime.getDay();
+                const currentTimeStr = `${String(thailandTime.getHours()).padStart(2, '0')}:${String(thailandTime.getMinutes()).padStart(2, '0')}`;
 
-                const currentDayIndex = getThailandDay();
                 const displayOrder = [1, 2, 3, 4, 5, 6, 0];
 
                 const newSchedule = displayOrder.map((dayIndex) => {
@@ -149,18 +151,25 @@ const LandingPageInteractive: React.FC = () => {
             } catch (error) {
                 console.error('Failed to fetch hours:', error);
                 if (isMounted) {
+                    const thailandTime = getThailandTime();
+                    const currentDayIndex = thailandTime.getDay();
+
                     const fallbackSchedule = [
-                        { day: dayNames[1], hours: '11:00 - 22:00', isToday: false },
-                        { day: dayNames[2], hours: '11:00 - 22:00', isToday: false },
-                        { day: dayNames[3], hours: '11:00 - 22:00', isToday: false },
-                        { day: dayNames[4], hours: '11:00 - 23:00', isToday: false },
-                        { day: dayNames[5], hours: '11:00 - 23:00', isToday: false },
-                        { day: dayNames[6], hours: '10:00 - 23:00', isToday: false },
-                        { day: dayNames[0], hours: '10:00 - 21:00', isToday: false },
-                    ].map(item => ({
-                        ...item,
-                        hours: locale === 'th' ? `${item.hours} น.` : item.hours
-                    }));
+                        { id: 1, open: '11:00', close: '22:00' },
+                        { id: 2, open: '11:00', close: '22:00' },
+                        { id: 3, open: '11:00', close: '22:00' },
+                        { id: 4, open: '11:00', close: '23:00' },
+                        { id: 5, open: '11:00', close: '23:00' },
+                        { id: 6, open: '10:00', close: '23:00' },
+                        { id: 0, open: '10:00', close: '21:00' },
+                    ].map(item => {
+                        const hoursStr = `${item.open} - ${item.close}`;
+                        return {
+                            day: dayNames[item.id],
+                            hours: locale === 'th' ? `${hoursStr} น.` : hoursStr,
+                            isToday: item.id === currentDayIndex,
+                        };
+                    });
                     setSchedule(fallbackSchedule);
                 }
             }
@@ -196,6 +205,7 @@ const LandingPageInteractive: React.FC = () => {
             clearInterval(interval);
         };
     }, [supabase, locale, dayNames, t]);
+
 
     const landingData: LandingPageData = {
         restaurantName: t('app.title'),
