@@ -1,4 +1,4 @@
-import React from 'react';
+import FormField from './FormField';
 
 interface TextInputProps {
   id: string;
@@ -9,10 +9,12 @@ interface TextInputProps {
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   placeholder?: string;
   disabled?: boolean;
-  error?: boolean;
+  error?: boolean | string; // Allow string for error message
   success?: boolean;
   maxLength?: number;
   pattern?: string;
+  label?: string;
+  required?: boolean;
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -28,8 +30,10 @@ const TextInput: React.FC<TextInputProps> = ({
   success = false,
   maxLength,
   pattern,
+  label,
+  required,
 }) => {
-  return (
+  const input = (
     <input
       id={id}
       name={name}
@@ -41,18 +45,35 @@ const TextInput: React.FC<TextInputProps> = ({
       disabled={disabled}
       maxLength={maxLength}
       pattern={pattern}
+      required={required}
       className={`
-        w-full px-4 py-3 rounded-md text-base
-        bg-input border-2 transition-smooth
-        placeholder:text-muted-foreground
-        focus:outline-none focus:ring-2 focus:ring-ring
+        w-full px-5 py-3.5 rounded-2xl text-base
+        bg-white/5 backdrop-blur-sm border border-white/10 transition-all duration-300
+        text-white placeholder:text-white/50
+        focus:outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary/10 focus:border-primary/50
+        min-h-[56px]
+        ${error ? 'border-error/50 bg-error/5' : success ? 'border-success/50 bg-success/5' : 'hover:border-white/20 hover:bg-white/10'}
         disabled:opacity-50 disabled:cursor-not-allowed
-        min-h-[44px]
-        ${error ? 'border-error' : success ? 'border-success' : 'border-border'}
-        ${!disabled && 'hover:border-primary/50'}
+        shadow-lg shadow-black/5 hover:shadow-black/10
       `}
     />
   );
+
+  if (label) {
+    return (
+      <FormField
+        label={label}
+        htmlFor={id}
+        required={required}
+        error={typeof error === 'string' ? error : undefined}
+        success={success}
+      >
+        {input}
+      </FormField>
+    );
+  }
+
+  return input;
 };
 
 export default TextInput;

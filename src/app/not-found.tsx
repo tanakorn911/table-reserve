@@ -31,9 +31,7 @@ export default function NotFound() {
         </div>
 
         <h2 className="text-2xl font-medium text-onBackground mb-2">{t('notFound.title')}</h2>
-        <p className="text-onBackground/70 mb-8">
-          {t('notFound.description')}
-        </p>
+        <p className="text-onBackground/70 mb-8">{t('notFound.description')}</p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button

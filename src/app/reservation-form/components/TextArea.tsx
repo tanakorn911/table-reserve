@@ -1,4 +1,4 @@
-import React from 'react';
+import FormField from './FormField';
 
 interface TextAreaProps {
   id: string;
@@ -10,6 +10,9 @@ interface TextAreaProps {
   disabled?: boolean;
   rows?: number;
   maxLength?: number;
+  label?: string;
+  error?: string;
+  required?: boolean;
 }
 
 const TextArea: React.FC<TextAreaProps> = ({
@@ -22,8 +25,11 @@ const TextArea: React.FC<TextAreaProps> = ({
   disabled = false,
   rows = 4,
   maxLength,
+  label,
+  error,
+  required,
 }) => {
-  return (
+  const textarea = (
     <div className="relative">
       <textarea
         id={id}
@@ -36,21 +42,32 @@ const TextArea: React.FC<TextAreaProps> = ({
         rows={rows}
         maxLength={maxLength}
         className={`
-          w-full px-4 py-3 rounded-md text-base
-          bg-input border-2 border-border transition-smooth
-          placeholder:text-muted-foreground resize-none
-          focus:outline-none focus:ring-2 focus:ring-ring
+          w-full px-5 py-3.5 rounded-2xl text-base
+          bg-white/5 backdrop-blur-sm border border-white/10 transition-all duration-300
+          text-white placeholder:text-white/50 resize-none
+          focus:outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary/10 focus:border-primary/50
           disabled:opacity-50 disabled:cursor-not-allowed
-          hover:border-primary/50
+          shadow-lg shadow-black/5 hover:shadow-black/10
+          hover:border-white/20 hover:bg-white/10
         `}
       />
       {maxLength && (
-        <div className="absolute bottom-2 right-3 text-xs text-muted-foreground">
+        <div className="absolute bottom-2 right-3 text-xs text-white/40">
           {value.length}/{maxLength}
         </div>
       )}
     </div>
   );
+
+  if (label) {
+    return (
+      <FormField label={label} htmlFor={id} required={required} error={error}>
+        {textarea}
+      </FormField>
+    );
+  }
+
+  return textarea;
 };
 
 export default TextArea;

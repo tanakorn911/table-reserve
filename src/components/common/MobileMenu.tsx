@@ -14,7 +14,8 @@ interface NavigationItem {
 }
 
 const MobileMenu = () => {
-  const { currentRoute, isMobileMenuOpen, setIsMobileMenuOpen, isStaffUser, locale, setLocale } = useNavigation();
+  const { currentRoute, isMobileMenuOpen, setIsMobileMenuOpen, isStaffUser, locale, setLocale } =
+    useNavigation();
   const { t } = useTranslation(locale);
 
   const navigationItems: NavigationItem[] = [
@@ -92,9 +93,10 @@ const MobileMenu = () => {
               className={`
                 flex items-center gap-3 px-6 py-4 rounded-md text-base font-medium
                 transition-smooth min-h-[44px]
-                ${isActiveRoute(item.path)
-                  ? 'bg-primary text-primary-foreground shadow-warm-sm'
-                  : 'text-foreground hover:bg-muted active:scale-[0.97]'
+                ${
+                  isActiveRoute(item.path)
+                    ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                    : 'text-foreground hover:bg-muted active:scale-[0.97]'
                 }
               `}
               style={{
@@ -134,9 +136,11 @@ const MobileMenu = () => {
                 }}
                 className={`
                   flex-1 py-3 rounded-lg text-sm font-bold transition-all border
-                  ${locale === 'th'
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-foreground border-border hover:bg-muted'}
+                  ${
+                    locale === 'th'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-foreground border-border hover:bg-muted'
+                  }
                 `}
               >
                 ไทย (TH)
@@ -148,9 +152,11 @@ const MobileMenu = () => {
                 }}
                 className={`
                   flex-1 py-3 rounded-lg text-sm font-bold transition-all border
-                  ${locale === 'en'
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-foreground border-border hover:bg-muted'}
+                  ${
+                    locale === 'en'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-foreground border-border hover:bg-muted'
+                  }
                 `}
               >
                 English (EN)

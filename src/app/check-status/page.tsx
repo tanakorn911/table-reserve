@@ -124,14 +124,14 @@ export default function CheckStatusPage() {
       {/* Header / Nav */}
       <div className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-between border-b border-white/5">
         <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#3b5998]">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
             <BuildingStorefrontIcon className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">{t('app.title')}</span>
+          <span className="text-xl font-bold tracking-tight text-white">{t('app.title')}</span>
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-[#d4af37] transition-colors"
+          className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-accent transition-colors"
         >
           <ArrowLeftIcon className="w-4 h-4" />
           {t('success.backHome')}
@@ -143,15 +143,13 @@ export default function CheckStatusPage() {
           <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">
             {locale === 'th' ? (
               <>
-                ตรวจสอบ <span className="text-[#d4af37]">สถานะการจอง</span>
+                ตรวจสอบ <span className="text-accent">สถานะการจอง</span>
               </>
             ) : (
               t('checkStatus.title')
             )}
           </h1>
-          <p className="text-gray-400 font-medium">
-            {t('checkStatus.subtitle')}
-          </p>
+          <p className="text-gray-400 font-medium">{t('checkStatus.subtitle')}</p>
         </div>
 
         {/* Search Card */}
@@ -166,7 +164,7 @@ export default function CheckStatusPage() {
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                  <HashtagIcon className="w-5 h-5 text-gray-400 group-focus-within:text-[#d4af37] transition-colors" />
+                  <HashtagIcon className="w-5 h-5 text-gray-400 group-focus-within:text-accent transition-colors" />
                 </div>
                 <input
                   id="bookingCode"
@@ -174,15 +172,21 @@ export default function CheckStatusPage() {
                   placeholder={t('checkStatus.placeholder')}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value.toUpperCase())}
-                  className="w-full bg-[#1a202c] border-2 border-white/10 rounded-2xl py-4 pl-14 pr-6 text-2xl font-black text-white focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all placeholder:text-gray-700 tracking-widest"
+                  className="w-full bg-[#1a202c] border-2 border-white/10 rounded-2xl py-4 pl-14 pr-6 text-2xl font-black text-white focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all placeholder:text-gray-700 tracking-widest"
                 />
               </div>
+              <p className="text-[10px] text-muted-foreground ml-1">
+                *{' '}
+                {locale === 'th'
+                  ? 'สามารถใช้รหัสจอง (BX-...) หรือ เบอร์โทรศัพท์ในการค้นหาได้'
+                  : 'You can search by booking code (BX-...) or phone number'}
+              </p>
             </div>
 
             <button
               type="submit"
-              disabled={loading || !inputValue.startsWith('BX-')}
-              className="w-full bg-[#d4af37] hover:bg-[#e0c050] text-[#1a202c] font-black py-4 rounded-xl text-lg shadow-xl hover:-translate-y-0.5 transition-all active:scale-[0.98] disabled:opacity-30 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+              disabled={loading || inputValue.length < 4}
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-4 rounded-xl text-lg shadow-xl hover:-translate-y-0.5 transition-all active:scale-[0.98] disabled:opacity-30 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-5 h-5 border-3 border-[#1a202c]/30 border-t-[#1a202c] rounded-full animate-spin" />
@@ -274,8 +278,7 @@ export default function CheckStatusPage() {
 
         <div className="mt-16 text-center">
           <p className="text-sm text-gray-500 font-medium">
-            {t('checkStatus.help')}{' '}
-            <span className="text-[#d4af37] font-bold">081-222-2222</span>
+            {t('checkStatus.help')} <span className="text-[#d4af37] font-bold">081-222-2222</span>
           </p>
         </div>
       </div>

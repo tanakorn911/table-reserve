@@ -73,6 +73,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return 'จัดการข้อมูลโต๊ะ';
       case 'settings':
         return 'ตั้งค่าระบบ';
+      case 'floor-plan':
+        return 'จัดการผังร้าน';
       default:
         return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
     }

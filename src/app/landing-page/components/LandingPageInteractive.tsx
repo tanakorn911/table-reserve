@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import HeroSection from './HeroSection';
 import OpeningHours from './OpeningHours';
 import RestaurantInfo from './RestaurantInfo';
@@ -12,279 +12,279 @@ import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 import HolidayAnnouncements from './HolidayAnnouncements';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { Line } from 'recharts';
 
 interface DaySchedule {
-    day: string;
-    hours: string;
-    isToday?: boolean;
+  day: string;
+  hours: string;
+  isToday?: boolean;
 }
 
 interface InfoCard {
-    icon: string;
-    title: string;
-    description: string;
+  icon: string;
+  title: string;
+  description: string;
 }
 
 interface TrustBadge {
-    icon: string;
-    title: string;
-    description: string;
+  icon: string;
+  title: string;
+  description: string;
 }
 
 interface ContactInfo {
-    phone: string;
-    email: string;
-    address: string;
-    mapLat: number;
-    mapLng: number;
+  phone: string;
+  email: string;
+  address: string;
+  mapLat: number;
+  mapLng: number;
 }
 
 interface SocialLink {
-    name: string;
-    icon: string;
-    url: string;
+  name: string;
+  icon: string;
+  url: string;
 }
 
 interface LandingPageData {
-    restaurantName: string;
-    tagline: string;
-    heroImage: string;
-    heroImageAlt: string;
-    schedule: DaySchedule[];
-    infoCards: InfoCard[];
-    trustBadges: TrustBadge[];
-    contact: ContactInfo;
-    socialLinks: SocialLink[];
+  restaurantName: string;
+  tagline: string;
+  heroImage: string;
+  heroImageAlt: string;
+  schedule: DaySchedule[];
+  infoCards: InfoCard[];
+  trustBadges: TrustBadge[];
+  contact: ContactInfo;
+  socialLinks: SocialLink[];
 }
 
 const DEFAULT_HOURS: any = {
-    '0': { open: '10:00', close: '21:00' },
-    '1': { open: '11:00', close: '22:00' },
-    '2': { open: '11:00', close: '22:00' },
-    '3': { open: '11:00', close: '22:00' },
-    '4': { open: '11:00', close: '23:00' },
-    '5': { open: '11:00', close: '23:00' },
-    '6': { open: '10:00', close: '23:00' },
+  '0': { open: '10:00', close: '21:00' },
+  '1': { open: '11:00', close: '22:00' },
+  '2': { open: '11:00', close: '22:00' },
+  '3': { open: '11:00', close: '22:00' },
+  '4': { open: '11:00', close: '23:00' },
+  '5': { open: '11:00', close: '23:00' },
+  '6': { open: '10:00', close: '23:00' },
 };
 
 const LandingPageInteractive: React.FC = () => {
-    const { locale } = useNavigation();
-    const { t } = useTranslation(locale);
-    const [schedule, setSchedule] = useState<DaySchedule[]>([]);
-    const [holidays, setHolidays] = useState<any[]>([]);
-    const supabase = React.useMemo(() => createClientSupabaseClient(), []);
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
+  const [schedule, setSchedule] = useState<DaySchedule[]>([]);
+  const [holidays, setHolidays] = useState<any[]>([]);
+  const supabase = React.useMemo(() => createClientSupabaseClient(), []);
 
-    const getThailandTime = () => {
-        const now = new Date();
-        const thailandOffset = 7 * 60;
-        const localOffset = now.getTimezoneOffset();
-        return new Date(now.getTime() + (thailandOffset + localOffset) * 60000);
+  const getThailandTime = () => {
+    const now = new Date();
+    const thailandOffset = 7 * 60;
+    const localOffset = now.getTimezoneOffset();
+    return new Date(now.getTime() + (thailandOffset + localOffset) * 60000);
+  };
+
+  // Memoize day names to avoid recreation
+  const dayNames = React.useMemo(
+    () => [
+      t('day.sunday'),
+      t('day.monday'),
+      t('day.tuesday'),
+      t('day.wednesday'),
+      t('day.thursday'),
+      t('day.friday'),
+      t('day.saturday'),
+    ],
+    [t]
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHours = async () => {
+      try {
+        const res = await fetch('/api/settings?key=business_hours', {
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error('Network response was not ok');
+        const json = await res.json();
+
+        if (!isMounted) return;
+
+        let hoursData = DEFAULT_HOURS;
+        if (json.data && json.data.value) {
+          hoursData = json.data.value;
+        }
+
+        const thailandTime = getThailandTime();
+        const currentDayIndex = thailandTime.getDay();
+
+        const displayOrder = [1, 2, 3, 4, 5, 6, 0];
+
+        const newSchedule = displayOrder.map((dayIndex) => {
+          const dayConfig = hoursData[String(dayIndex)];
+          let timeRange = t('hours.closed');
+
+          if (dayConfig) {
+            if (locale === 'th') {
+              timeRange = `${dayConfig.open} - ${dayConfig.close} น.`;
+            } else {
+              const toAmPm = (timeStr: string) => {
+                try {
+                  const [h, m] = timeStr.split(':');
+                  let hour = parseInt(h, 10);
+                  const ampm = hour >= 12 ? 'PM' : 'AM';
+                  hour = hour % 12 || 12;
+                  return `${hour}:${m} ${ampm}`;
+                } catch {
+                  return timeStr;
+                }
+              };
+              timeRange = `${toAmPm(dayConfig.open)} - ${toAmPm(dayConfig.close)}`;
+            }
+          }
+
+          return {
+            day: dayNames[dayIndex],
+            hours: timeRange,
+            isToday: dayIndex === currentDayIndex,
+          };
+        });
+
+        setSchedule(newSchedule);
+      } catch (error) {
+        console.error('Failed to fetch hours:', error);
+        if (isMounted) {
+          const thailandTime = getThailandTime();
+          const currentDayIndex = thailandTime.getDay();
+
+          const fallbackSchedule = [
+            { id: 1, open: '11:00', close: '22:00' },
+            { id: 2, open: '11:00', close: '22:00' },
+            { id: 3, open: '11:00', close: '22:00' },
+            { id: 4, open: '11:00', close: '23:00' },
+            { id: 5, open: '11:00', close: '23:00' },
+            { id: 6, open: '10:00', close: '23:00' },
+            { id: 0, open: '10:00', close: '21:00' },
+          ].map((item) => {
+            const hoursStr = `${item.open} - ${item.close}`;
+            return {
+              day: dayNames[item.id],
+              hours: locale === 'th' ? `${hoursStr} น.` : hoursStr,
+              isToday: item.id === currentDayIndex,
+            };
+          });
+          setSchedule(fallbackSchedule);
+        }
+      }
     };
 
-    // Memoize day names to avoid recreation
-    const dayNames = React.useMemo(() => [
-        t('day.sunday'),
-        t('day.monday'),
-        t('day.tuesday'),
-        t('day.wednesday'),
-        t('day.thursday'),
-        t('day.friday'),
-        t('day.saturday')
-    ], [t]);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const fetchHours = async () => {
-            try {
-                const res = await fetch('/api/settings?key=business_hours', {
-                    cache: 'no-store'
-                });
-                if (!res.ok) throw new Error('Network response was not ok');
-                const json = await res.json();
-
-                if (!isMounted) return;
-
-                let hoursData = DEFAULT_HOURS;
-                if (json.data && json.data.value) {
-                    hoursData = json.data.value;
-                }
-
-                const thailandTime = getThailandTime();
-                const currentDayIndex = thailandTime.getDay();
-                const currentTimeStr = `${String(thailandTime.getHours()).padStart(2, '0')}:${String(thailandTime.getMinutes()).padStart(2, '0')}`;
-
-                const displayOrder = [1, 2, 3, 4, 5, 6, 0];
-
-                const newSchedule = displayOrder.map((dayIndex) => {
-                    const dayConfig = hoursData[String(dayIndex)];
-                    let timeRange = t('hours.closed');
-
-                    if (dayConfig) {
-                        if (locale === 'th') {
-                            timeRange = `${dayConfig.open} - ${dayConfig.close} น.`;
-                        } else {
-                            const toAmPm = (timeStr: string) => {
-                                try {
-                                    const [h, m] = timeStr.split(':');
-                                    let hour = parseInt(h, 10);
-                                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                                    hour = hour % 12 || 12;
-                                    return `${hour}:${m} ${ampm}`;
-                                } catch (e) {
-                                    return timeStr;
-                                }
-                            };
-                            timeRange = `${toAmPm(dayConfig.open)} - ${toAmPm(dayConfig.close)}`;
-                        }
-                    }
-
-                    return {
-                        day: dayNames[dayIndex],
-                        hours: timeRange,
-                        isToday: dayIndex === currentDayIndex,
-                    };
-                });
-
-                setSchedule(newSchedule);
-            } catch (error) {
-                console.error('Failed to fetch hours:', error);
-                if (isMounted) {
-                    const thailandTime = getThailandTime();
-                    const currentDayIndex = thailandTime.getDay();
-
-                    const fallbackSchedule = [
-                        { id: 1, open: '11:00', close: '22:00' },
-                        { id: 2, open: '11:00', close: '22:00' },
-                        { id: 3, open: '11:00', close: '22:00' },
-                        { id: 4, open: '11:00', close: '23:00' },
-                        { id: 5, open: '11:00', close: '23:00' },
-                        { id: 6, open: '10:00', close: '23:00' },
-                        { id: 0, open: '10:00', close: '21:00' },
-                    ].map(item => {
-                        const hoursStr = `${item.open} - ${item.close}`;
-                        return {
-                            day: dayNames[item.id],
-                            hours: locale === 'th' ? `${hoursStr} น.` : hoursStr,
-                            isToday: item.id === currentDayIndex,
-                        };
-                    });
-                    setSchedule(fallbackSchedule);
-                }
-            }
-        };
-
-        const fetchHolidays = async () => {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const { data } = await supabase
-                    .from('holidays')
-                    .select('*')
-                    .gte('holiday_date', today)
-                    .order('holiday_date', { ascending: true })
-                    .limit(3);
-                if (isMounted && data) {
-                    setHolidays(data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch holidays:', error);
-            }
-        };
-
-        fetchHours();
-        fetchHolidays();
-
-        const interval = setInterval(() => {
-            fetchHours();
-            fetchHolidays();
-        }, 30000);
-
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
-    }, [supabase, locale, dayNames, t]);
-
-
-    const landingData: LandingPageData = {
-        restaurantName: t('app.title'),
-        tagline: t('app.tagline'),
-        heroImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80',
-        heroImageAlt: t('hero.imageAlt'),
-        schedule: schedule,
-        infoCards: [
-            {
-                icon: 'SparklesIcon',
-                title: t('info.premium.title'),
-                description: t('info.premium.desc'),
-            },
-            {
-                icon: 'UserGroupIcon',
-                title: t('info.service.title'),
-                description: t('info.service.desc'),
-            },
-            {
-                icon: 'HomeModernIcon',
-                title: t('info.modern.title'),
-                description: t('info.modern.desc'),
-            },
-        ],
-        trustBadges: [
-            {
-                icon: 'ShieldCheckIcon',
-                title: t('trust.ssl.title'),
-                description: t('trust.ssl.desc'),
-            },
-            {
-                icon: 'StarIcon',
-                title: t('trust.star.title'),
-                description: t('trust.star.desc'),
-            },
-            {
-                icon: 'CheckBadgeIcon',
-                title: t('trust.health.title'),
-                description: t('trust.health.desc'),
-            },
-        ],
-        contact: {
-            phone: '054-466-666',
-            email: 'contact@up.ac.th',
-            address: t('contact.address.full'),
-            mapLat: 40.7580,
-            mapLng: -73.9855
-        },
-        socialLinks: [
-            { name: 'Facebook', icon: 'GlobeAltIcon', url: 'https://facebook.com' },
-            { name: 'Instagram', icon: 'CameraIcon', url: 'https://instagram.com' },
-            { name: 'Line', icon: 'ChatBubbleLeftIcon', url: 'https://line.me' },
-        ],
+    const fetchHolidays = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data } = await supabase
+          .from('holidays')
+          .select('*')
+          .gte('holiday_date', today)
+          .order('holiday_date', { ascending: true })
+          .limit(3);
+        if (isMounted && data) {
+          setHolidays(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch holidays:', error);
+      }
     };
 
-    return (
-        <>
-            <HeroSection
-                restaurantName={landingData.restaurantName}
-                tagline={landingData.tagline}
-                heroImage={landingData.heroImage}
-                heroImageAlt={landingData.heroImageAlt}
-            />
+    fetchHours();
+    fetchHolidays();
 
-            {holidays.length > 0 && <HolidayAnnouncements holidays={holidays} />}
+    const interval = setInterval(() => {
+      fetchHours();
+      fetchHolidays();
+    }, 30000);
 
-            <OpeningHours schedule={landingData.schedule} />
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [supabase, locale, dayNames, t]);
 
-            <RestaurantInfo cards={landingData.infoCards} />
+  const landingData: LandingPageData = {
+    restaurantName: t('app.title'),
+    tagline: t('app.tagline'),
+    heroImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80',
+    heroImageAlt: t('hero.imageAlt'),
+    schedule: schedule,
+    infoCards: [
+      {
+        icon: 'SparklesIcon',
+        title: t('info.premium.title'),
+        description: t('info.premium.desc'),
+      },
+      {
+        icon: 'UserGroupIcon',
+        title: t('info.service.title'),
+        description: t('info.service.desc'),
+      },
+      {
+        icon: 'HomeModernIcon',
+        title: t('info.modern.title'),
+        description: t('info.modern.desc'),
+      },
+    ],
+    trustBadges: [
+      {
+        icon: 'ShieldCheckIcon',
+        title: t('trust.ssl.title'),
+        description: t('trust.ssl.desc'),
+      },
+      {
+        icon: 'StarIcon',
+        title: t('trust.star.title'),
+        description: t('trust.star.desc'),
+      },
+      {
+        icon: 'CheckBadgeIcon',
+        title: t('trust.health.title'),
+        description: t('trust.health.desc'),
+      },
+    ],
+    contact: {
+      phone: '054-466-666',
+      email: 'contact@up.ac.th',
+      address: t('contact.address.full'),
+      mapLat: 40.758,
+      mapLng: -73.9855,
+    },
+    socialLinks: [
+      { name: 'Facebook', icon: 'GlobeAltIcon', url: 'https://facebook.com' },
+      { name: 'Instagram', icon: 'CameraIcon', url: 'https://instagram.com' },
+      { name: 'Line', icon: 'ChatBubbleLeftIcon', url: 'https://line.me' },
+    ],
+  };
 
-            <TrustSignals badges={landingData.trustBadges} />
+  return (
+    <>
+      <HeroSection
+        restaurantName={landingData.restaurantName}
+        tagline={landingData.tagline}
+        heroImage={landingData.heroImage}
+        heroImageAlt={landingData.heroImageAlt}
+      />
 
-            <LocationContact contact={landingData.contact} />
+      {holidays.length > 0 && <HolidayAnnouncements holidays={holidays} />}
 
-            <Footer restaurantName={landingData.restaurantName} socialLinks={landingData.socialLinks} />
+      <OpeningHours schedule={landingData.schedule} />
 
-            <StickyReserveButton />
-        </>
-    );
+      <RestaurantInfo cards={landingData.infoCards} />
+
+      <TrustSignals badges={landingData.trustBadges} />
+
+      <LocationContact contact={landingData.contact} />
+
+      <Footer restaurantName={landingData.restaurantName} socialLinks={landingData.socialLinks} />
+
+      <StickyReserveButton />
+    </>
+  );
 };
 
 export default LandingPageInteractive;

@@ -6,10 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   HomeIcon,
   CalendarDaysIcon,
-  TableCellsIcon,
   ArrowRightOnRectangleIcon,
   Cog6ToothIcon,
   MagnifyingGlassIcon,
+  MapIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
@@ -67,7 +67,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       icon: MagnifyingGlassIcon,
       roles: ['admin', 'staff'],
     },
-    { name: ' จัดการโต๊ะ', href: '/admin/tables', icon: TableCellsIcon, roles: ['admin'] },
+    { name: 'จัดการผังร้าน', href: '/admin/floor-plan', icon: MapIcon, roles: ['admin'] },
     { name: 'ตั้งค่าระบบ', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['admin'] },
   ];
 
@@ -90,7 +90,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-[#3b5998]">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-primary">
           <span className="text-lg font-bold text-white leading-tight">
             จองโต๊ะออนไลน์{' '}
             <span className="text-blue-200 text-xs block opacity-80 uppercase tracking-tighter">

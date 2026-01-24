@@ -39,9 +39,10 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                   className={`
                     flex items-center justify-between py-4 px-6 rounded-lg
                     transition-smooth
-                    ${item.isToday
-                      ? 'bg-primary/10 border-2 border-primary'
-                      : 'bg-muted/50 hover:bg-muted'
+                    ${
+                      item.isToday
+                        ? 'bg-primary/10 border-2 border-primary'
+                        : 'bg-muted/50 hover:bg-muted'
                     }
                   `}
                 >

@@ -98,11 +98,14 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`group relative w-full px-4 py-3 text-base font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm ${loading ? 'opacity-50 cursor-wait' : 'hover:-translate-y-0.5 active:scale-[0.98]'
-              }`}
+            className={`group relative w-full px-4 py-3 text-base font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm ${
+              loading ? 'opacity-50 cursor-wait' : 'hover:-translate-y-0.5 active:scale-[0.98]'
+            }`}
           >
             <span className="flex items-center justify-center gap-2">
-              {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+              {loading && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
               {loading ? 'กำลังดำเนินการ...' : 'เข้าสู่ระบบ'}
             </span>
           </button>

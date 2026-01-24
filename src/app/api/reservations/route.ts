@@ -121,9 +121,10 @@ export async function POST(request: NextRequest) {
       if (hasOverlap) {
         return NextResponse.json(
           {
-            error: locale === 'th'
-              ? 'โต๊ะนี้มีรายการจองอื่นแล้วในช่วงเวลาดังกล่าว (รวมเวลาพักโต๊ะ 105 นาที)'
-              : 'Table is already booked during this time slot (including 105 min buffer)'
+            error:
+              locale === 'th'
+                ? 'โต๊ะนี้มีรายการจองอื่นแล้วในช่วงเวลาดังกล่าว (รวมเวลาพักโต๊ะ 105 นาที)'
+                : 'Table is already booked during this time slot (including 105 min buffer)',
           },
           { status: 409 }
         );

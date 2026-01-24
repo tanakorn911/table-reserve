@@ -96,9 +96,7 @@ const Footer: React.FC<FooterProps> = ({ restaurantName, socialLinks }) => {
             <p className="text-sm text-muted-foreground">
               © {currentYear} {restaurantName}. {t('footer.rights')}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {t('footer.security')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('footer.security')}</p>
             <Link
               href="/admin/login"
               target="_blank"

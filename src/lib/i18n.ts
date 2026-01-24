@@ -19,12 +19,15 @@ export const translations = {
     'hero.imageAlt': 'บรรยากาศร้านอาหารสุดหรู',
 
     'info.whyChooseUs': 'ทำไมต้องเลือกเรา',
-    'info.whyChooseUsDesc': 'สัมผัสประสบการณ์การรับประทานอาหารที่ยอดเยี่ยมด้วยความมุ่งมั่นของเราในด้านคุณภาพ การบริการ และบรรยากาศ',
+    'info.whyChooseUsDesc':
+      'สัมผัสประสบการณ์การรับประทานอาหารที่ยอดเยี่ยมด้วยความมุ่งมั่นของเราในด้านคุณภาพ การบริการ และบรรยากาศ',
 
     'info.premium.title': 'บริการระดับพรีเมียม',
-    'info.premium.desc': 'บริการจองโต๊ะออนไลน์ที่สะดวก รวดเร็ว และมีประสิทธิภาพสูงสุด รองรับทุกความต้องการของคุณ',
+    'info.premium.desc':
+      'บริการจองโต๊ะออนไลน์ที่สะดวก รวดเร็ว และมีประสิทธิภาพสูงสุด รองรับทุกความต้องการของคุณ',
     'info.service.title': 'ทีมงานมืออาชีพ',
-    'info.service.desc': 'ทีมงานผู้เชี่ยวชาญพร้อมให้บริการตลอด 24 ชั่วโมง แก้ไขปัญหาได้อย่างรวดเร็วและมีประสิทธิภาพ',
+    'info.service.desc':
+      'ทีมงานผู้เชี่ยวชาญพร้อมให้บริการตลอด 24 ชั่วโมง แก้ไขปัญหาได้อย่างรวดเร็วและมีประสิทธิภาพ',
     'info.modern.title': 'ระบบที่ทันสมัย',
     'info.modern.desc': 'เทคโนโลยีล่าสุดเพื่อประสบการณ์การจองที่ราบรื่น ปลอดภัย และใช้งานง่าย',
 
@@ -103,6 +106,10 @@ export const translations = {
     'payment.scan': 'สแกนเพื่อจ่าย',
     'payment.ready': 'พร้อมรับเงิน',
     'payment.amount': 'มัดจำ 200.00 บาท',
+    'payment.promptpay': 'พร้อมเพย์ (PromptPay)',
+    'payment.prepayment': 'ชำระเงินมัดจำล่วงหน้า',
+    'payment.deposit_info':
+      'ยอดเงินมัดจำ 200 บาท จะถูกนำไปหักออกจากค่าอาหารทั้งหมด (ไม่มีค่าธรรมเนียมการจอง)',
     'payment.upload': 'แนบสลิปการโอนเงิน',
     'payment.upload.label': 'กดที่นี่เพื่อเลือกรูปสลิป',
     'payment.upload.click': 'คลิกเพื่อเปลี่ยนรูปภาพ',
@@ -111,13 +118,16 @@ export const translations = {
 
     // Policy
     'policy.title': 'นโยบายการจอง',
-    'policy.desc': 'กรุณามาถึงภายใน 15 นาทีหลังเวลาจองของคุณ สำหรับกลุ่ม 6 คนขึ้นไป กรุณาโทรติดต่อเราโดยตรงที่ 081-222-2222',
+    'policy.desc':
+      'กรุณามาถึงภายใน 15 นาทีหลังเวลาจองของคุณ สำหรับกลุ่ม 6 คนขึ้นไป กรุณาโทรติดต่อเราโดยตรงที่ 081-222-2222',
 
     // Alerts
     'alert.tableTaken': 'ขออภัย โต๊ะนี้เพิ่งถูกจองไป กรุณาเลือกโต๊ะใหม่',
     'alert.failed': 'การจองล้มเหลว',
     'alert.uploadFailed': 'ไม่สามารถอัปโหลดสลิปได้ กรุณาลองใหม่อีกครั้ง',
     'alert.connectionError': 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง',
+    'validation.fillAll': 'กรุณากรอกข้อมูลให้ครบถ้วน',
+    'validation.attachSlip': 'กรุณากรอกข้อมูลและแนบสลิปโอนเงิน',
 
     // Success Modal
     'success.title': 'ยืนยันการจองแล้ว!',
@@ -156,6 +166,63 @@ export const translations = {
     'notFound.title': 'ไม่พบหน้านี้',
     'notFound.description': 'หน้าที่คุณกำลังค้นหาไม่มีอยู่จริง ลองตรวจสอบ URL หรือกลับไปหน้าหลัก',
     'notFound.goBack': 'ย้อนกลับ',
+    // Admin Floor Plan
+    'admin.floorPlan.title': 'จัดการผังร้าน',
+    'admin.floorPlan.subtitle': 'จัดการเลย์เอาท์และตำแหน่งโต๊ะ',
+    'admin.floorPlan.save': 'บันทึกผังร้าน',
+    'admin.floorPlan.saved': 'บันทึกเรียบร้อย!',
+    'admin.floorPlan.addTable': 'เพิ่มโต๊ะ',
+    'admin.floorPlan.tips': 'คำแนะนำ',
+    'admin.floorPlan.tip1': 'ลากโต๊ะเพื่อเปลี่ยนตำแหน่ง',
+    'admin.floorPlan.tip2': 'การเปลี่ยนแปลงจะมีผลเมื่อกดบันทึก',
+    'admin.floorPlan.tip3': 'ดับเบิ้ลคลิกที่โต๊ะเพื่อแก้ไขรายละเอียด',
+    'admin.floorPlan.shapes.rect': 'สี่เหลี่ยม',
+    'admin.floorPlan.shapes.circle': 'วงกลม',
+    'admin.floorPlan.loading': 'กำลังโหลดผังร้าน...',
+    'admin.floorPlan.editModal.title': 'แก้ไขรายละเอียดโต๊ะ',
+    'admin.floorPlan.editModal.name': 'ชื่อโต๊ะ',
+    'admin.floorPlan.editModal.capacity': 'ความจุ (ท่าน)',
+    'admin.floorPlan.editModal.zone': 'โซน',
+    'admin.floorPlan.editModal.shape': 'รูปร่าง',
+    'admin.floorPlan.editModal.update': 'อัปเดต',
+    'admin.floorPlan.editModal.delete': 'ลบโต๊ะ',
+    'admin.floorPlan.editModal.confirmDelete': 'คุณแน่ใจหรือไม่ที่จะลบโต๊ะนี้?',
+    'admin.floorPlan.selectDate': 'เลือกวันที่',
+    'admin.floorPlan.mode.edit': 'แก้ไขผังร้าน',
+    'admin.floorPlan.mode.check': 'เช็คสถานะโต๊ะ',
+    'admin.floorPlan.configureSettings': 'ตั้งค่ารายละเอียดโต๊ะ',
+    'admin.floorPlan.showingBookingsWait': '* แสดงการจองในช่วง 2 ชั่วโมงหลังจากเวลาที่เลือก',
+    'admin.floorPlan.tableCount': '{count} โต๊ะ',
+    'admin.floorPlan.checkButton': 'ตรวจสอบสถานะ',
+    'admin.floorPlan.zone.indoor': 'โซนห้องแอร์',
+    'admin.floorPlan.zone.outdoor': 'โซนด้านนอก',
+    'admin.floorPlan.zone.vip': 'โซน VIP',
+    'admin.floorPlan.legend.available': 'ว่าง',
+    'admin.floorPlan.legend.selected': 'เลือกอยู่',
+    'admin.floorPlan.legend.booked': 'จองแล้ว',
+    'admin.floorPlan.noTablesInZone': 'ไม่พบโต๊ะในโซนนี้',
+    'admin.floorPlan.allZones': 'ทุกโซน',
+    'admin.floorPlan.entrance': 'ทางเข้า',
+
+    // Wizard Steps
+    'wizard.step.schedule': 'วันเวลา',
+    'wizard.step.table': 'เลือกโต๊ะ',
+    'wizard.step.confirm': 'ยืนยัน',
+    'wizard.fullBooked': 'เต็มแล้ว',
+    'wizard.back': 'ย้อนกลับ',
+    'wizard.continue': 'ดำเนินการต่อ',
+    'wizard.table': 'เลือกโต๊ะ',
+    'wizard.view.map': 'มุมมองแผนผัง',
+    'wizard.view.list': 'มุมมองรายการ',
+
+    // Table Status
+    'table.status.available': 'ว่าง',
+    'table.status.booked': 'จองแล้ว',
+    'table.status.selected': 'เลือกอยู่',
+    'table.status.unavailable': 'ไม่ว่าง',
+    'table.clickToSelect': 'คลิกที่โต๊ะเพื่อเลือก',
+    'table.selectedLabel': 'โต๊ะที่เลือก',
+    'table.selectFromMap': 'กรุณาเลือกโต๊ะจากแผนผัง',
   },
   en: {
     // Common
@@ -168,19 +235,24 @@ export const translations = {
 
     // Landing Page
     'hero.title': 'Welcome to TableReserve',
-    'hero.subtitle': 'Book your table in advance for convenience and experience exceptional atmosphere.',
+    'hero.subtitle':
+      'Book your table in advance for convenience and experience exceptional atmosphere.',
     'hero.cta': 'Book Now',
     'hero.imageAlt': 'Elegant restaurant atmosphere',
 
     'info.whyChooseUs': 'Why Choose Us',
-    'info.whyChooseUsDesc': 'Experience exceptional dining with our commitment to quality, service, and atmosphere.',
+    'info.whyChooseUsDesc':
+      'Experience exceptional dining with our commitment to quality, service, and atmosphere.',
 
     'info.premium.title': 'Premium Service',
-    'info.premium.desc': 'Convenient, fast, and highly efficient online table booking service to meet all your needs.',
+    'info.premium.desc':
+      'Convenient, fast, and highly efficient online table booking service to meet all your needs.',
     'info.service.title': 'Professional Team',
-    'info.service.desc': 'Expert team ready to serve you 24/7, resolving issues quickly and efficiently.',
+    'info.service.desc':
+      'Expert team ready to serve you 24/7, resolving issues quickly and efficiently.',
     'info.modern.title': 'Modern System',
-    'info.modern.desc': 'Latest technology for a smooth, secure, and user-friendly booking experience.',
+    'info.modern.desc':
+      'Latest technology for a smooth, secure, and user-friendly booking experience.',
 
     'trust.ssl.title': 'SSL Secured',
     'trust.ssl.desc': 'Your data is protected with high-level encryption.',
@@ -190,7 +262,8 @@ export const translations = {
     'trust.health.desc': 'Meets safety and hygiene standards.',
 
     'holiday.title': 'Special Holiday Announcement',
-    'holiday.message': 'We apologize for the inconvenience as we will be closed on the following dates:',
+    'holiday.message':
+      'We apologize for the inconvenience as we will be closed on the following dates:',
 
     'contact.visitUs': 'Visit Us',
     'contact.subtitle': 'Find us at our convenient location.',
@@ -265,7 +338,8 @@ export const translations = {
 
     // Policy
     'policy.title': 'Reservation Policy',
-    'policy.desc': 'Please arrive within 15 minutes of your booking time. For groups larger than 6, please call us directly at 081-222-2222',
+    'policy.desc':
+      'Please arrive within 15 minutes of your booking time. For groups larger than 6, please call us directly at 081-222-2222',
 
     // Alerts
     'alert.tableTaken': 'Sorry, this table has just been booked. Please select another.',
@@ -308,16 +382,82 @@ export const translations = {
 
     // Not Found
     'notFound.title': 'Page Not Found',
-    'notFound.description': 'The page you are looking for does not exist. Please check the URL or go back to home.',
+    'notFound.description':
+      'The page you are looking for does not exist. Please check the URL or go back to home.',
     'notFound.goBack': 'Go Back',
+
+    // Admin Floor Plan
+    'admin.floorPlan.title': 'Floor Plan Management',
+    'admin.floorPlan.subtitle': 'Manage restaurant layout and table positions',
+    'admin.floorPlan.save': 'Save Layout',
+    'admin.floorPlan.saved': 'Details Saved!',
+    'admin.floorPlan.addTable': 'Add Table',
+    'admin.floorPlan.tips': 'Tips',
+    'admin.floorPlan.tip1': 'Drag tables to reposition.',
+    'admin.floorPlan.tip2': 'Changes are applied only after saving.',
+    'admin.floorPlan.tip3': 'Double-click a table to edit details.',
+    'admin.floorPlan.shapes.rect': 'Rectangle',
+    'admin.floorPlan.shapes.circle': 'Circle',
+    'admin.floorPlan.loading': 'Loading layout...',
+    'admin.floorPlan.editModal.title': 'Edit Table Details',
+    'admin.floorPlan.editModal.name': 'Table Name',
+    'admin.floorPlan.editModal.capacity': 'Capacity (Pax)',
+    'admin.floorPlan.editModal.zone': 'Zone',
+    'admin.floorPlan.editModal.shape': 'Shape',
+    'admin.floorPlan.editModal.update': 'Update',
+    'admin.floorPlan.editModal.delete': 'Delete Table',
+    'admin.floorPlan.editModal.confirmDelete': 'Are you sure you want to delete this table?',
+    'admin.floorPlan.legend.available': 'Available',
+    'admin.floorPlan.legend.selected': 'Selected',
+    'admin.floorPlan.legend.booked': 'Booked',
+    'admin.floorPlan.noTablesInZone': 'No tables in this zone',
+    'admin.floorPlan.allZones': 'All Zones',
+    'admin.floorPlan.entrance': 'Entrance',
+    'admin.floorPlan.zone.indoor': 'Indoor Zone',
+    'admin.floorPlan.zone.outdoor': 'Outdoor Zone',
+    'admin.floorPlan.zone.vip': 'VIP Zone',
+
+    // Wizard Steps
+    'wizard.step.schedule': 'Schedule',
+    'wizard.step.table': 'Select Table',
+    'wizard.step.confirm': 'Confirm',
+    'wizard.fullBooked': 'Full Booked',
+
+    // Table Status
+    'table.status.available': 'Available',
+    'table.status.booked': 'Booked',
+    'table.status.selected': 'Selected',
+    'table.status.unavailable': 'Unavailable',
+    'payment.promptpay': 'PromptPay',
+    'payment.prepayment': 'Advance Deposit',
+    'payment.deposit_info':
+      'Deposit of 200 THB will be deducted from your total bill (No booking fee)',
+    'table.clickToSelect': 'Click table to select',
+    'table.selectedLabel': 'Selected Table',
+    'table.selectFromMap': 'Please select a table from the map',
+    'validation.fillAll': 'Please fill in all fields',
+    'validation.attachSlip': 'Please fill all details and attach payment slip',
+    'wizard.back': 'Back',
+    'wizard.continue': 'Continue',
+    'wizard.table': 'Select Table',
+    'wizard.view.map': 'Map View',
+    'wizard.view.list': 'List View',
   },
 };
 
 export const useTranslation = (locale: Locale = 'th') => {
   const t = useCallback(
-    (key: keyof (typeof translations)['th']) => {
+    (key: keyof (typeof translations)['th'], params?: Record<string, string | number>) => {
       const translation = translations[locale as keyof typeof translations];
-      return (translation as any)[key] || key;
+      let text = (translation as any)[key] || key;
+
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          text = text.replace(`{${key}}`, String(value));
+        });
+      }
+
+      return text;
     },
     [locale]
   );

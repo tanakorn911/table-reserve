@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface TimeSlot {
   time: string;
@@ -48,6 +49,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
   success = false,
 }) => {
   const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
   const [isOpen, setIsOpen] = useState(false);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -166,13 +168,15 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         // Refresh slots immediately to show accurate state
         const fetchPromise = fetchTimeSlots();
         setHoldingTime(null); // Clear loading state before alert
-        alert(data.error || (locale === 'th' ? 'ขออภัย ช่วงเวลานี้ไม่ว่างแล้ว กรุณาเลือกเวลาอื่น' : 'Sorry, this time slot is no longer available'));
+        alert(
+          data.error ||
+            (locale === 'th' ? 'ขออภัย ช่วงเวลานี้ไม่ว่างแล้ว' : 'Sorry, this slot is unavailable')
+        );
         await fetchPromise;
       }
     } catch (error) {
       console.error('Failed to hold time slot:', error);
-      setHoldingTime(null);
-      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง' : 'Connection error, please try again');
+      alert(t('alert.connectionError'));
     } finally {
       setHoldingTime(null);
     }
@@ -237,23 +241,31 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         }}
         disabled={!selectedDate}
         className={`
-          w-full px-4 py-3.5 pr-12 rounded-lg text-base font-medium text-left
-          bg-input border-2 transition-all duration-300
-          focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary
-          min-h-[52px] shadow-sm
-          ${error ? 'border-error' : success ? 'border-success' : 'border-border'}
-          ${selectedDate ? 'hover:border-primary/70 hover:shadow-md cursor-pointer active:scale-[0.99]' : 'opacity-50 cursor-not-allowed'}
+          w-full px-4 pl-12 py-4 rounded-2xl text-base font-bold text-left
+          bg-white/5 border border-white/10 transition-all duration-300
+          focus:outline-none focus:bg-white/10 focus:border-primary/50 focus:shadow-[0_0_20px_rgba(var(--primary),0.2)]
+          min-h-[56px] shadow-lg shadow-black/5 relative overflow-hidden group
+          ${error ? 'border-error/50 bg-error/5' : success ? 'border-success/50 bg-success/5' : ''}
+          ${selectedDate ? 'hover:bg-white/10 hover:border-white/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] cursor-pointer active:scale-[0.99]' : 'opacity-40 cursor-not-allowed grayscale'}
         `}
       >
-        <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
-          {!selectedDate ? (locale === 'th' ? 'กรุณาเลือกวันที่ก่อน' : 'Please select a date first') : formatDisplayTime(value)}
+        {/* Glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300 group-hover:scale-110">
+          <Icon name="ClockIcon" size={20} className="text-white/70 group-hover:text-white" />
+        </div>
+
+        <span
+          className={`block transition-colors duration-300 ${value ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}
+        >
+          {!selectedDate
+            ? locale === 'th'
+              ? 'กรุณาเลือกวันที่ก่อน'
+              : 'Please select a date first'
+            : formatDisplayTime(value)}
         </span>
       </button>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-        <div className="p-1.5 rounded-md bg-primary/10">
-          <Icon name="ClockIcon" size={20} className="text-primary" />
-        </div>
-      </div>
 
       {isOpen && selectedDate && (
         <>
@@ -263,7 +275,9 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
           />
           <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-xl shadow-warm-lg p-4 max-h-[350px] overflow-y-auto pointer-events-auto">
             <div className="flex items-center justify-between mb-3 sticky top-0 bg-card/90 backdrop-blur-sm pb-2 z-10">
-              <h4 className="text-sm font-semibold text-foreground">{locale === 'th' ? 'เลือกเวลา' : 'Select Time'}</h4>
+              <h4 className="text-sm font-semibold text-foreground">
+                {locale === 'th' ? 'เลือกเวลา' : 'Select Time'}
+              </h4>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -285,7 +299,9 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                 <div className="p-3 bg-muted rounded-full text-muted-foreground">
                   <Icon name="CalendarIcon" size={24} />
                 </div>
-                <p className="text-sm text-muted-foreground">{locale === 'th' ? 'ไม่มีช่วงเวลาว่างในวันนี้' : 'No available slots today'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {locale === 'th' ? 'ไม่มีช่วงเวลาว่างในวันนี้' : 'No available slots today'}
+                </p>
                 <button
                   type="button"
                   onClick={() => fetchTimeSlots()}
@@ -310,7 +326,9 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                       const ampm = hour >= 12 ? 'PM' : 'AM';
                       const hour12 = hour % 12 || 12;
                       displayLabel = `${hour12}:${minutes} ${ampm}`;
-                    } catch (e) { }
+                    } catch (e) {
+                      /* ignore */
+                    }
                   }
 
                   return (

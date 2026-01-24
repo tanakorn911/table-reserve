@@ -21,12 +21,11 @@ interface SuccessModalProps {
 }
 
 const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservation }) => {
-  if (!isOpen) return null;
-  const activeReservation = reservation;
-  if (!activeReservation) return null;
-
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
+
+  if (!isOpen || !reservation) return null;
+  const activeReservation = reservation;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + 'T00:00:00');
@@ -81,9 +80,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
             >
               {t('success.title')}
             </h2>
-            <p className="text-base text-muted-foreground text-center">
-              {t('success.subtitle')}
-            </p>
+            <p className="text-base text-muted-foreground text-center">{t('success.subtitle')}</p>
             <p className="text-base text-muted-foreground text-center font-semibold text-primary">
               {t('success.screenshot')}
             </p>
@@ -113,9 +110,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                 <Icon name="PhoneIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">{t('form.phone')}</p>
-                  <p className="text-base font-medium text-foreground">
-                    {activeReservation.phone}
-                  </p>
+                  <p className="text-base font-medium text-foreground">{activeReservation.phone}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

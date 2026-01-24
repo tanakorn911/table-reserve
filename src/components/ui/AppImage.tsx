@@ -17,7 +17,7 @@ interface AppImageProps {
   sizes?: string;
   onClick?: () => void;
   fallbackSrc?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 function AppImage({
@@ -120,12 +120,18 @@ function AppImage({
   if (fill) {
     return (
       <div className={`relative ${className}`}>
-        <Image {...imageProps} fill sizes={sizes || '100vw'} style={{ objectFit: 'cover' }} />
+        <Image
+          {...imageProps}
+          fill
+          sizes={sizes || '100vw'}
+          style={{ objectFit: 'cover' }}
+          alt={alt}
+        />
       </div>
     );
   }
 
-  return <Image {...imageProps} width={width || 400} height={height || 300} />;
+  return <Image {...imageProps} width={width || 400} height={height || 300} alt={alt} />;
 }
 
 export default AppImage;

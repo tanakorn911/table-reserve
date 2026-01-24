@@ -39,21 +39,20 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  const value = React.useMemo(() => ({
-    currentRoute,
-    isMobileMenuOpen,
-    setIsMobileMenuOpen,
-    isStaffUser,
-    setIsStaffUser,
-    locale,
-    setLocale: changeLocale,
-  }), [currentRoute, isMobileMenuOpen, isStaffUser, locale]);
-
-  return (
-    <NavigationContext.Provider value={value}>
-      {children}
-    </NavigationContext.Provider>
+  const value = React.useMemo(
+    () => ({
+      currentRoute,
+      isMobileMenuOpen,
+      setIsMobileMenuOpen,
+      isStaffUser,
+      setIsStaffUser,
+      locale,
+      setLocale: changeLocale,
+    }),
+    [currentRoute, isMobileMenuOpen, isStaffUser, locale]
   );
+
+  return <NavigationContext.Provider value={value}>{children}</NavigationContext.Provider>;
 };
 
 export const useNavigation = () => {

@@ -96,7 +96,7 @@ function generateTimeSlots(
 
     // Skip if in the past
     if (date === todayStr && currentMinutes < currentTotalMinutes) {
-      currentMinutes += DURATION_MINUTES;
+      currentMinutes += 30; // Skip by interval
       continue;
     }
 
@@ -157,7 +157,7 @@ function generateTimeSlots(
       status,
     });
 
-    currentMinutes += DURATION_MINUTES;
+    currentMinutes += 90; // 90-minute intervals
   }
 
   return slots;
@@ -280,7 +280,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: locale === 'th' ? 'ช่วงเวลานี้กำลังมีผู้ทำรายการจองอื่น' : 'This time slot is being held by another user',
+            error:
+              locale === 'th'
+                ? 'ช่วงเวลานี้กำลังมีผู้ทำรายการจองอื่น'
+                : 'This time slot is being held by another user',
           },
           { status: 409 }
         );

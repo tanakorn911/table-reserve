@@ -39,9 +39,7 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
             <h2 className="text-xl font-black text-red-900 uppercase tracking-wider mb-1">
               {t('holiday.title')}
             </h2>
-            <p className="text-red-700 font-medium">
-              {t('holiday.message')}
-            </p>
+            <p className="text-red-700 font-medium">{t('holiday.message')}</p>
           </div>
 
           <div className="flex flex-wrap justify-center md:justify-end gap-3 flex-1">
@@ -55,9 +53,12 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
                 </span>
                 <span className="text-sm font-black text-gray-900">
                   {new Date(holiday.holiday_date + 'T00:00:00').getDate()}{' '}
-                  {new Date(holiday.holiday_date + 'T00:00:00').toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
-                    month: 'short',
-                  })}
+                  {new Date(holiday.holiday_date + 'T00:00:00').toLocaleDateString(
+                    locale === 'th' ? 'th-TH' : 'en-US',
+                    {
+                      month: 'short',
+                    }
+                  )}
                 </span>
                 {holiday.description && (
                   <span className="text-[10px] text-gray-500 font-medium mt-1">

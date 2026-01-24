@@ -201,12 +201,12 @@ const ReservationFormInteractive = () => {
         if (value.trim().length < 2) return t('validation.name.short');
         return undefined;
 
-      case 'phone':
+      case 'phone': {
         if (!value.trim()) return t('validation.phone.required');
         const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-        if (!phoneRegex.test(value.replace(/\s/g, '')))
-          return t('validation.phone.invalid');
+        if (!phoneRegex.test(value.replace(/\s/g, ''))) return t('validation.phone.invalid');
         return undefined;
+      }
 
       case 'email':
         if (value.trim() && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(value))
@@ -649,7 +649,9 @@ const ReservationFormInteractive = () => {
                         {t('payment.scan')}
                       </span>
                       <div className="px-4 py-1.5 bg-muted/30 border border-border rounded-full">
-                        <span className="text-sm font-bold text-foreground">{t('payment.amount')}</span>
+                        <span className="text-sm font-bold text-foreground">
+                          {t('payment.amount')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -676,10 +678,11 @@ const ReservationFormInteractive = () => {
                         className={`
                             flex flex-col items-center justify-center w-full min-h-[160px] px-6 py-6
                             rounded-2xl border-2 border-dashed transition-all cursor-pointer
-                            ${slipFile
-                            ? 'bg-primary/10 border-primary shadow-glow-sm'
-                            : 'bg-muted/20 border-border hover:border-primary/50 hover:bg-muted/40'
-                          }
+                            ${
+                              slipFile
+                                ? 'bg-primary/10 border-primary shadow-glow-sm'
+                                : 'bg-muted/20 border-border hover:border-primary/50 hover:bg-muted/40'
+                            }
                         `}
                       >
                         {slipFile ? (
@@ -739,9 +742,7 @@ const ReservationFormInteractive = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-foreground mb-1">{t('policy.title')}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t('policy.desc')}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t('policy.desc')}</p>
                 </div>
               </div>
             </div>

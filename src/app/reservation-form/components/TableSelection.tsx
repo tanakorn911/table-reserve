@@ -17,12 +17,12 @@ interface TableSelectionProps {
 const getLocalizedText = (text: string, locale: 'th' | 'en') => {
   if (locale === 'th') return text;
   const map: Record<string, string> = {
-    'โต๊ะริมหน้าต่าง': 'Window Table',
-    'โต๊ะโซฟา': 'Sofa Table',
-    'โต๊ะส่วนตัว': 'Private Table',
+    โต๊ะริมหน้าต่าง: 'Window Table',
+    โต๊ะโซฟา: 'Sofa Table',
+    โต๊ะส่วนตัว: 'Private Table',
     'โต๊ะส่วนตัว (2 ที่นั่ง)': 'Private Table (2 seats)',
-    'โต๊ะกลางร้าน': 'Center Table',
-    'โต๊ะบาร์': 'Bar Table',
+    โต๊ะกลางร้าน: 'Center Table',
+    โต๊ะบาร์: 'Bar Table',
     'วิวสวย บรรยากาศดี (4 ที่นั่ง)': 'Nice view, good atmosphere (4 seats)',
     'นั่งสบาย เหมาะสำหรับครอบครัว (6 ที่นั่ง)': 'Comfortable, perfect for families (6 seats)',
     'มีความเป็นส่วนตัวสูง (2 ที่นั่ง)': 'High privacy (2 seats)',
@@ -34,7 +34,8 @@ const getLocalizedText = (text: string, locale: 'th' | 'en') => {
   if (map[text]) return map[text];
 
   // Fallback for dynamic strings if needed (simple heuristic)
-  if (text.includes('ที่นั่ง')) return text.replace('ที่นั่ง', 'seats').replace('รองรับ', 'Supports');
+  if (text.includes('ที่นั่ง'))
+    return text.replace('ที่นั่ง', 'seats').replace('รองรับ', 'Supports');
 
   return text;
 };
@@ -66,13 +67,14 @@ const TableSelection: React.FC<TableSelectionProps> = ({
               disabled={isDisabled}
               className={`
                 relative flex items-start p-4 rounded-xl border-2 text-left transition-all duration-200
-                ${isSelected
-                  ? 'border-primary bg-primary/5 shadow-md'
-                  : isBooked
-                    ? 'border-red-200/50 bg-red-50/10 cursor-not-allowed pointer-events-none' // Booked: No opacity opacity, just specific colors
-                    : isDisabled
-                      ? 'border-muted bg-gray-100/50 opacity-40 cursor-not-allowed grayscale pointer-events-none'
-                      : 'border-border bg-card hover:border-primary/50 hover:shadow-sm'
+                ${
+                  isSelected
+                    ? 'border-primary bg-primary/5 shadow-md'
+                    : isBooked
+                      ? 'border-red-200/50 bg-red-50/10 cursor-not-allowed pointer-events-none' // Booked: No opacity opacity, just specific colors
+                      : isDisabled
+                        ? 'border-muted bg-gray-100/50 opacity-40 cursor-not-allowed grayscale pointer-events-none'
+                        : 'border-border bg-card hover:border-primary/50 hover:shadow-sm'
                 }
                 ${error && !isSelected ? 'border-error/50' : ''}
               `}
@@ -114,7 +116,11 @@ const TableSelection: React.FC<TableSelectionProps> = ({
                 </p>
                 <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                   <Icon name="UsersIcon" size={14} />
-                  <span>{locale === 'th' ? `รองรับ ${table.capacity} ท่าน` : `Supports ${table.capacity} guests`}</span>
+                  <span>
+                    {locale === 'th'
+                      ? `รองรับ ${table.capacity} ท่าน`
+                      : `Supports ${table.capacity} guests`}
+                  </span>
                 </div>
               </div>
             </button>
