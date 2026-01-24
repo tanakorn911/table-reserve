@@ -10,7 +10,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -42,7 +44,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -87,12 +91,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Send Notification for Update
     (async () => {
       try {
-
         const statusMap: any = {
-          'confirmed': '✅ ยืนยันแล้ว',
-          'pending': '⏳ รอการยืนยัน',
-          'cancelled': '❌ ยกเลิกแล้ว',
-          'completed': '🏁 เสร็จสิ้น'
+          confirmed: '✅ ยืนยันแล้ว',
+          pending: '⏳ รอการยืนยัน',
+          cancelled: '❌ ยกเลิกแล้ว',
+          completed: '🏁 เสร็จสิ้น',
         };
 
         let changeMsg = '';
@@ -145,7 +148,9 @@ export async function DELETE(
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -163,10 +168,7 @@ export async function DELETE(
     }
 
     // Hard delete: remove from database
-    const { error } = await supabase
-      .from('reservations')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('reservations').delete().eq('id', id);
 
     if (error) {
       console.error('Supabase error:', error);

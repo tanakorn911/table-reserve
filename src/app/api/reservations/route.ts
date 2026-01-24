@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const isAdmin = !!session;
 
     const { searchParams } = new URL(request.url);
@@ -20,9 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Admin can see everything (*), Public sees limited fields
     // Public needs to see booked slots to avoid conflict
-    const selectFields = isAdmin
-      ? '*'
-      : 'reservation_time, table_number, status, reservation_date';
+    const selectFields = isAdmin ? '*' : 'reservation_time, table_number, status, reservation_date';
 
     let query = supabase
       .from('reservations')

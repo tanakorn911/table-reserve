@@ -75,9 +75,9 @@ module.exports = {
         xl: 'var(--radius-xl)', /* 24px */
       },
       fontFamily: {
-        heading: ['Crimson Text', 'serif'],
-        body: ['Source Sans 3', 'sans-serif'],
-        caption: ['Nunito Sans', 'sans-serif'],
+        heading: ['Sarabun', 'serif'],
+        body: ['Sarabun', 'sans-serif'],
+        caption: ['Sarabun', 'sans-serif'],
         data: ['JetBrains Mono', 'monospace'],
       },
       spacing: {

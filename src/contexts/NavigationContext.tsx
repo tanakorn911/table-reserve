@@ -36,7 +36,7 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
         isStaffUser,
         setIsStaffUser,
         locale,
-        setLocale
+        setLocale,
       }}
     >
       {children}
