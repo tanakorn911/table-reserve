@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface GuestNumberInputProps {
   id: string;
@@ -24,6 +25,8 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
   error = false,
   success = false,
 }) => {
+  const { locale } = useNavigation();
+
   const handleIncrement = () => {
     const currentValue = parseInt(value) || 0;
     if (currentValue < max) {
@@ -45,7 +48,7 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
   };
 
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center" >
       <button
         type="button"
         onClick={handleDecrement}
@@ -81,7 +84,7 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
           `}
         />
         <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 text-xs text-muted-foreground">
-          คน
+          {locale === 'th' ? 'คน' : 'guests'}
         </div>
       </div>
       <button
@@ -98,7 +101,7 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
       >
         <Icon name="PlusIcon" size={20} />
       </button>
-    </div>
+    </div >
   );
 };
 

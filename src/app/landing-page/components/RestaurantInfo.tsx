@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface InfoCard {
   icon: string;
@@ -12,16 +14,18 @@ interface RestaurantInfoProps {
 }
 
 const RestaurantInfo: React.FC<RestaurantInfoProps> = ({ cards }) => {
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
+
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 lg:px-6">
         <div className="text-center mb-12">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
-            ทำไมต้องเลือกเรา
+            {t('info.whyChooseUs')}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            สัมผัสประสบการณ์การรับประทานอาหารที่ยอดเยี่ยมด้วยความมุ่งมั่นของเราในด้านคุณภาพ
-            การบริการ และบรรยากาศ
+            {t('info.whyChooseUsDesc')}
           </p>
         </div>
 

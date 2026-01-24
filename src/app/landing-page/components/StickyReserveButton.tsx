@@ -3,10 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 const StickyReserveButton: React.FC = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -44,7 +48,7 @@ const StickyReserveButton: React.FC = () => {
         "
       >
         <Icon name="CalendarIcon" size={24} />
-        <span className="hidden sm:inline">จองโต๊ะ</span>
+        <span className="hidden sm:inline">{t('nav.reserve')}</span>
       </Link>
     </div>
   );

@@ -23,22 +23,34 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
   const [locale, setLocale] = useState<'th' | 'en'>('th');
 
   useEffect(() => {
+    const stored = localStorage.getItem('app-locale');
+    if (stored === 'en' || stored === 'th') {
+      setLocale(stored);
+    }
+  }, []);
+
+  const changeLocale = (newLocale: 'th' | 'en') => {
+    setLocale(newLocale);
+    localStorage.setItem('app-locale', newLocale);
+  };
+
+  useEffect(() => {
     setCurrentRoute(pathname);
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  const value = React.useMemo(() => ({
+    currentRoute,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+    isStaffUser,
+    setIsStaffUser,
+    locale,
+    setLocale: changeLocale,
+  }), [currentRoute, isMobileMenuOpen, isStaffUser, locale]);
+
   return (
-    <NavigationContext.Provider
-      value={{
-        currentRoute,
-        isMobileMenuOpen,
-        setIsMobileMenuOpen,
-        isStaffUser,
-        setIsStaffUser,
-        locale,
-        setLocale,
-      }}
-    >
+    <NavigationContext.Provider value={value}>
       {children}
     </NavigationContext.Provider>
   );

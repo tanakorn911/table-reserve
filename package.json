@@ -56,6 +56,8 @@
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
     "next": "15.1.11",
+    "promptpay-qr": "^0.5.0",
+    "qrcode.react": "^4.2.0",
     "react": "19.0.3",
     "react-dom": "19.0.3",
     "react-to-print": "^3.2.0",

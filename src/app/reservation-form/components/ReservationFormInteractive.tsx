@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import FormField from './FormField';
 import TextInput from './TextInput';
@@ -16,6 +16,8 @@ import { Table } from '@/types/tables';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
+import generatePayload from 'promptpay-qr';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface FormData {
   fullName: string;
@@ -91,7 +93,7 @@ const ReservationFormInteractive = () => {
   const [minDate, setMinDate] = useState('');
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const supabase = createClientSupabaseClient();
+  const supabase = useMemo(() => createClientSupabaseClient(), []);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -129,104 +131,94 @@ const ReservationFormInteractive = () => {
 
   const [bookedTableIds, setBookedTableIds] = useState<number[]>([]);
 
+  const fetchBookedTables = useCallback(async () => {
+    if (!formData.date || !formData.time) {
+      setBookedTableIds([]);
+      return;
+    }
+
+    try {
+      // Fetch bookings for this specific date and time (confirmed AND pending)
+      const response = await fetch(`/api/reservations?date=${formData.date}`);
+      const result = await response.json();
+
+      if (result.data) {
+        // Filter reservations that match the selected time and have a table assigned
+        // Include both 'confirmed' and 'pending' status
+        const booked = result.data
+          .filter((r: any) => {
+            // 90 mins dining + 15 mins buffer = 105 mins total block
+            const totalDuration = 90 + 15;
+
+            // Handle time format mismatch (HH:mm:ss vs HH:mm)
+            const dbTime = r.reservation_time.substring(0, 5);
+            const [dbHour, dbMinute] = dbTime.split(':').map(Number);
+            const dbMinutes = dbHour * 60 + dbMinute;
+
+            const [selectedHour, selectedMinute] = formData.time.split(':').map(Number);
+            const selectedMinutes = selectedHour * 60 + selectedMinute;
+
+            // Check for overlap: |TimeA - TimeB| < 105 mins
+            const diff = Math.abs(dbMinutes - selectedMinutes);
+
+            return (
+              diff < totalDuration &&
+              r.table_number !== null &&
+              (r.status === 'confirmed' || r.status === 'pending')
+            );
+          })
+          .map((r: any) => Number(r.table_number));
+
+        setBookedTableIds(booked);
+      }
+    } catch (error) {
+      console.error('Failed to fetch booked tables:', error);
+    }
+  }, [formData.date, formData.time]);
+
   useEffect(() => {
-    const fetchBookedTables = async () => {
-      if (!formData.date || !formData.time) {
-        setBookedTableIds([]);
-        return;
-      }
-
-      try {
-        // Fetch bookings for this specific date and time (confirmed AND pending)
-        const response = await fetch(`/api/reservations?date=${formData.date}`);
-        const result = await response.json();
-
-        if (result.data) {
-          console.log('Fetching bookings:', {
-            selectedTime: formData.time,
-            reservations: result.data.map((r: any) => ({
-              t: r.reservation_time,
-              s: r.status,
-              tbl: r.table_number,
-            })),
-          });
-
-          // Filter reservations that match the selected time and have a table assigned
-          // Include both 'confirmed' and 'pending' status
-          const booked = result.data
-            .filter((r: any) => {
-              // 90 mins dining + 15 mins buffer = 105 mins total block
-              const totalDuration = 90 + 15;
-
-              // Handle time format mismatch (HH:mm:ss vs HH:mm)
-              const dbTime = r.reservation_time.substring(0, 5);
-              const [dbHour, dbMinute] = dbTime.split(':').map(Number);
-              const dbMinutes = dbHour * 60 + dbMinute;
-
-              const [selectedHour, selectedMinute] = formData.time.split(':').map(Number);
-              const selectedMinutes = selectedHour * 60 + selectedMinute;
-
-              // Check for overlap: |TimeA - TimeB| < 105 mins
-              const diff = Math.abs(dbMinutes - selectedMinutes);
-
-              return (
-                diff < totalDuration &&
-                r.table_number &&
-                (r.status === 'confirmed' || r.status === 'pending')
-              );
-            })
-            .map((r: any) => r.table_number);
-
-          console.log('Booked Table IDs:', booked);
-          setBookedTableIds(booked);
-        }
-      } catch (error) {
-        console.error('Failed to fetch booked tables:', error);
-      }
-    };
-
     fetchBookedTables(); // Initial fetch
 
     // Poll every 3 seconds for real-time updates
     const interval = setInterval(fetchBookedTables, 3000);
 
     return () => clearInterval(interval);
-  }, [formData.date, formData.time]);
+  }, [fetchBookedTables]);
 
   const guestOptions = [
-    { value: '', label: 'เลือกจำนวนแขก' },
+    { value: '', label: t('form.guests.placeholder') },
     ...Array.from({ length: 10 }, (_, i) => ({
       value: String(i + 1),
-      label: `${i + 1} แขก`,
+      label: `${i + 1} ${t('form.guests.label')}`,
     })),
   ];
 
   const validateField = (name: keyof FormData, value: string): string | undefined => {
     switch (name) {
       case 'fullName':
-        if (!value.trim()) return 'กรุณากรอกชื่อ-นามสกุล';
-        if (!value.trim().includes(' ')) return 'กรุณากรอกทั้งชื่อและนามสกุล (เว้นวรรค)';
-        if (value.trim().length < 2) return 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร';
+        if (!value.trim()) return t('validation.name.required');
+        if (!value.trim().includes(' ')) return t('validation.name.invalid');
+        if (value.trim().length < 2) return t('validation.name.short');
         return undefined;
 
       case 'phone':
-        if (!value.trim()) return 'กรุณากรอกเบอร์โทรศัพท์';
+        if (!value.trim()) return t('validation.phone.required');
         const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
         if (!phoneRegex.test(value.replace(/\s/g, '')))
-          return 'กรุณากรอกเบอร์โทรศัพท์ 10 หลักที่ถูกต้อง';
+          return t('validation.phone.invalid');
         return undefined;
 
       case 'email':
         if (value.trim() && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(value))
-          return 'กรุณากรอกอีเมลที่ถูกต้อง';
+          return t('validation.email.invalid');
         return undefined;
 
       case 'guests':
-        if (!value) return 'กรุณาเลือกจำนวนแขก';
+        if (!value) return t('validation.guests.required');
         return undefined;
 
       case 'date':
-        if (!value) return 'กรุณาเลือกวันที่';
+        if (!value) return t('validation.date.required');
         if (isHydrated) {
           const selectedDate = new Date(value + 'T00:00:00');
           const today = new Date();
@@ -234,16 +226,16 @@ const ReservationFormInteractive = () => {
           const localOffset = today.getTimezoneOffset();
           const thailandTime = new Date(today.getTime() + (thailandOffset + localOffset) * 60000);
           thailandTime.setHours(0, 0, 0, 0);
-          if (selectedDate < thailandTime) return 'ไม่สามารถเลือกวันที่ย้อนหลังได้';
+          if (selectedDate < thailandTime) return t('validation.date.past');
         }
         return undefined;
 
       case 'time':
-        if (!value) return 'กรุณาเลือกเวลา';
+        if (!value) return t('validation.time.required');
         return undefined;
 
       case 'tableId':
-        if (!value) return 'กรุณาเลือกโต๊ะ';
+        if (!value) return t('validation.table.required');
         return undefined;
 
       default:
@@ -279,8 +271,6 @@ const ReservationFormInteractive = () => {
     (Object.keys(formData) as Array<keyof FormData>).forEach((key) => {
       if (key !== 'specialRequests') {
         const value = formData[key];
-        // Convert non-string values to string for validation helper if needed
-        // or update validateField to accept any
         const stringValue = value === undefined ? '' : String(value);
         const error = validateField(key, stringValue);
         if (error) {
@@ -309,7 +299,6 @@ const ReservationFormInteractive = () => {
 
     setIsLoading(true);
 
-    // 1. Upload Slip if exists
     let payment_slip_url = '';
     if (slipFile) {
       setUploading(true);
@@ -320,7 +309,7 @@ const ReservationFormInteractive = () => {
 
       if (uploadError) {
         console.error('Upload Error:', uploadError);
-        alert('ไม่สามารถอัปโหลดสลิปได้ กรุณาลองใหม่อีกครั้ง');
+        alert(t('alert.uploadFailed'));
         setIsLoading(false);
         setUploading(false);
         return;
@@ -349,62 +338,26 @@ const ReservationFormInteractive = () => {
           table_number: formData.tableId,
           special_requests: formData.specialRequests,
           payment_slip_url: payment_slip_url,
+          locale: locale,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        // const result = await response.json(); // REMOVE: Already parsed above at line 293
         console.error('Reservation failed:', result.error);
 
         if (response.status === 409) {
-          alert('ขออภัย โต๊ะนี้เพิ่งถูกจองไป กรุณาเลือกโต๊ะใหม่');
-          // Force refresh booked tables immediately
-          const fetchBookedTables = async () => {
-            try {
-              const res = await fetch(`/api/reservations?date=${formData.date}`);
-              const data = await res.json();
-              if (data.data) {
-                const booked = data.data
-                  .filter((r: any) => {
-                    // 90 mins dining + 15 mins buffer = 105 mins total block
-                    const totalDuration = 90 + 15;
-
-                    const dbTime = r.reservation_time.substring(0, 5);
-                    const [dbHour, dbMinute] = dbTime.split(':').map(Number);
-                    const dbMinutes = dbHour * 60 + dbMinute;
-
-                    const [selectedHour, selectedMinute] = formData.time.split(':').map(Number);
-                    const selectedMinutes = selectedHour * 60 + selectedMinute;
-
-                    // Check for overlap: |TimeA - TimeB| < 105 mins
-                    const diff = Math.abs(dbMinutes - selectedMinutes);
-
-                    return (
-                      diff < totalDuration &&
-                      r.table_number &&
-                      (r.status === 'confirmed' || r.status === 'pending')
-                    );
-                  })
-                  .map((r: any) => r.table_number);
-                setBookedTableIds(booked);
-              }
-            } catch (e) {
-              console.error('Failed to refresh tables', e);
-            }
-          };
-          fetchBookedTables();
+          alert(result.error || t('alert.tableTaken'));
+          fetchBookedTables(); // Refresh the booked tables list
           setIsLoading(false);
           return;
         }
 
-        alert(`การจองล้มเหลว: ${result.error || 'เกิดข้อผิดพลาด'}`);
+        alert(`${t('alert.failed')}: ${result.error || 'Unknown error'}`);
         setIsLoading(false);
         return;
       }
-
-      // const result = await response.json(); // REMOVED: Already declared/parsed at start
 
       const reservationId = result.data?.id || `RES${Date.now().toString().slice(-8)}`;
       const details: ReservationDetails = {
@@ -422,7 +375,7 @@ const ReservationFormInteractive = () => {
       setShowSuccess(true);
     } catch (error) {
       console.error('Submission error:', error);
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+      alert(t('alert.connectionError'));
     } finally {
       setIsLoading(false);
     }
@@ -496,7 +449,7 @@ const ReservationFormInteractive = () => {
                     value={formData.fullName}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="กรุณากรอกชื่อ-นามสกุล"
+                    placeholder={t('form.placeholder.name')}
                     error={touched.fullName && !!errors.fullName}
                     success={
                       touched.fullName && !errors.fullName && formData.fullName.trim() !== ''
@@ -519,7 +472,7 @@ const ReservationFormInteractive = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="081-222-2222"
+                    placeholder={t('form.placeholder.phone')}
                     error={touched.phone && !!errors.phone}
                     success={touched.phone && !errors.phone && formData.phone.trim() !== ''}
                     pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
@@ -539,7 +492,7 @@ const ReservationFormInteractive = () => {
                     value={formData.email}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="your@email.com"
+                    placeholder={t('form.placeholder.email')}
                     error={touched.email && !!errors.email}
                     success={touched.email && !errors.email && formData.email?.trim() !== ''}
                   />
@@ -591,8 +544,6 @@ const ReservationFormInteractive = () => {
                     onBlur={() => {
                       console.log('Date Picker blurred');
                       setTouched((prev) => ({ ...prev, date: true }));
-                      // The validation is already handled in onChange with the correct value
-                      // Calling it here with formData.date might use a stale value
                     }}
                     minDate={minDate}
                     error={touched.date && !!errors.date}
@@ -655,54 +606,50 @@ const ReservationFormInteractive = () => {
                     name="specialRequests"
                     value={formData.specialRequests}
                     onChange={handleChange}
-                    placeholder="มีข้อจำกัดด้านอาหาร อาการแพ้ หรือโอกาสพิเศษหรือไม่? (ไม่บังคับ)"
+                    placeholder={t('form.placeholder.requests')}
                     rows={4}
                     maxLength={500}
                   />
                 </FormField>
 
-                {/* 💰 Theme-Matched Payment Section */}
                 <div className="space-y-6 pt-6 border-t border-muted">
                   <div className="space-y-2">
                     <h3 className="text-lg font-black text-foreground uppercase tracking-tight">
-                      ชำระเงินมัดจำล่วงหน้า
+                      {t('payment.title')}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      เพื่อยืนยันสิทธิ์การเข้าใช้บริการ กรุณาโอนเงินมัดจำจำนวน{' '}
-                      <span className="text-primary font-black">200 บาท</span>{' '}
-                      (หักคืนจากยอดรวมค่าอาหาร)
+                      {t('payment.desc')}{' '}
+                      <span className="text-primary font-black">{t('payment.deposit')}</span>{' '}
+                      {t('payment.desc_suffix')}
                     </p>
                   </div>
 
                   <div className="bg-card rounded-2xl p-6 border border-border shadow-md flex flex-col items-center">
                     <div className="flex justify-between items-center w-full mb-4 px-2">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                        Thai QR Payment
+                        {t('payment.scan')}
                       </span>
                       <span className="text-[10px] font-medium text-success flex items-center gap-1">
                         <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
-                        พร้อมรับเงิน
+                        {t('payment.ready')}
                       </span>
                     </div>
 
-                    <div className="p-4 bg-white rounded-xl shadow-inner mb-4">
-                      <img
-                        src="/images/qr.jpeg"
-                        alt="Payment QR"
-                        className="w-48 h-48 md:w-56 md:h-56 object-contain"
-                        onError={(e) => {
-                          (e.target as any).src =
-                            'https://placehold.co/400x400/ffffff/334155?text=200+THB+QR';
-                        }}
+                    <div className="p-4 bg-white rounded-xl shadow-inner mb-4 flex justify-center">
+                      <QRCodeCanvas
+                        value={generatePayload('0809317630', { amount: 200 })}
+                        size={200}
+                        level="M"
+                        className="w-48 h-48 md:w-56 md:h-56"
                       />
                     </div>
 
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-xs text-muted-foreground uppercase tracking-tighter">
-                        Scan to Pay
+                        {t('payment.scan')}
                       </span>
                       <div className="px-4 py-1.5 bg-muted/30 border border-border rounded-full">
-                        <span className="text-sm font-bold text-foreground">มัดจำ 200.00 บาท</span>
+                        <span className="text-sm font-bold text-foreground">{t('payment.amount')}</span>
                       </div>
                     </div>
                   </div>
@@ -710,7 +657,7 @@ const ReservationFormInteractive = () => {
                   <div className="space-y-3">
                     <label className="text-base font-semibold text-foreground flex items-center gap-2">
                       <Icon name="PhotoIcon" size={18} className="text-primary" />
-                      แนบสลิปการโอนเงิน <span className="text-error">*</span>
+                      {t('payment.upload')} <span className="text-error">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -727,14 +674,13 @@ const ReservationFormInteractive = () => {
                       <label
                         htmlFor="slip_upload"
                         className={`
-                                                    flex flex-col items-center justify-center w-full min-h-[160px] px-6 py-6
-                                                    rounded-2xl border-2 border-dashed transition-all cursor-pointer
-                                                    ${
-                                                      slipFile
-                                                        ? 'bg-primary/10 border-primary shadow-glow-sm'
-                                                        : 'bg-muted/20 border-border hover:border-primary/50 hover:bg-muted/40'
-                                                    }
-                                                `}
+                            flex flex-col items-center justify-center w-full min-h-[160px] px-6 py-6
+                            rounded-2xl border-2 border-dashed transition-all cursor-pointer
+                            ${slipFile
+                            ? 'bg-primary/10 border-primary shadow-glow-sm'
+                            : 'bg-muted/20 border-border hover:border-primary/50 hover:bg-muted/40'
+                          }
+                        `}
                       >
                         {slipFile ? (
                           <div className="flex flex-col items-center text-center">
@@ -745,7 +691,7 @@ const ReservationFormInteractive = () => {
                               {slipFile.name}
                             </p>
                             <p className="text-[10px] text-primary/60 font-medium uppercase mt-2 bg-primary/10 px-3 py-1 rounded-full">
-                              คลิกเพื่อเปลี่ยนรูปภาพ
+                              {t('payment.upload.click')}
                             </p>
                           </div>
                         ) : (
@@ -758,10 +704,10 @@ const ReservationFormInteractive = () => {
                               />
                             </div>
                             <p className="text-base font-bold text-foreground">
-                              กดที่นี่เพื่อเลือกรูปสลิป
+                              {t('payment.upload.label')}
                             </p>
                             <p className="text-xs text-muted-foreground mt-2 max-w-[200px]">
-                              รองรับไฟล์ภาพ JPG, PNG (สูงสุด 5MB)
+                              {t('payment.upload.hint')}
                             </p>
                           </div>
                         )}
@@ -792,11 +738,9 @@ const ReservationFormInteractive = () => {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-foreground mb-1">นโยบายการจอง</h3>
+                  <h3 className="text-sm font-medium text-foreground mb-1">{t('policy.title')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    กรุณามาถึงภายใน 15 นาทีหลังเวลาจองของคุณ สำหรับกลุ่ม 6 คนขึ้นไป
-                    <br />
-                    กรุณาโทรติดต่อเราโดยตรงที่ 081-222-2222
+                    {t('policy.desc')}
                   </p>
                 </div>
               </div>
@@ -804,12 +748,11 @@ const ReservationFormInteractive = () => {
           </div>
         </div>
       </div>
-
-      {reservationDetails && (
+      {showSuccess && reservationDetails && (
         <SuccessModal
           isOpen={showSuccess}
           onClose={handleCloseSuccess}
-          reservationDetails={reservationDetails}
+          reservation={reservationDetails}
         />
       )}
     </>

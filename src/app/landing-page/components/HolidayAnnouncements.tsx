@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface Holiday {
   id: string;
@@ -12,9 +14,12 @@ interface HolidayAnnouncementsProps {
 }
 
 const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays }) => {
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('th-TH', {
+    return date.toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -32,10 +37,10 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
 
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-xl font-black text-red-900 uppercase tracking-wider mb-1">
-              ประกาศวันหยุดพิเศษ
+              {t('holiday.title')}
             </h2>
             <p className="text-red-700 font-medium">
-              ทางร้านขออภัยในความไม่สะดวก เนื่องจากจะมีการปิดทำการในวันดังกล่าวดั้งนี้:
+              {t('holiday.message')}
             </p>
           </div>
 
@@ -46,11 +51,11 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
                 className="bg-white px-4 py-2 rounded-xl border border-red-200 shadow-sm flex flex-col items-center min-w-[140px]"
               >
                 <span className="text-xs font-bold text-red-400 uppercase tracking-tighter">
-                  {formatDate(holiday.holiday_date).split('ที่')[0]}
+                  {formatDate(holiday.holiday_date).split(locale === 'th' ? 'ที่' : ',')[0]}
                 </span>
                 <span className="text-sm font-black text-gray-900">
                   {new Date(holiday.holiday_date + 'T00:00:00').getDate()}{' '}
-                  {new Date(holiday.holiday_date + 'T00:00:00').toLocaleDateString('th-TH', {
+                  {new Date(holiday.holiday_date + 'T00:00:00').toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
                     month: 'short',
                   })}
                 </span>

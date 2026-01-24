@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface DaySchedule {
   day: string;
@@ -12,6 +14,9 @@ interface OpeningHoursProps {
 }
 
 const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
+
   return (
     <section className="py-16 lg:py-24 bg-card">
       <div className="container mx-auto px-4 lg:px-6">
@@ -21,9 +26,9 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
               <Icon name="ClockIcon" size={32} className="text-primary" />
             </div>
             <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
-              เวลาทำการ
+              {t('hours.title')}
             </h2>
-            <p className="text-lg text-muted-foreground">เราพร้อมให้บริการคุณตลอดทั้งสัปดาห์</p>
+            <p className="text-lg text-muted-foreground">{t('hours.subtitle')}</p>
           </div>
 
           <div className="bg-background rounded-xl shadow-warm-md p-6 lg:p-8">
@@ -34,10 +39,9 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                   className={`
                     flex items-center justify-between py-4 px-6 rounded-lg
                     transition-smooth
-                    ${
-                      item.isToday
-                        ? 'bg-primary/10 border-2 border-primary'
-                        : 'bg-muted/50 hover:bg-muted'
+                    ${item.isToday
+                      ? 'bg-primary/10 border-2 border-primary'
+                      : 'bg-muted/50 hover:bg-muted'
                     }
                   `}
                 >

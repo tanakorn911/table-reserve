@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface SocialLink {
   name: string;
@@ -18,6 +20,8 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ restaurantName, socialLinks }) => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -90,17 +94,17 @@ const Footer: React.FC<FooterProps> = ({ restaurantName, socialLinks }) => {
 
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} {restaurantName}. สงวนลิขสิทธิ์
+              © {currentYear} {restaurantName}. {t('footer.rights')}
             </p>
             <p className="text-xs text-muted-foreground">
-              การจองออนไลน์ที่ปลอดภัยด้วยการเข้ารหัส SSL
+              {t('footer.security')}
             </p>
             <Link
               href="/admin/login"
               target="_blank"
               className="text-xs text-muted-foreground hover:text-primary transition-colors underline decoration-dotted"
             >
-              เข้าสู่ระบบผู้ดูแลระบบ (Admin)
+              {t('footer.adminLogin')}
             </Link>
           </div>
         </div>

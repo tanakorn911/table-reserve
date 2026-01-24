@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface FormFieldProps {
   label: string;
@@ -17,6 +18,8 @@ const FormField: React.FC<FormFieldProps> = ({
   children,
   htmlFor,
 }) => {
+  const { locale } = useNavigation();
+
   return (
     <div className="flex flex-col gap-2">
       <label
@@ -36,7 +39,7 @@ const FormField: React.FC<FormFieldProps> = ({
       {success && !error && (
         <p className="text-sm text-success flex items-center gap-1.5">
           <span>✓</span>
-          <span>ถูกต้อง</span>
+          <span>{locale === 'th' ? 'ถูกต้อง' : 'Valid'}</span>
         </p>
       )}
     </div>

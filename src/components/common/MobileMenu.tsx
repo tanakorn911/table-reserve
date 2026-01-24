@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useNavigation } from '@/contexts/NavigationContext';
 import Icon from '@/components/ui/AppIcon';
+import { useTranslation } from '@/lib/i18n';
 
 interface NavigationItem {
   label: string;
@@ -12,23 +13,24 @@ interface NavigationItem {
   staffOnly?: boolean;
 }
 
-const navigationItems: NavigationItem[] = [
-  {
-    label: 'หน้าหลัก',
-    path: '/landing-page',
-    icon: 'HomeIcon',
-    staffOnly: false,
-  },
-  {
-    label: 'รายการจอง',
-    path: '/reservation-list',
-    icon: 'ClipboardDocumentListIcon',
-    staffOnly: true,
-  },
-];
-
 const MobileMenu = () => {
-  const { currentRoute, isMobileMenuOpen, setIsMobileMenuOpen, isStaffUser } = useNavigation();
+  const { currentRoute, isMobileMenuOpen, setIsMobileMenuOpen, isStaffUser, locale, setLocale } = useNavigation();
+  const { t } = useTranslation(locale);
+
+  const navigationItems: NavigationItem[] = [
+    {
+      label: t('nav.home'),
+      path: '/landing-page',
+      icon: 'HomeIcon',
+      staffOnly: false,
+    },
+    {
+      label: t('admin.reservations'),
+      path: '/admin/dashboard',
+      icon: 'ClipboardDocumentListIcon',
+      staffOnly: true,
+    },
+  ];
 
   const filteredNavItems = navigationItems.filter(
     (item) => !item.staffOnly || (item.staffOnly && isStaffUser)
@@ -69,7 +71,7 @@ const MobileMenu = () => {
   return (
     <>
       <div
-        className="fixed inset-0 z-200 bg-background md:hidden transition-smooth"
+        className="fixed inset-0 z-200 bg-background/80 backdrop-blur-sm md:hidden transition-smooth"
         onClick={() => setIsMobileMenuOpen(false)}
         aria-hidden="true"
       />
@@ -78,7 +80,7 @@ const MobileMenu = () => {
         className="
           fixed top-20 left-0 right-0 bottom-0 z-200 bg-card
           md:hidden overflow-y-auto transition-smooth
-          animate-in slide-in-from-top-4 duration-250
+          animate-in slide-in-from-top-4 duration-250 border-t border-border
         "
       >
         <nav className="flex flex-col p-6 gap-2">
@@ -90,10 +92,9 @@ const MobileMenu = () => {
               className={`
                 flex items-center gap-3 px-6 py-4 rounded-md text-base font-medium
                 transition-smooth min-h-[44px]
-                ${
-                  isActiveRoute(item.path)
-                    ? 'bg-primary text-primary-foreground shadow-warm-sm'
-                    : 'text-foreground hover:bg-muted active:scale-[0.97]'
+                ${isActiveRoute(item.path)
+                  ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                  : 'text-foreground hover:bg-muted active:scale-[0.97]'
                 }
               `}
               style={{
@@ -119,8 +120,43 @@ const MobileMenu = () => {
             }}
           >
             <Icon name="CalendarIcon" size={24} />
-            <span>จองโต๊ะ</span>
+            <span>{t('nav.reserve')}</span>
           </Link>
+
+          {/* Language Switcher for Mobile */}
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-sm font-medium text-muted-foreground mb-4 px-2">Language / ภาษา</p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setLocale('th');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`
+                  flex-1 py-3 rounded-lg text-sm font-bold transition-all border
+                  ${locale === 'th'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-border hover:bg-muted'}
+                `}
+              >
+                ไทย (TH)
+              </button>
+              <button
+                onClick={() => {
+                  setLocale('en');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`
+                  flex-1 py-3 rounded-lg text-sm font-bold transition-all border
+                  ${locale === 'en'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-border hover:bg-muted'}
+                `}
+              >
+                English (EN)
+              </button>
+            </div>
+          </div>
         </nav>
       </div>
     </>

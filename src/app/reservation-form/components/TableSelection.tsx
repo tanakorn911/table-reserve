@@ -1,7 +1,6 @@
-'use client';
-
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 // Note: TABLE_TYPES import removed as we now accept tables as props
 import { Table } from '@/types/tables';
@@ -15,6 +14,31 @@ interface TableSelectionProps {
   error?: boolean;
 }
 
+const getLocalizedText = (text: string, locale: 'th' | 'en') => {
+  if (locale === 'th') return text;
+  const map: Record<string, string> = {
+    'โต๊ะริมหน้าต่าง': 'Window Table',
+    'โต๊ะโซฟา': 'Sofa Table',
+    'โต๊ะส่วนตัว': 'Private Table',
+    'โต๊ะส่วนตัว (2 ที่นั่ง)': 'Private Table (2 seats)',
+    'โต๊ะกลางร้าน': 'Center Table',
+    'โต๊ะบาร์': 'Bar Table',
+    'วิวสวย บรรยากาศดี (4 ที่นั่ง)': 'Nice view, good atmosphere (4 seats)',
+    'นั่งสบาย เหมาะสำหรับครอบครัว (6 ที่นั่ง)': 'Comfortable, perfect for families (6 seats)',
+    'มีความเป็นส่วนตัวสูง (2 ที่นั่ง)': 'High privacy (2 seats)',
+    'บรรยากาศครึกครื้น (4 ที่นั่ง)': 'Lively atmosphere (4 seats)',
+    'เหมาะสำหรับมาคนเดียวหรือคู่รัก (2 ที่นั่ง)': 'Good for solo or couples (2 seats)',
+  };
+
+  // Try exact match
+  if (map[text]) return map[text];
+
+  // Fallback for dynamic strings if needed (simple heuristic)
+  if (text.includes('ที่นั่ง')) return text.replace('ที่นั่ง', 'seats').replace('รองรับ', 'Supports');
+
+  return text;
+};
+
 const TableSelection: React.FC<TableSelectionProps> = ({
   tables,
   selectedTableId,
@@ -23,6 +47,8 @@ const TableSelection: React.FC<TableSelectionProps> = ({
   partySize,
   error = false,
 }) => {
+  const { locale } = useNavigation();
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -40,14 +66,13 @@ const TableSelection: React.FC<TableSelectionProps> = ({
               disabled={isDisabled}
               className={`
                 relative flex items-start p-4 rounded-xl border-2 text-left transition-all duration-200
-                ${
-                  isSelected
-                    ? 'border-primary bg-primary/5 shadow-md'
-                    : isBooked
-                      ? 'border-red-200/50 bg-red-50/10 cursor-not-allowed pointer-events-none' // Booked: No opacity opacity, just specific colors
-                      : isDisabled
-                        ? 'border-muted bg-gray-100/50 opacity-40 cursor-not-allowed grayscale pointer-events-none'
-                        : 'border-border bg-card hover:border-primary/50 hover:shadow-sm'
+                ${isSelected
+                  ? 'border-primary bg-primary/5 shadow-md'
+                  : isBooked
+                    ? 'border-red-200/50 bg-red-50/10 cursor-not-allowed pointer-events-none' // Booked: No opacity opacity, just specific colors
+                    : isDisabled
+                      ? 'border-muted bg-gray-100/50 opacity-40 cursor-not-allowed grayscale pointer-events-none'
+                      : 'border-border bg-card hover:border-primary/50 hover:shadow-sm'
                 }
                 ${error && !isSelected ? 'border-error/50' : ''}
               `}
@@ -66,30 +91,30 @@ const TableSelection: React.FC<TableSelectionProps> = ({
                   <span
                     className={`font-semibold ${isSelected ? 'text-primary' : isBooked ? 'text-red-500/90' : 'text-foreground'}`}
                   >
-                    {table.name}
+                    {getLocalizedText(table.name, locale)}
                   </span>
                   {isBooked ? (
                     <span className="text-xs font-medium text-red-600 px-2 py-0.5 rounded-full bg-red-100/80">
-                      ไม่ว่าง
+                      {locale === 'th' ? 'ไม่ว่าง' : 'Booked'}
                     </span>
                   ) : isCapacityLow ? (
                     <span className="text-xs font-medium text-warning px-2 py-0.5 rounded-full bg-warning/10">
-                      ที่นั่งไม่พอ
+                      {locale === 'th' ? 'ที่นั่งไม่พอ' : 'Capacity Low'}
                     </span>
                   ) : isSelected ? (
                     <span className="text-xs font-medium text-primary px-2 py-0.5 rounded-full bg-primary/10">
-                      เลือกแล้ว
+                      {locale === 'th' ? 'เลือกแล้ว' : 'Selected'}
                     </span>
                   ) : null}
                 </div>
                 <p
                   className={`text-sm line-clamp-2 ${isBooked ? 'text-red-400/80' : 'text-muted-foreground'}`}
                 >
-                  {table.description}
+                  {getLocalizedText(table.description, locale)}
                 </p>
                 <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                   <Icon name="UsersIcon" size={14} />
-                  <span>รองรับ {table.capacity} ท่าน</span>
+                  <span>{locale === 'th' ? `รองรับ ${table.capacity} ท่าน` : `Supports ${table.capacity} guests`}</span>
                 </div>
               </div>
             </button>

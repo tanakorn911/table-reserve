@@ -75,6 +75,11 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
+    // Allow POST /api/timeslots (Public - Hold/Release slots)
+    if (path === '/api/timeslots') {
+      return response;
+    }
+
     // Block everything if not logged in (other than allowed public above)
     if (isWrite && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

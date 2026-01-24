@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface ReservationDetails {
   id: string;
@@ -15,11 +17,16 @@ interface ReservationDetails {
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  reservationDetails: ReservationDetails;
+  reservation: ReservationDetails;
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservationDetails }) => {
+const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservation }) => {
   if (!isOpen) return null;
+  const activeReservation = reservation;
+  if (!activeReservation) return null;
+
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + 'T00:00:00');
@@ -27,7 +34,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
     const thailandOffset = 7 * 60;
     const localOffset = date.getTimezoneOffset();
     const thailandDate = new Date(date.getTime() + (thailandOffset + localOffset) * 60000);
-    return thailandDate.toLocaleDateString('th-TH', {
+    return thailandDate.toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -38,7 +45,13 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(':');
     const hour = parseInt(hours, 10);
-    return `${hour}:${minutes} น.`;
+    if (locale === 'th') {
+      return `${hour}:${minutes} น.`;
+    }
+    // Convert to 12-hour format for EN
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
   };
 
   return (
@@ -66,13 +79,13 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               id="success-title"
               className="text-2xl font-heading font-bold text-foreground text-center"
             >
-              ยืนยันการจองแล้ว!
+              {t('success.title')}
             </h2>
             <p className="text-base text-muted-foreground text-center">
-              โต๊ะของคุณได้รับการจองเรียบร้อยแล้ว <br></br>เราตั้งตารอที่จะให้บริการคุณ!
+              {t('success.subtitle')}
             </p>
-            <p className="text-base text-muted-foreground text-center">
-              **กรุณาแคปหน้าจอเพื่อใช้เป็นหลักฐานการจอง**
+            <p className="text-base text-muted-foreground text-center font-semibold text-primary">
+              {t('success.screenshot')}
             </p>
           </div>
 
@@ -81,64 +94,64 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               <div className="flex items-start gap-3">
                 <Icon name="IdentificationIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">รหัสการจอง</p>
+                  <p className="text-sm text-muted-foreground">{t('success.code')}</p>
                   <p className="text-xl font-black text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border-2 border-blue-200 inline-block tracking-widest">
-                    {reservationDetails.bookingCode || reservationDetails.id.slice(0, 8)}
+                    {activeReservation.bookingCode || activeReservation.id.slice(0, 8)}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Icon name="UserIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">ชื่อ</p>
+                  <p className="text-sm text-muted-foreground">{t('form.name')}</p>
                   <p className="text-base font-medium text-foreground">
-                    {reservationDetails.fullName}
+                    {activeReservation.fullName}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Icon name="PhoneIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">เบอร์โทรศัพท์</p>
+                  <p className="text-sm text-muted-foreground">{t('form.phone')}</p>
                   <p className="text-base font-medium text-foreground">
-                    {reservationDetails.phone}
+                    {activeReservation.phone}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Icon name="CalendarIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">วันที่</p>
+                  <p className="text-sm text-muted-foreground">{t('form.date')}</p>
                   <p className="text-base font-medium text-foreground">
-                    {formatDate(reservationDetails.date)}
+                    {formatDate(activeReservation.date)}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Icon name="ClockIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">เวลา</p>
+                  <p className="text-sm text-muted-foreground">{t('form.time')}</p>
                   <p className="text-base font-medium text-foreground">
-                    {formatTime(reservationDetails.time)}
+                    {formatTime(activeReservation.time)}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Icon name="UsersIcon" size={20} className="text-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">จำนวนแขก</p>
+                  <p className="text-sm text-muted-foreground">{t('form.guests')}</p>
                   <p className="text-base font-medium text-foreground">
-                    {reservationDetails.guests} ท่าน
+                    {activeReservation.guests} {t('form.guests.label')}
                   </p>
                 </div>
               </div>
-              {reservationDetails.specialRequests && (
+              {activeReservation.specialRequests && (
                 <div className="flex items-start gap-3">
                   <Icon name="ChatBubbleLeftRightIcon" size={20} className="text-primary mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">คำขอพิเศษ</p>
+                    <p className="text-sm text-muted-foreground">{t('form.requests')}</p>
                     <p className="text-base font-medium text-foreground">
-                      {reservationDetails.specialRequests}
+                      {activeReservation.specialRequests}
                     </p>
                   </div>
                 </div>
@@ -157,7 +170,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               "
             >
               <Icon name="HomeIcon" size={20} />
-              <span>กลับสู่หน้าหลัก</span>
+              <span>{t('success.backHome')}</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import type { CreateReservationInput } from '@/types/database.types';
 import { sendLineNotification, sendEmailConfirmation } from '@/lib/notifications';
 
@@ -65,7 +66,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const body: CreateReservationInput = await request.json();
+    const reqBody = await request.json();
+    const { locale, ...body } = reqBody;
 
     // Validate required fields
     const requiredFields = [
@@ -118,7 +120,11 @@ export async function POST(request: NextRequest) {
 
       if (hasOverlap) {
         return NextResponse.json(
-          { error: 'Table is already booked during this time slot (90 min + 15 min buffer)' },
+          {
+            error: locale === 'th'
+              ? 'โต๊ะนี้มีรายการจองอื่นแล้วในช่วงเวลาดังกล่าว (รวมเวลาพักโต๊ะ 105 นาที)'
+              : 'Table is already booked during this time slot (including 105 min buffer)'
+          },
           { status: 409 }
         );
       }
@@ -151,7 +157,7 @@ export async function POST(request: NextRequest) {
 
         // 2. Email Confirmation to Customer
         if (data.guest_email) {
-          await sendEmailConfirmation(data.guest_email, data);
+          await sendEmailConfirmation(data.guest_email, data, locale || 'th');
         }
       } catch (e) {
         console.error('Notification error', e);

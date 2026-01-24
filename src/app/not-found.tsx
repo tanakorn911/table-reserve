@@ -3,9 +3,13 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 export default function NotFound() {
   const router = useRouter();
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
 
   const handleGoHome = () => {
     router?.push('/');
@@ -26,9 +30,9 @@ export default function NotFound() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-medium text-onBackground mb-2">ไม่พบหน้านี้</h2>
+        <h2 className="text-2xl font-medium text-onBackground mb-2">{t('notFound.title')}</h2>
         <p className="text-onBackground/70 mb-8">
-          หน้าที่คุณกำลังค้นหาไม่มีอยู่จริง ลองตรวจสอบ URL หรือกลับไปหน้าหลัก
+          {t('notFound.description')}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -37,7 +41,7 @@ export default function NotFound() {
             className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200"
           >
             <Icon name="ArrowLeftIcon" size={16} />
-            ย้อนกลับ
+            {t('notFound.goBack')}
           </button>
 
           <button
@@ -45,7 +49,7 @@ export default function NotFound() {
             className="inline-flex items-center justify-center gap-2 border border-border bg-background text-foreground px-6 py-3 rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
           >
             <Icon name="HomeIcon" size={16} />
-            กลับหน้าหลัก
+            {t('success.backHome')}
           </button>
         </div>
       </div>

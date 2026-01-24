@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface CalendarPickerProps {
   id: string;
@@ -31,6 +32,22 @@ const THAI_MONTHS = [
   'ธันวาคม',
 ];
 
+const EN_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const EN_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 const CalendarPicker: React.FC<CalendarPickerProps> = ({
   id,
   name,
@@ -41,6 +58,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
   error = false,
   success = false,
 }) => {
+  const { locale } = useNavigation();
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [holidays, setHolidays] = useState<{ date: string; desc: string }[]>([]);
@@ -146,12 +164,19 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
   };
 
   const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return 'เลือกวันที่';
+    if (!dateStr) return locale === 'th' ? 'เลือกวันที่' : 'Select Date';
     const date = new Date(dateStr + 'T00:00:00');
     const day = date.getDate();
-    const month = THAI_MONTHS[date.getMonth()];
-    const year = date.getFullYear() + 543; // Buddhist era
-    return `${day} ${month} ${year}`;
+
+    if (locale === 'th') {
+      const month = THAI_MONTHS[date.getMonth()];
+      const year = date.getFullYear() + 543; // Buddhist era
+      return `${day} ${month} ${year}`;
+    } else {
+      const month = EN_MONTHS[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    }
   };
 
   const canGoPrevMonth = () => {
@@ -210,7 +235,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
 
     if (isDateValueDisabled(dateStr)) {
       console.log('[DEBUG] Date is disabled, skipping selection.');
-      alert('ขออภัย วันที่เลือกไม่สามารถจองได้');
+      alert(locale === 'th' ? 'ขออภัย วันที่เลือกไม่สามารถจองได้' : 'Sorry, selected date is not available');
       return;
     }
 
@@ -218,7 +243,6 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     onChange(dateStr);
     setIsOpen(false);
 
-    // Use setTimeout to ensure the form state has updated before triggering validation
     setTimeout(() => {
       console.log('[DEBUG] Triggering onBlur after quick select');
       onBlur?.();
@@ -240,6 +264,9 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
   };
 
   const days = getDaysInMonth(currentMonth);
+  const currentDays = locale === 'th' ? THAI_DAYS : EN_DAYS;
+  const currentMonths = locale === 'th' ? THAI_MONTHS : EN_MONTHS;
+  const currentYear = locale === 'th' ? currentMonth.getFullYear() + 543 : currentMonth.getFullYear();
 
   return (
     <div className="relative">
@@ -284,7 +311,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                 <Icon name="ChevronLeftIcon" size={20} className="text-foreground" />
               </button>
               <h3 className="text-lg font-semibold text-foreground">
-                {THAI_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear() + 543}
+                {currentMonths[currentMonth.getMonth()]} {currentYear}
               </h3>
               <button
                 type="button"
@@ -297,12 +324,11 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
 
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {THAI_DAYS.map((day, i) => (
+              {currentDays.map((day, i) => (
                 <div
                   key={day}
-                  className={`text-center text-sm font-medium py-2 ${
-                    i === 0 ? 'text-error' : i === 6 ? 'text-primary' : 'text-muted-foreground'
-                  }`}
+                  className={`text-center text-sm font-medium py-2 ${i === 0 ? 'text-error' : i === 6 ? 'text-primary' : 'text-muted-foreground'
+                    }`}
                 >
                   {day}
                 </div>
@@ -322,17 +348,16 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                       className={`
                                                 relative w-full h-full flex flex-col items-center justify-center rounded-lg text-sm font-medium
                                                 transition-all duration-200
-                                                ${
-                                                  isSelected(day)
-                                                    ? 'bg-primary text-primary-foreground shadow-warm-sm'
-                                                    : isToday(day)
-                                                      ? 'bg-accent/20 text-accent border border-accent'
-                                                      : getHoliday(day)
-                                                        ? 'bg-red-50 text-red-500 border border-red-100 opacity-60'
-                                                        : isDateDisabled(day)
-                                                          ? 'text-muted-foreground/30 cursor-not-allowed grayscale'
-                                                          : 'text-foreground hover:bg-muted'
-                                                }
+                                                ${isSelected(day)
+                          ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                          : isToday(day)
+                            ? 'bg-accent/20 text-accent border border-accent'
+                            : getHoliday(day)
+                              ? 'bg-red-50 text-red-500 border border-red-100 opacity-60'
+                              : isDateDisabled(day)
+                                ? 'text-muted-foreground/30 cursor-not-allowed grayscale'
+                                : 'text-foreground hover:bg-muted'
+                        }
                                             `}
                     >
                       {day}
@@ -352,14 +377,14 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                 onClick={() => handleQuickSelect(0)}
                 className="flex-1 py-2.5 px-3 rounded-lg text-sm font-bold bg-muted text-foreground hover:bg-primary/20 transition-all active:scale-95"
               >
-                วันนี้
+                {locale === 'th' ? 'วันนี้' : 'Today'}
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickSelect(1)}
                 className="flex-1 py-2.5 px-3 rounded-lg text-sm font-bold bg-muted text-foreground hover:bg-primary/20 transition-all active:scale-95"
               >
-                พรุ่งนี้
+                {locale === 'th' ? 'พรุ่งนี้' : 'Tomorrow'}
               </button>
             </div>
           </div>

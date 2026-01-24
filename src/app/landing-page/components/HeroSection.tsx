@@ -2,6 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface HeroSectionProps {
   restaurantName: string;
@@ -16,6 +18,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   heroImage,
   heroImageAlt,
 }) => {
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
+
   return (
     <section className="relative w-full h-[600px] lg:h-[700px] overflow-hidden">
       <div className="absolute inset-0">
@@ -48,7 +53,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             "
             >
               <Icon name="CalendarIcon" size={24} />
-              <span>จองโต๊ะเลย</span>
+              <span>{t('hero.cta')}</span>
             </Link>
 
             <Link
@@ -61,7 +66,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             "
             >
               <Icon name="MagnifyingGlassIcon" size={24} />
-              <span>ตรวจสอบสถานะ</span>
+              <span>{t('nav.checkStatus')}</span>
             </Link>
           </div>
         </div>

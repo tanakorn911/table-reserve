@@ -13,12 +13,39 @@ import {
   HashtagIcon,
   BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 export default function CheckStatusPage() {
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
   const [inputValue, setInputValue] = useState('');
   const [reservation, setReservation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const formatTime = (time: string) => {
+    const cleanTime = time.substring(0, 5);
+    if (locale === 'th') return `${cleanTime} น.`;
+    const [h, m] = cleanTime.split(':');
+    let hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12;
+    return `${hour}:${m} ${ampm}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString + 'T00:00:00');
+      return date.toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,12 +61,12 @@ export default function CheckStatusPage() {
       const json = await res.json();
 
       if (!res.ok) {
-        setError(json.error || 'ไม่พบข้อมูลการจอง รหัสอาจไม่ถูกต้อง');
+        setError(json.error || t('checkStatus.error.notFound'));
       } else {
         setReservation(json.data);
       }
     } catch (err) {
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+      setError(t('checkStatus.error.connection'));
     } finally {
       setLoading(false);
     }
@@ -49,7 +76,7 @@ export default function CheckStatusPage() {
     switch (status) {
       case 'confirmed':
         return {
-          text: 'ยืนยันการจองแล้ว',
+          text: t('checkStatus.status.confirmed'),
           color: 'text-green-400',
           icon: CheckCircleIcon,
           bg: 'bg-green-500/10',
@@ -57,7 +84,7 @@ export default function CheckStatusPage() {
         };
       case 'pending':
         return {
-          text: 'รอพนักงานตรวจสอบ',
+          text: t('checkStatus.status.pending'),
           color: 'text-amber-400',
           icon: ClockIcon,
           bg: 'bg-amber-500/10',
@@ -65,7 +92,7 @@ export default function CheckStatusPage() {
         };
       case 'cancelled':
         return {
-          text: 'ยกเลิกการจองแล้ว',
+          text: t('checkStatus.status.cancelled'),
           color: 'text-red-400',
           icon: ExclamationCircleIcon,
           bg: 'bg-red-500/10',
@@ -73,7 +100,7 @@ export default function CheckStatusPage() {
         };
       case 'completed':
         return {
-          text: 'ใช้บริการเสร็จสิ้น',
+          text: t('checkStatus.status.completed'),
           color: 'text-blue-400',
           icon: CheckCircleIcon,
           bg: 'bg-blue-500/10',
@@ -100,24 +127,30 @@ export default function CheckStatusPage() {
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#3b5998]">
             <BuildingStorefrontIcon className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">จองโต๊ะออนไลน์</span>
+          <span className="text-xl font-bold tracking-tight">{t('app.title')}</span>
         </Link>
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-[#d4af37] transition-colors"
         >
           <ArrowLeftIcon className="w-4 h-4" />
-          กลับหน้าหลัก
+          {t('success.backHome')}
         </Link>
       </div>
 
       <div className="max-w-xl mx-auto pt-16 pb-24 px-6">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">
-            ตรวจสอบ <span className="text-[#d4af37]">สถานะการจอง</span>
+            {locale === 'th' ? (
+              <>
+                ตรวจสอบ <span className="text-[#d4af37]">สถานะการจอง</span>
+              </>
+            ) : (
+              t('checkStatus.title')
+            )}
           </h1>
           <p className="text-gray-400 font-medium">
-            กรุณากรอกรหัสการจอง <span className="text-white">BX-XXXXXX</span> ของคุณเพื่อตรวจสอบ
+            {t('checkStatus.subtitle')}
           </p>
         </div>
 
@@ -129,7 +162,7 @@ export default function CheckStatusPage() {
                 htmlFor="bookingCode"
                 className="block text-xs font-black uppercase tracking-[0.2em] text-gray-500 ml-1"
               >
-                Reservation Code
+                {t('checkStatus.label.code')}
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
@@ -138,7 +171,7 @@ export default function CheckStatusPage() {
                 <input
                   id="bookingCode"
                   type="text"
-                  placeholder="เช่น BX-123456"
+                  placeholder={t('checkStatus.placeholder')}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value.toUpperCase())}
                   className="w-full bg-[#1a202c] border-2 border-white/10 rounded-2xl py-4 pl-14 pr-6 text-2xl font-black text-white focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all placeholder:text-gray-700 tracking-widest"
@@ -156,7 +189,7 @@ export default function CheckStatusPage() {
               ) : (
                 <MagnifyingGlassIcon className="w-5 h-5" />
               )}
-              ค้นหาข้อมูล
+              {t('checkStatus.button')}
             </button>
           </form>
 
@@ -187,32 +220,32 @@ export default function CheckStatusPage() {
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-4 text-left">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    ชื่อลูกค้า
+                    {t('checkStatus.label.customer')}
                   </p>
                   <p className="text-lg font-bold text-white">{reservation.guest_name}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    รหัสจอง
+                    {t('checkStatus.label.code')}
                   </p>
                   <p className="text-lg font-bold text-[#d4af37]">{reservation.short_id}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    วันที่จอง
+                    {t('checkStatus.label.date')}
                   </p>
                   <div className="flex items-center gap-2 text-white font-bold text-lg">
                     <CalendarIcon className="w-4 h-4 text-gray-400" />
-                    {reservation.reservation_date}
+                    {formatDate(reservation.reservation_date)}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    เวลา
+                    {t('checkStatus.label.time')}
                   </p>
                   <div className="flex items-center gap-2 text-white font-bold text-lg">
                     <ClockIcon className="w-4 h-4 text-gray-400" />
-                    {reservation.reservation_time.substring(0, 5)} น.
+                    {formatTime(reservation.reservation_time)}
                   </div>
                 </div>
               </div>
@@ -223,10 +256,10 @@ export default function CheckStatusPage() {
                     <UserIcon className="w-6 h-6 text-[#d4af37]" />
                     <div className="text-left">
                       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                        โต๊ะหมายเลข
+                        {t('checkStatus.label.table')}
                       </p>
                       <p className="text-xl font-black text-white">
-                        หมายเลข {reservation.table_number}
+                        {t('checkStatus.label.tableNum').replace('{num}', reservation.table_number)}
                       </p>
                     </div>
                   </div>
@@ -241,7 +274,7 @@ export default function CheckStatusPage() {
 
         <div className="mt-16 text-center">
           <p className="text-sm text-gray-500 font-medium">
-            ต้องการความช่วยเหลือ? ติดต่อเบอร์{' '}
+            {t('checkStatus.help')}{' '}
             <span className="text-[#d4af37] font-bold">081-222-2222</span>
           </p>
         </div>

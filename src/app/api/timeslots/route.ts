@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
     cleanupExpiredHolds();
 
     const body = await request.json();
-    const { date, time, action, sessionId } = body;
+    const { date, time, action, sessionId, locale } = body;
 
     if (!date || !time || !action || !sessionId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: 'ช่วงเวลานี้ถูกจองเต็มแล้ว',
+            error: locale === 'th' ? 'ช่วงเวลานี้ถูกจองเต็มแล้ว' : 'This time slot is fully booked',
           },
           { status: 409 }
         );
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: 'ช่วงเวลานี้กำลังมีผู้ทำรายการจองอื่น',
+            error: locale === 'th' ? 'ช่วงเวลานี้กำลังมีผู้ทำรายการจองอื่น' : 'This time slot is being held by another user',
           },
           { status: 409 }
         );

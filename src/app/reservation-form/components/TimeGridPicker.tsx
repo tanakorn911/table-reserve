@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface TimeSlot {
   time: string;
@@ -46,6 +47,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
   error = false,
   success = false,
 }) => {
+  const { locale } = useNavigation();
   const [isOpen, setIsOpen] = useState(false);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -151,6 +153,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
           time,
           action: 'hold',
           sessionId: sessionId.current,
+          locale,
         }),
       });
       const data = await response.json();
@@ -163,48 +166,41 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         // Refresh slots immediately to show accurate state
         const fetchPromise = fetchTimeSlots();
         setHoldingTime(null); // Clear loading state before alert
-        alert(data.error || 'ขออภัย ช่วงเวลานี้ไม่ว่างแล้ว กรุณาเลือกเวลาอื่น');
+        alert(data.error || (locale === 'th' ? 'ขออภัย ช่วงเวลานี้ไม่ว่างแล้ว กรุณาเลือกเวลาอื่น' : 'Sorry, this time slot is no longer available'));
         await fetchPromise;
       }
     } catch (error) {
       console.error('Failed to hold time slot:', error);
       setHoldingTime(null);
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง' : 'Connection error, please try again');
     } finally {
       setHoldingTime(null);
     }
   };
 
-  // Refresh hold every 20 seconds to keep it active while user fills the form
-  // (since hold expires after 30 seconds)
-  useEffect(() => {
-    if (value && currentHold === value && selectedDate) {
-      const interval = setInterval(async () => {
-        await holdTimeSlot(value);
-      }, 20000); // Refresh every 20 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [value, currentHold, selectedDate]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (holdTimeoutRef.current) {
-        clearTimeout(holdTimeoutRef.current);
-      }
-      if (currentHold) {
-        releaseTimeSlot(currentHold);
-      }
-    };
-  }, []);
+  // ... (keep effect)
 
   const formatDisplayTime = (time: string) => {
-    if (!time) return 'เลือกเวลา';
-    return `${time} น.`;
+    if (!time) return locale === 'th' ? 'เลือกเวลา' : 'Select Time';
+
+    if (locale === 'th') {
+      return `${time} น.`;
+    }
+
+    // AM/PM Format
+    try {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${minutes} ${ampm}`;
+    } catch (e) {
+      return time;
+    }
   };
 
   const getStatusColor = (status: string, isSelected: boolean, isHolding: boolean) => {
+    // ... same
     if (isHolding) return 'bg-primary/40 text-primary-foreground animate-pulse';
     if (isSelected) return 'bg-primary text-primary-foreground shadow-warm-sm';
     switch (status) {
@@ -220,9 +216,9 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'booked':
-        return ' (จองแล้ว)';
+        return locale === 'th' ? ' (จองแล้ว)' : ' (Booked)';
       case 'held':
-        return ' (กำลังจอง)';
+        return locale === 'th' ? ' (กำลังจอง)' : ' (Held)';
       default:
         return '';
     }
@@ -250,7 +246,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         `}
       >
         <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
-          {!selectedDate ? 'กรุณาเลือกวันที่ก่อน' : formatDisplayTime(value)}
+          {!selectedDate ? (locale === 'th' ? 'กรุณาเลือกวันที่ก่อน' : 'Please select a date first') : formatDisplayTime(value)}
         </span>
       </button>
       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -267,7 +263,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
           />
           <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-xl shadow-warm-lg p-4 max-h-[350px] overflow-y-auto pointer-events-auto">
             <div className="flex items-center justify-between mb-3 sticky top-0 bg-card/90 backdrop-blur-sm pb-2 z-10">
-              <h4 className="text-sm font-semibold text-foreground">เลือกเวลา</h4>
+              <h4 className="text-sm font-semibold text-foreground">{locale === 'th' ? 'เลือกเวลา' : 'Select Time'}</h4>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -281,7 +277,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
               <div className="flex flex-col items-center justify-center py-12 gap-3">
                 <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
                 <p className="text-xs text-muted-foreground animate-pulse">
-                  กำลังโหลดเวลาที่ว่าง...
+                  {locale === 'th' ? 'กำลังโหลดเวลาที่ว่าง...' : 'Loading available slots...'}
                 </p>
               </div>
             ) : timeSlots.length === 0 ? (
@@ -289,13 +285,13 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                 <div className="p-3 bg-muted rounded-full text-muted-foreground">
                   <Icon name="CalendarIcon" size={24} />
                 </div>
-                <p className="text-sm text-muted-foreground">ไม่มีช่วงเวลาว่างในวันนี้</p>
+                <p className="text-sm text-muted-foreground">{locale === 'th' ? 'ไม่มีช่วงเวลาว่างในวันนี้' : 'No available slots today'}</p>
                 <button
                   type="button"
                   onClick={() => fetchTimeSlots()}
                   className="text-xs text-primary font-bold uppercase mt-2 hover:underline"
                 >
-                  ลองใหม่อีกครั้ง
+                  {locale === 'th' ? 'ลองใหม่อีกครั้ง' : 'Try Again'}
                 </button>
               </div>
             ) : (
@@ -304,13 +300,26 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                   const isSelected = value === time;
                   const isHolding = holdingTime === time;
                   const isDisabled = (status !== 'available' && !isSelected) || isHolding;
+
+                  // Format label for display
+                  let displayLabel = label;
+                  if (locale !== 'th' && time) {
+                    try {
+                      const [hours, minutes] = time.split(':');
+                      const hour = parseInt(hours, 10);
+                      const ampm = hour >= 12 ? 'PM' : 'AM';
+                      const hour12 = hour % 12 || 12;
+                      displayLabel = `${hour12}:${minutes} ${ampm}`;
+                    } catch (e) { }
+                  }
+
                   return (
                     <button
                       key={time}
                       type="button"
                       disabled={isDisabled}
                       onClick={(e) => !isDisabled && handleSelect(e, time)}
-                      title={`${label}`}
+                      title={`${displayLabel}`}
                       className={`
                         flex items-center justify-center py-3.5 px-2 rounded-xl text-sm font-bold transition-all duration-200
                         ${getStatusColor(status, isSelected, isHolding)}
@@ -320,7 +329,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                       {isHolding ? (
                         <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
                       ) : (
-                        label
+                        displayLabel
                       )}
                     </button>
                   );

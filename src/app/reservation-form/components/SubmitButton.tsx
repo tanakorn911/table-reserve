@@ -1,13 +1,18 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface SubmitButtonProps {
-  disabled: boolean;
+  disabled?: boolean;
   loading: boolean;
   onClick: () => void;
 }
 
-const SubmitButton: React.FC<SubmitButtonProps> = ({ disabled, loading, onClick }) => {
+const SubmitButton: React.FC<SubmitButtonProps> = ({ disabled = false, loading, onClick }) => {
+  const { locale } = useNavigation();
+  const { t } = useTranslation(locale);
+
   return (
     <button
       type="button"
@@ -16,10 +21,9 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ disabled, loading, onClick 
       className={`
         w-full flex items-center justify-center gap-2 px-8 py-4 rounded-md
         text-base font-medium transition-smooth min-h-[44px]
-        ${
-          disabled || loading
-            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-            : 'bg-primary text-primary-foreground shadow-warm-sm hover:shadow-warm-md hover:-translate-y-0.5 active:scale-[0.97]'
+        ${disabled || loading
+          ? 'bg-muted text-muted-foreground cursor-not-allowed'
+          : 'bg-primary text-primary-foreground shadow-warm-sm hover:shadow-warm-md hover:-translate-y-0.5 active:scale-[0.97]'
         }
       `}
     >
@@ -31,7 +35,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ disabled, loading, onClick 
       ) : (
         <>
           <Icon name="CheckCircleIcon" size={20} />
-          <span>ยืนยันการจอง</span>
+          <span>{t('form.submit')}</span>
         </>
       )}
     </button>
