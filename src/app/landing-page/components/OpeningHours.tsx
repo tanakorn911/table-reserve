@@ -1,0 +1,75 @@
+import React from 'react';
+import Icon from '@/components/ui/AppIcon';
+
+interface DaySchedule {
+  day: string;
+  hours: string;
+  isToday?: boolean;
+}
+
+interface OpeningHoursProps {
+  schedule: DaySchedule[];
+}
+
+const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
+  return (
+    <section className="py-16 lg:py-24 bg-card">
+      <div className="container mx-auto px-4 lg:px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <Icon name="ClockIcon" size={32} className="text-primary" />
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
+              เวลาทำการ
+            </h2>
+            <p className="text-lg text-muted-foreground">เราพร้อมให้บริการคุณตลอดทั้งสัปดาห์</p>
+          </div>
+
+          <div className="bg-background rounded-xl shadow-warm-md p-6 lg:p-8">
+            <div className="space-y-4">
+              {schedule.map((item, index) => (
+                <div
+                  key={index}
+                  className={`
+                    flex items-center justify-between py-4 px-6 rounded-lg
+                    transition-smooth
+                    ${
+                      item.isToday
+                        ? 'bg-primary/10 border-2 border-primary'
+                        : 'bg-muted/50 hover:bg-muted'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    {item.isToday && (
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    )}
+                    <span
+                      className={`
+                        text-lg font-semibold
+                        ${item.isToday ? 'text-primary' : 'text-foreground'}
+                      `}
+                    >
+                      {item.day}
+                    </span>
+                  </div>
+                  <span
+                    className={`
+                      text-lg font-medium
+                      ${item.isToday ? 'text-primary' : 'text-muted-foreground'}
+                    `}
+                  >
+                    {item.hours}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default OpeningHours;
