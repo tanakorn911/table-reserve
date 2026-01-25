@@ -16,7 +16,8 @@
 - **รองรับ 2 ภาษา** - สลับระหว่างไทย/อังกฤษได้ทันที
 - **ชำระเงินมัดจำ** - สแกน QR PromptPay และอัปโหลดสลิป
 - **ตรวจสอบสถานะ** - เช็คการจองผ่านรหัส BX-XXXXXX หรือเบอร์โทร
-- **รับการแจ้งเตือน** - Email ยืนยันอัตโนมัติ
+- **Rate Limiting** - ป้องกัน Spam การจองด้วย Upstash Redis
+- **Fail-safe System** - ระบบสำรองข้อมูล หาก Rate Limit มีปัญหา ลูกค้ายังจองได้ต่อเนื่อง
 
 ### 🔐 สำหรับพนักงาน/Admin
 
@@ -35,6 +36,7 @@
 
 - Node.js 18+ 
 - Supabase Account
+- Upstash Redis Account (สำหรับ Rate Limiting)
 - LINE Notify Token (สำหรับแจ้งเตือน, ไม่บังคับ)
 
 ### ขั้นตอนการติดตั้ง
@@ -56,6 +58,8 @@
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   UPSTASH_REDIS_REST_URL=your_upstash_url # For Rate Limiting
+   UPSTASH_REDIS_REST_TOKEN=your_upstash_token
    LINE_CHANNEL_ACCESS_TOKEN=your_line_token
    LINE_TARGET_ID=your_line_id
    ```
@@ -88,6 +92,9 @@
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 LINE_CHANNEL_ACCESS_TOKEN=
 LINE_TARGET_ID=
 ```
