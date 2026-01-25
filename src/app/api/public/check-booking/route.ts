@@ -49,10 +49,23 @@ export async function GET(request: NextRequest) {
 
         if (error || !data) {
             console.error('Search error:', error?.message);
-            return NextResponse.json({ error: 'ไม่พบข้อมูลการจอง กรุณาตรวจสอบรหัส BX- หรือเบอร์โทรศัพท์อีกครั้ง' }, { status: 404 });
+            return NextResponse.json({ error: 'ไม่พบข้อมูลการจอง กรุณาตรวจสอบรหัส BX-xxxxxx' }, { status: 404 });
         }
 
         const reservationData: any = data;
+
+        // Fetch table name if table_number exists
+        if (reservationData.table_number) {
+            const { data: tableData } = await supabase
+                .from('tables')
+                .select('name')
+                .eq('id', reservationData.table_number)
+                .single();
+
+            if (tableData) {
+                reservationData.table_name = tableData.name;
+            }
+        }
 
         // Basic masking for privacy
         const maskName = (name: string) => {

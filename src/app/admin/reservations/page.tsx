@@ -214,7 +214,7 @@ export default function AdminReservationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-900">{t('admin.reservations.title')}</h1>
+        <h1 className="text-2xl font-bold text-white">{t('admin.reservations.title')}</h1>
 
         {/* Action Bar */}
         <div className="flex items-center space-x-2">

@@ -12,6 +12,7 @@ import {
   ExclamationCircleIcon,
   HashtagIcon,
   BuildingStorefrontIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
@@ -23,6 +24,7 @@ export default function CheckStatusPage() {
   const [reservation, setReservation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const formatTime = (time: string) => {
     const cleanTime = time.substring(0, 5);
@@ -54,6 +56,7 @@ export default function CheckStatusPage() {
     setLoading(true);
     setError('');
     setReservation(null);
+    setIsModalOpen(false);
 
     try {
       // Precise search by code BX-XXXXXX
@@ -64,6 +67,7 @@ export default function CheckStatusPage() {
         setError(json.error || t('checkStatus.error.notFound'));
       } else {
         setReservation(json.data);
+        setIsModalOpen(true);
       }
     } catch (err) {
       setError(t('checkStatus.error.connection'));
@@ -156,12 +160,19 @@ export default function CheckStatusPage() {
         <div className="bg-[#2d3748] rounded-[24px] p-8 shadow-2xl border border-white/5">
           <form onSubmit={handleSearch} className="space-y-6">
             <div className="space-y-3">
-              <label
-                htmlFor="bookingCode"
-                className="block text-xs font-black uppercase tracking-[0.2em] text-gray-500 ml-1"
-              >
-                {t('checkStatus.label.code')}
-              </label>
+              <div className="flex items-center justify-between px-1">
+                <label
+                  htmlFor="bookingCode"
+                  className="block text-sm font-black uppercase tracking-wider text-white"
+                >
+                  {t('checkStatus.label.code')}
+                </label>
+                <span className="text-xs text-gray-400 font-medium">
+                  {locale === 'th'
+                    ? '* ใช้รหัสจอง (BX-...) ค้นหา'
+                    : '* Use booking code (BX-...)'}
+                </span>
+              </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <HashtagIcon className="w-5 h-5 text-gray-400 group-focus-within:text-accent transition-colors" />
@@ -175,12 +186,6 @@ export default function CheckStatusPage() {
                   className="w-full bg-[#1a202c] border-2 border-white/10 rounded-2xl py-4 pl-14 pr-6 text-2xl font-black text-white focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all placeholder:text-gray-700 tracking-widest"
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground ml-1">
-                *{' '}
-                {locale === 'th'
-                  ? 'สามารถใช้รหัสจอง (BX-...) หรือ เบอร์โทรศัพท์ในการค้นหาได้'
-                  : 'You can search by booking code (BX-...) or phone number'}
-              </p>
             </div>
 
             <button
@@ -206,72 +211,94 @@ export default function CheckStatusPage() {
         </div>
 
         {/* Result Section */}
-        {reservation && statusInfo && (
-          <div className="mt-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        {/* Result Modal Popup */}
+        {isModalOpen && reservation && statusInfo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className={`rounded-3xl border ${statusInfo.border} ${statusInfo.bg} p-8 flex flex-col items-center text-center shadow-lg`}
-            >
-              <div className={`p-4 rounded-2xl ${statusInfo.bg} mb-4`}>
-                <statusInfo.icon className={`w-10 h-10 ${statusInfo.color}`} />
-              </div>
-              <h2 className={`text-3xl font-black ${statusInfo.color} mb-1`}>{statusInfo.text}</h2>
-              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
-                Reservation Status
-              </p>
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            ></div>
 
-              <div className="w-full h-px bg-white/10 my-8"></div>
+            <div className={`relative bg-[#2d3748] border ${statusInfo.border} rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200`}>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"
+                type="button"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
 
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-4 text-left">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    {t('checkStatus.label.customer')}
-                  </p>
-                  <p className="text-lg font-bold text-white">{reservation.guest_name}</p>
+              <div className={`p-8 flex flex-col items-center text-center ${statusInfo.bg}`}>
+                <div className={`p-4 rounded-2xl bg-white/5 mb-4`}>
+                  <statusInfo.icon className={`w-10 h-10 ${statusInfo.color}`} />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    {t('checkStatus.label.code')}
-                  </p>
-                  <p className="text-lg font-bold text-[#d4af37]">{reservation.short_id}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    {t('checkStatus.label.date')}
-                  </p>
-                  <div className="flex items-center gap-2 text-white font-bold text-lg">
-                    <CalendarIcon className="w-4 h-4 text-gray-400" />
-                    {formatDate(reservation.reservation_date)}
+                <h2 className={`text-3xl font-black ${statusInfo.color} mb-1`}>{statusInfo.text}</h2>
+                <p className="text-gray-200 text-[10px] font-black uppercase tracking-widest">
+                  {locale === 'th' ? 'สถานะการจอง' : 'RESERVATION STATUS'}
+                </p>
+
+                <div className="w-full h-px bg-white/10 my-8"></div>
+
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-4 text-left">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                      {t('checkStatus.label.customer')}
+                    </p>
+                    <p className="text-lg font-bold text-white line-clamp-1">{reservation.guest_name}</p>
                   </div>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    {t('checkStatus.label.time')}
-                  </p>
-                  <div className="flex items-center gap-2 text-white font-bold text-lg">
-                    <ClockIcon className="w-4 h-4 text-gray-400" />
-                    {formatTime(reservation.reservation_time)}
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                      {t('checkStatus.label.code')}
+                    </p>
+                    <p className="text-lg font-bold text-[#d4af37]">{reservation.short_id}</p>
                   </div>
-                </div>
-              </div>
-
-              {reservation.table_number && (
-                <div className="w-full mt-10 p-5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <UserIcon className="w-6 h-6 text-[#d4af37]" />
-                    <div className="text-left">
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                        {t('checkStatus.label.table')}
-                      </p>
-                      <p className="text-xl font-black text-white">
-                        {t('checkStatus.label.tableNum').replace('{num}', reservation.table_number)}
-                      </p>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                      {t('checkStatus.label.date')}
+                    </p>
+                    <div className="flex items-center gap-2 text-white font-bold text-lg">
+                      <CalendarIcon className="w-4 h-4 text-gray-400" />
+                      {formatDate(reservation.reservation_date)}
                     </div>
                   </div>
-                  <div className="px-3 py-1 bg-[#d4af37]/10 rounded border border-[#d4af37]/20 text-[10px] font-black text-[#d4af37] uppercase tracking-wider">
-                    Ready
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                      {t('checkStatus.label.time')}
+                    </p>
+                    <div className="flex items-center gap-2 text-white font-bold text-lg">
+                      <ClockIcon className="w-4 h-4 text-gray-400" />
+                      {formatTime(reservation.reservation_time)}
+                    </div>
                   </div>
                 </div>
-              )}
+
+                {reservation.table_number && (
+                  <div className="w-full mt-10 p-5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <UserIcon className="w-6 h-6 text-[#d4af37]" />
+                      <div className="text-left">
+                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+                          {t('checkStatus.label.table')}
+                        </p>
+                        <p className="text-xl font-black text-white">
+                          {reservation.table_name || reservation.table_number}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-[#d4af37]/10 rounded border border-[#d4af37]/20 text-[10px] font-black text-[#d4af37] uppercase tracking-wider">
+                      Ready
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-black/20 border-t border-white/5">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="w-full py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl shadow-sm hover:bg-white/10 transition-colors text-sm"
+                >
+                  {t('common.close')}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -282,6 +309,14 @@ export default function CheckStatusPage() {
           </p>
         </div>
       </div>
+
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="w-16 h-16 border-4 border-accent rounded-full border-t-transparent animate-spin mb-4"></div>
+          <p className="text-white font-bold text-lg animate-pulse">{t('common.loading')}</p>
+        </div>
+      )}
     </div>
   );
 }
