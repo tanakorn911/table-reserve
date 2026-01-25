@@ -2,7 +2,7 @@
 
 > ระบบจัดการจองโต๊ะแบบครบวงจร พร้อมหน้าจอ Admin และ Customer ที่ใช้งานง่าย
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-2.0-green)](https://supabase.com/)
 
