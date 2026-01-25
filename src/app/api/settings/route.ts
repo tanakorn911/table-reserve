@@ -9,6 +9,12 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createServerSupabaseClient();
 
+    // 🔒 Authentication required (except for business hours)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session && key !== 'business_hours') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let query = supabase.from('settings').select('*');
 
     if (key) {
@@ -35,14 +41,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient();
+
+    // 🔒 Authentication required
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { key, value, description } = body;
 
     if (!key || value === undefined) {
       return NextResponse.json({ error: 'Key and value are required' }, { status: 400 });
     }
-
-    const supabase = await createServerSupabaseClient();
 
     // Upsert setting
     const { data, error } = await supabase
@@ -78,7 +90,7 @@ export async function PUT(request: NextRequest) {
 
     const supabase = await createServerSupabaseClient();
 
-    // Check if requester is admin
+    // Check if requester is authenticated
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -86,9 +98,16 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Ideally check if user.role is admin from profiles, but for simplicity we trust the client's session + RLS
-    // (RLS should enforce that only admins can update other profiles if we set it up right,
-    // or we can allow users to update their own, but here we are updating OTHERS)
+    // 🔒 Check if user is admin - CRITICAL SECURITY FIX
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
 
     const { error } = await supabase
       .from('profiles')

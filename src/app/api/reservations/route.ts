@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import type { CreateReservationInput } from '@/types/database.types';
 import { sendLineNotification, sendEmailConfirmation } from '@/lib/notifications';
+import { reservationRateLimiter, checkRateLimit, getClientIp } from '@/lib/ratelimit';
 
 // GET /api/reservations - Get reservations (Public/Protected hybrid)
 export async function GET(request: NextRequest) {
@@ -22,8 +23,10 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date');
 
     // Admin can see everything (*), Public sees limited fields
-    // Public needs to see booked slots to avoid conflict
-    const selectFields = isAdmin ? '*' : 'reservation_time, table_number, status, reservation_date';
+    // Public needs to see booked slots to avoid conflict  
+    const selectFields = isAdmin
+      ? '*'
+      : 'reservation_time, table_number, status, reservation_date';
 
     let query = supabase
       .from('reservations')
@@ -55,6 +58,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Manual table name lookup for admin
+    if (isAdmin && data) {
+      // Get all unique table numbers
+      const tableNumbers = [...new Set(data.map((r: any) => r.table_number).filter(Boolean))];
+
+      if (tableNumbers.length > 0) {
+        // Fetch table names
+        const { data: tablesData } = await supabase
+          .from('tables')
+          .select('id, name')
+          .in('id', tableNumbers);
+
+        // Create table lookup map
+        const tableMap = new Map(tablesData?.map((t) => [t.id, t.name]) || []);
+
+        // Add table names to reservations
+        const dataWithTableNames = data.map((r: any) => ({
+          ...r,
+          table_name: r.table_number ? tableMap.get(r.table_number) : null,
+        }));
+
+        return NextResponse.json({ data: dataWithTableNames });
+      }
+    }
+
     return NextResponse.json({ data });
   } catch (error) {
     console.error('Server error:', error);
@@ -65,6 +93,29 @@ export async function GET(request: NextRequest) {
 // POST /api/reservations - Create a new reservation (Public)
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 Rate limiting: 10 requests per hour per IP
+    const clientIp = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(reservationRateLimiter, clientIp);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Too many reservation attempts. Please try again later.',
+          limit: rateLimitResult.limit,
+          remaining: 0,
+          reset: rateLimitResult.reset,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(rateLimitResult.limit || 10),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(rateLimitResult.reset || Date.now() + 3600000),
+          }
+        }
+      );
+    }
+
     const supabase = await createServerSupabaseClient();
     const reqBody = await request.json();
     const { locale, ...body } = reqBody;
@@ -151,12 +202,26 @@ export async function POST(request: NextRequest) {
     // Send Notifications (Async - don't block response)
     (async () => {
       try {
-        // 1. LINE Notify to Staff
+        // 1. Get table name if table_number exists
+        let tableName = '-';
+        if (data.table_number) {
+          const { data: tableData } = await supabase
+            .from('tables')
+            .select('name')
+            .eq('id', data.table_number)
+            .single();
+
+          if (tableData) {
+            tableName = tableData.name;
+          }
+        }
+
+        // 2. LINE Notify to Staff
         const bookingCode = data.booking_code || data.id.slice(0, 8);
-        const message = `📢 จองโต๊ะใหม่! [${bookingCode}]\nคุณ ${data.guest_name}\n📞 ${data.guest_phone}\n👥 ${data.party_size} ท่าน\n📅 ${data.reservation_date} เวลา ${data.reservation_time}\n🪑 โต๊ะ ${data.table_number || '-'}\n📝 ${data.special_requests || '-'}`;
+        const message = `📢 จองโต๊ะใหม่! [${bookingCode}]\nคุณ ${data.guest_name}\n📞 ${data.guest_phone}\n👥 ${data.party_size} ท่าน\n📅 ${data.reservation_date} เวลา ${data.reservation_time}\n🪑 โต๊ะ ${tableName}\n📝 ${data.special_requests || '-'}`;
         await sendLineNotification(message, data.payment_slip_url);
 
-        // 2. Email Confirmation to Customer
+        // 3. Email Confirmation to Customer
         if (data.guest_email) {
           await sendEmailConfirmation(data.guest_email, data, locale || 'th');
         }
@@ -166,8 +231,11 @@ export async function POST(request: NextRequest) {
     })();
 
     return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
-    console.error('Server error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('CRITICAL RESERVATION ERROR:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error.message, stack: error.stack },
+      { status: 500 }
+    );
   }
 }

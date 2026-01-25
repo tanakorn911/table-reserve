@@ -9,10 +9,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'TableReserve - ระบบจองโต๊ะร้านอาหารออนไลน์',
-  description: 'จองโต๊ะร้านอาหารง่ายๆ สะดวก รวดเร็ว พร้อมแผนที่ 3D และระบบแจ้งเตือนผ่าน LINE',
+  title: 'TableReserve',
+  description: 'Premium Online Table Reservation System',
   icons: {
-    icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
+    icon: '/logo.png',
+    apple: '/logo.png',
   },
 };
 

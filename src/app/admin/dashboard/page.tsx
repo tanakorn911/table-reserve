@@ -8,7 +8,10 @@ import {
   ClockIcon,
   BanknotesIcon,
   UserGroupIcon,
+  LightBulbIcon,
 } from '@heroicons/react/24/outline';
+import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useTranslation } from '@/lib/i18n';
 import {
   BarChart,
   Bar,
@@ -22,6 +25,8 @@ import {
 } from 'recharts';
 
 export default function DashboardPage() {
+  const locale = useAdminLocale();
+  const { t } = useTranslation(locale);
   const [stats, setStats] = useState({
     todayTotal: 0,
     todayPending: 0,
@@ -118,9 +123,9 @@ export default function DashboardPage() {
   const StatCard = ({ title, value, icon: Icon, color, subtitle }: any) => (
     <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start justify-between hover:shadow-md transition-shadow group">
       <div>
-        <p className="text-sm font-bold text-gray-400 mb-1">{title}</p>
+        <p className="text-sm font-bold text-slate-500 mb-1">{title}</p>
         <h3 className="text-3xl font-black text-gray-900">{value}</h3>
-        {subtitle && <p className="text-xs text-gray-500 mt-1 font-bold">{subtitle}</p>}
+        {subtitle && <p className="text-[12px] text-slate-800 mt-1 font-bold">{subtitle}</p>}
       </div>
       <div
         className={`p-4 rounded-xl ${color} shadow-lg transition-transform group-hover:scale-110`}
@@ -142,10 +147,10 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">ภาพรวมประจำวัน</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            ข้อมูลการจองสำหรับวันนี้:{' '}
-            {new Date().toLocaleDateString('th-TH', {
+            {t('admin.dashboard.subtitle')}{' '}
+            {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -157,53 +162,51 @@ export default function DashboardPage() {
         <div className="flex bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('today')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === 'today'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'today'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
-            วันนี้
+            {t('admin.dashboard.today')}
           </button>
           <button
             onClick={() => setActiveTab('week')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === 'week'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'week'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
-            สัปดาห์นี้
+            {locale === 'th' ? 'สัปดาห์นี้' : 'This Week'}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="จำนวนลูกค้า (Pax)"
+          title={t('admin.dashboard.stats.guests')}
           value={stats.todayPax}
-          subtitle="คาดการณ์ลูกค้าวันนี้"
+          subtitle={locale === 'th' ? 'คาดการณ์ลูกค้าวันนี้' : 'Expected guests today'}
           icon={UserGroupIcon}
           color="bg-purple-600"
         />
         <StatCard
-          title="จองวันนี้ทั้งหมด"
+          title={locale === 'th' ? 'จองวันนี้ทั้งหมด' : 'Total Bookings Today'}
           value={stats.todayTotal}
-          subtitle={`${stats.todayConfirmed} ยืนยัน / ${stats.todayPending} รอ`}
+          subtitle={`${stats.todayConfirmed} ${locale === 'th' ? 'ยืนยัน' : 'confirmed'} / ${stats.todayPending} ${locale === 'th' ? 'รอ' : 'pending'}`}
           icon={CalendarIcon}
           color="bg-blue-600"
         />
         <StatCard
-          title="รอดำเนินการ"
+          title={t('admin.dashboard.stats.waiting')}
           value={stats.todayPending}
-          subtitle="ต้องกดอนุมัติ"
+          subtitle={locale === 'th' ? 'ต้องกดอนุมัติ' : 'Needs approval'}
           icon={ClockIcon}
           color={stats.todayPending > 0 ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'}
         />
         <StatCard
-          title="ยืนยันแล้ว"
+          title={t('admin.dashboard.stats.confirmed')}
           value={stats.todayConfirmed}
-          subtitle="พร้อมให้บริการ"
+          subtitle={locale === 'th' ? 'พร้อมให้บริการ' : 'Ready to serve'}
           icon={CheckCircleIcon}
           color="bg-green-600"
         />
@@ -214,8 +217,8 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
           <h2 className="mb-6 text-lg font-bold text-gray-900 flex items-center">
             {activeTab === 'today'
-              ? 'ช่วงเวลาที่ลูกค้าแน่น (Peak Hours)'
-              : 'แนวโน้มการจอง (7 วันย้อนหลัง)'}
+              ? t('admin.dashboard.peak.title')
+              : locale === 'th' ? 'แนวโน้มการจอง (7 วันย้อนหลัง)' : 'Booking Trend (Last 7 Days)'}
           </h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -231,7 +234,7 @@ export default function DashboardPage() {
                     stroke="#8884d8"
                     fill="#8884d8"
                     fillOpacity={0.2}
-                    name="จำนวนลูกค้า"
+                    name={locale === 'th' ? 'จำนวนลูกค้า' : 'Guests'}
                   />
                 </AreaChart>
               ) : (
@@ -240,13 +243,13 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" stroke="#9CA3AF" />
                   <YAxis allowDecimals={false} stroke="#9CA3AF" />
                   <Tooltip />
-                  <Bar dataKey="bookings" fill="#3B82F6" radius={[4, 4, 0, 0]} name="จำนวนการจอง" />
+                  <Bar dataKey="bookings" fill="#3B82F6" radius={[4, 4, 0, 0]} name={locale === 'th' ? 'จำนวนการจอง' : 'Bookings'} />
                 </BarChart>
               )}
             </ResponsiveContainer>
             {activeTab === 'today' && hourlyData.length === 0 && (
               <div className="flex h-full items-center justify-center text-gray-400 pb-20 -mt-80">
-                ยังไม่มีข้อมูลการจองสำหรับวันนี้
+                {locale === 'th' ? 'ยังไม่มีข้อมูลการจองสำหรับวันนี้' : 'No reservations data for today'}
               </div>
             )}
           </div>
@@ -254,38 +257,41 @@ export default function DashboardPage() {
 
         {/* Quick Actions / Summary */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">สถานะโต๊ะวันนี้</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('admin.dashboard.tableStatus.title')}</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
               <div className="flex items-center">
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                <span className="text-gray-700 font-medium">ว่าง (Available)</span>
+                <span className="text-gray-700 font-medium">{t('admin.dashboard.tableStatus.available')}</span>
               </div>
               <span className="font-bold text-gray-900">-</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
               <div className="flex items-center">
                 <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                <span className="text-gray-700 font-medium">จองแล้ว (Booked)</span>
+                <span className="text-gray-700 font-medium">{t('admin.dashboard.tableStatus.booked')}</span>
               </div>
               <span className="font-bold text-gray-900">{stats.todayTotal}</span>
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">คำแนะนำ</h3>
-            <ul className="text-sm text-gray-500 space-y-2 list-disc pl-4">
+          <div className="mt-8 pt-6 border-t border-gray-100 bg-slate-50/50 p-4 rounded-xl shadow-inner">
+            <h3 className="text-base font-black text-slate-900 mb-3 uppercase tracking-wider flex items-center gap-2">
+              <LightBulbIcon className="w-5 h-5 text-yellow-500" />
+              {t('admin.dashboard.forecast.title')}
+            </h3>
+            <ul className="text-sm text-slate-700 space-y-3 list-disc pl-4 font-bold">
               <li>
-                ช่วงเวลา Peak วันนี้คือ{' '}
+                {locale === 'th' ? 'ช่วงเวลา Peak วันนี้คือ' : 'Peak hour today is'}{' '}
                 <strong>
                   {hourlyData.length > 0
                     ? hourlyData.reduce((prev, current) =>
-                        prev.pax > current.pax ? prev : current
-                      ).time
+                      prev.pax > current.pax ? prev : current
+                    ).time
                     : '-'}
                 </strong>
               </li>
-              <li>เตรียมพนักงานให้เพียงพอก่อนเวลา 17:00</li>
+              <li>{locale === 'th' ? 'เตรียมพนักงานให้เพียงพอก่อนเวลา 17:00' : 'Prepare adequate staff before 17:00'}</li>
             </ul>
           </div>
         </div>

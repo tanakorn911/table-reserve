@@ -5,7 +5,7 @@ import FloorPlan from '@/components/floor-plan/FloorPlan';
 import { Table, TableShape } from '@/types/tables';
 import Icon from '@/components/ui/AppIcon';
 import { useTranslation } from '@/lib/i18n';
-import { useNavigation } from '@/contexts/NavigationContext';
+import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import AdminTimeGrid from '../components/AdminTimeGrid';
 
 interface EditModalProps {
@@ -181,7 +181,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-[2] py-4 bg-[#3b5998] text-white rounded-xl font-black shadow-xl shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-4 bg-[#3b5998] text-white rounded-xl font-black shadow-xl shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <Icon name="CheckIcon" size={20} />
             {t('admin.floorPlan.editModal.update')}
@@ -193,8 +193,8 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
 };
 
 export default function FloorPlanAdminPage() {
-  const { locale } = useNavigation();
-  const { t } = useTranslation('th'); // Default to Thai for Admin as requested
+  const locale = useAdminLocale();
+  const { t } = useTranslation(locale); // Dynamically use current locale
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
@@ -340,13 +340,14 @@ export default function FloorPlanAdminPage() {
         body: JSON.stringify({
           name: `T-${newTableCount}`,
           capacity: 4,
-          description: 'โต๊ะใหม่',
+          description: locale === 'th' ? 'โต๊ะใหม่' : 'New Table',
           x: 50,
           y: 50,
           width: shape === 'circle' ? 80 : 80,
           height: shape === 'circle' ? 80 : 60,
           shape: shape,
           zone: zone,
+          locale: locale,
         }),
       });
 
@@ -368,9 +369,50 @@ export default function FloorPlanAdminPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto">
-      {/* Sidebar / Toolbar */}
-      <div className="w-full md:w-80 flex flex-col gap-4">
+    <div className="h-full md:h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto overflow-y-auto md:overflow-hidden">
+      {/* Main Canvas - Moved to TOP on mobile for better visibility */}
+      <div className="flex-1 order-1 md:order-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative group min-h-[500px] md:min-h-0">
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-xl border border-gray-200 text-[13px] font-black text-slate-700 shadow-lg flex items-center gap-2">
+            <Icon name="Square2StackIcon" size={16} className="text-blue-500" />
+            {t('admin.floorPlan.tableCount').replace('{count}', tables.length.toString())}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto bg-gray-50/50">
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
+                <span className="text-sm font-medium text-gray-400">
+                  {t('admin.floorPlan.loading')}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="min-w-[800px] h-full p-4 md:p-8 pb-32">
+              <FloorPlan
+                mode={viewMode === 'edit' ? 'edit' : 'view'}
+                tables={tables}
+                onTableUpdate={handleTableUpdate}
+                height={850}
+                onTableEdit={setEditingTable}
+                bookedTables={bookedTables}
+                locale={locale}
+                onTableSelect={(id) => {
+                  if (viewMode === 'check') {
+                    const booking = bookedTables.find((b) => b.id === id);
+                    if (booking) setSelectedBooking(booking);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sidebar / Toolbar - Moved to BOTTOM on mobile */}
+      <div className="w-full md:w-80 flex flex-col gap-4 order-2 md:order-1">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-6">
           <div>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">
@@ -380,25 +422,25 @@ export default function FloorPlanAdminPage() {
           </div>
 
           {/* Mode Switcher */}
-          <div className="flex bg-gray-100 p-1 rounded-xl">
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner">
             <button
               onClick={() => setViewMode('edit')}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                viewMode === 'edit'
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'edit'
+                ? 'bg-white text-blue-600 shadow-md'
+                : 'text-slate-500 hover:text-slate-700'
+                }`}
             >
+              <Icon name="PencilIcon" size={16} />
               {t('admin.floorPlan.mode.edit')}
             </button>
             <button
               onClick={() => setViewMode('check')}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                viewMode === 'check'
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'check'
+                ? 'bg-white text-green-600 shadow-md'
+                : 'text-slate-500 hover:text-slate-700'
+                }`}
             >
+              <Icon name="MagnifyingGlassIcon" size={16} />
               {t('admin.floorPlan.mode.check')}
             </button>
           </div>
@@ -493,13 +535,13 @@ export default function FloorPlanAdminPage() {
           </div>
         </div>
 
-        {/* Tip Card */}
-        <div className="bg-blue-50/50 rounded-2xl p-5 border border-blue-100/50">
-          <h3 className="font-bold text-blue-900 text-sm mb-2 flex items-center gap-2">
-            <Icon name="InformationCircleIcon" size={16} />
+        {/* Tip Card - Smaller or Hidden on Mobile if needed */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hidden md:block">
+          <h3 className="font-black text-slate-900 text-base mb-3 flex items-center gap-2">
+            <Icon name="InformationCircleIcon" size={20} className="text-blue-600" />
             {t('admin.floorPlan.tips')}
           </h3>
-          <ul className="text-xs text-blue-800 space-y-2 list-disc list-inside opacity-80 leading-relaxed">
+          <ul className="text-sm text-slate-700 space-y-3 list-disc list-inside font-bold leading-relaxed">
             <li>{t('admin.floorPlan.tip1')}</li>
             <li>{t('admin.floorPlan.tip2')}</li>
             <li>{t('admin.floorPlan.tip3')}</li>
@@ -507,45 +549,6 @@ export default function FloorPlanAdminPage() {
         </div>
       </div>
 
-      {/* Main Canvas */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative group">
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <div className="bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 shadow-sm">
-            {t('admin.floorPlan.tableCount', { count: tables.length })}
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-auto bg-gray-50/50">
-          {isLoading ? (
-            <div className="h-full flex items-center justify-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-10 h-10 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
-                <span className="text-sm font-medium text-gray-400">
-                  {t('admin.floorPlan.loading')}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="min-w-[800px] min-h-[600px] h-full p-8">
-              <FloorPlan
-                mode={viewMode === 'edit' ? 'edit' : 'view'}
-                tables={tables}
-                onTableUpdate={handleTableUpdate}
-                height={700}
-                onTableEdit={setEditingTable}
-                bookedTables={bookedTables}
-                locale="th"
-                onTableSelect={(id) => {
-                  if (viewMode === 'check') {
-                    const booking = bookedTables.find((b) => b.id === id);
-                    if (booking) setSelectedBooking(booking);
-                  }
-                }}
-              />
-            </div>
-          )}
-        </div>
-      </div>
 
       <EditModal
         table={editingTable}
@@ -574,45 +577,44 @@ export default function FloorPlanAdminPage() {
               <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3 text-green-600">
                 <Icon name="CalendarIcon" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">ข้อมูลการจอง</h3>
-              <p className="text-sm text-gray-500">โต๊ะที่ {selectedBooking.id}</p>
+              <h3 className="text-xl font-bold text-gray-900">{t('admin.floorPlan.bookingDetails')}</h3>
+              <p className="text-sm text-gray-500">{t('admin.reservations.table.table')} {selectedBooking.id}</p>
             </div>
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">เวลาจอง</span>
-                  <span className="font-bold text-gray-900">{selectedBooking.time} น.</span>
+                  <span className="text-gray-500">{t('form.time')}</span>
+                  <span className="font-bold text-gray-900">{selectedBooking.time} {locale === 'th' ? 'น.' : ''}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">ว่างอีกครั้ง</span>
+                  <span className="text-gray-500">{t('admin.floorPlan.nextAvailable')}</span>
                   <span className="font-bold text-green-600">
                     {(() => {
                       const [h, m] = selectedBooking.time.split(':').map(Number);
                       const endH = h + 2;
-                      return `${endH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} น.`;
+                      return `${endH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}${locale === 'th' ? ' น.' : ''}`;
                     })()}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
-                  <span className="text-gray-500">ชื่อลูกค้า</span>
+                  <span className="text-gray-500">{t('form.name')}</span>
                   <span className="font-bold text-gray-900">{selectedBooking.guestName}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">เบอร์โทร</span>
+                  <span className="text-gray-500">{t('form.phone')}</span>
                   <span className="font-bold text-gray-900">{selectedBooking.guestPhone}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">จำนวน</span>
-                  <span className="font-bold text-gray-900">{selectedBooking.partySize} ท่าน</span>
+                  <span className="text-gray-500">{t('form.guests')}</span>
+                  <span className="font-bold text-gray-900">{selectedBooking.partySize} {t('admin.reservations.guests')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">สถานะ</span>
+                  <span className="text-gray-500">{t('admin.reservations.table.status')}</span>
                   <span
-                    className={`font-bold px-2 py-0.5 rounded text-xs ${
-                      selectedBooking.status === 'confirmed'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}
+                    className={`font-bold px-2 py-0.5 rounded text-xs ${selectedBooking.status === 'confirmed'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                      }`}
                   >
                     {selectedBooking.status}
                   </span>

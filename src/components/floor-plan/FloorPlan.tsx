@@ -258,11 +258,27 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                 </div>
             )}
 
+            {/* Legend - Centered at the top */}
+            <div className="flex flex-wrap gap-6 text-[11px] font-black text-slate-800 justify-center mb-6 bg-slate-100 p-3 rounded-2xl border border-slate-300 shadow-md">
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-slate-200 border border-slate-400 rounded shadow-sm"></div>
+                    <span>{t('admin.floorPlan.legend.available')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-primary border border-primary rounded shadow-lg shadow-primary/20"></div>
+                    <span>{t('admin.floorPlan.legend.selected')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-[#FEE2E2] border border-[#FCA5A5] rounded"></div>
+                    <span>{t('admin.floorPlan.legend.booked')}</span>
+                </div>
+            </div>
+
             {/* Map Container - Dark Theme */}
             <div
                 ref={containerRef}
-                className="relative bg-[#0F172A] border border-slate-700 rounded-3xl overflow-hidden shadow-2xl cursor-default group"
-                style={{ height: `${height}px`, width: '100%' }}
+                className="relative bg-[#0F172A] border-4 border-slate-700 rounded-3xl overflow-hidden shadow-2xl cursor-default group"
+                style={{ height: `${height}px`, width: '100%', minWidth: '800px' }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={() => handleMouseUp}
                 onMouseLeave={() => setDraggingTableId(null)}
@@ -299,7 +315,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                     </div>
 
                     {/* VIP Zone (Private Room) - Deep Gold/Bronze */}
-                    <div className="absolute bottom-6 left-6 w-[20%] h-[35%] bg-[#3D342B] rounded-2xl border border-[#785C36] shadow-lg shadow-black/20">
+                    <div className="absolute bottom-6 left-6 w-[38%] h-[48%] bg-[#3D342B] rounded-2xl border-4 border-[#B48E43] shadow-2xl shadow-black/60">
                         <div
                             className="absolute inset-0 opacity-[0.1]"
                             style={{
@@ -322,7 +338,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
 
                     {/* Main Entrance Door */}
                     <div className="absolute top-1/2 right-[30%] -translate-y-1/2 translate-x-1/2 z-0">
-                        <div className="w-1.5 h-16 bg-[#334155] rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] relative">
+                        <div className="w-2.5 h-20 bg-[#334155] rounded-full shadow-[0_0_20px_rgba(0,0,0,0.5)] relative border-x border-slate-600">
                             <div className="absolute top-2 -left-1 w-3.5 h-1 bg-[#475569] rounded-full transform -rotate-12" />
                             <div className="absolute bottom-2 -left-1 w-3.5 h-1 bg-[#475569] rounded-full transform rotate-12" />
                         </div>
@@ -365,8 +381,8 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                         >
                             {renderChairs(table)}
                             <div
-                                className={`px-3 py-1 rounded-full text-xs font-black z-10 pointer-events-none transition-all duration-300 shadow-sm backdrop-blur-md
-                                    ${selectedTableId === table.id ? 'text-white' : 'text-slate-900 bg-white/90 border border-white/50'}
+                                className={`px-4 py-2 rounded-full text-[14px] font-black z-10 pointer-events-none transition-all duration-300 shadow-md backdrop-blur-md
+                                    ${selectedTableId === table.id ? 'text-white' : 'text-slate-900 bg-white border-2 border-slate-300'}
                                 `}
                             >
                                 {table.name}
@@ -390,21 +406,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                 )}
             </div>
 
-            {/* Legend */}
-            <div className="mt-6 flex flex-wrap gap-4 text-xs font-medium text-gray-500 justify-center">
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-white border border-gray-300 rounded shadow-sm"></div>
-                    <span>{t('admin.floorPlan.legend.available')}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-primary border border-primary rounded shadow-lg shadow-primary/30"></div>
-                    <span>{t('admin.floorPlan.legend.selected')}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-[#FEF2F2] border border-[#FCA5A5] rounded"></div>
-                    <span>{t('admin.floorPlan.legend.booked')}</span>
-                </div>
-            </div>
+
         </div>
     );
 };

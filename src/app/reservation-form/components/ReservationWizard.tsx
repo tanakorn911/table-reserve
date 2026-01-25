@@ -745,12 +745,25 @@ const ReservationWizard = () => {
                                         onClick={handleSubmit}
                                         type="button"
                                         disabled={isLoading}
-                                        className="w-full md:w-auto bg-primary text-white px-6 py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        className="w-full md:w-auto bg-primary text-white px-8 py-3.5 rounded-xl font-bold text-sm shadow-xl shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
                                     >
                                         <span className="whitespace-nowrap">
-                                            {isLoading ? '...' : t('form.submit')}
+                                            {isLoading ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    {uploading ? t('common.uploading') : t('common.processing')}
+                                                </div>
+                                            ) : (
+                                                t('form.submit')
+                                            )}
                                         </span>
-                                        {!isLoading && <Icon name="CheckIcon" size={18} />}
+                                        {!isLoading && (
+                                            <Icon
+                                                name="CheckIcon"
+                                                size={18}
+                                                className="group-hover:translate-x-1 transition-transform"
+                                            />
+                                        )}
                                     </button>
                                 )}
                             </div>
@@ -758,6 +771,67 @@ const ReservationWizard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Premium Loading Overlay */}
+            <AnimatePresence>
+                {isLoading && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md"
+                    >
+                        <div className="relative">
+                            {/* Animated Rings */}
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                className="w-24 h-24 border-4 border-primary/20 border-t-primary rounded-full"
+                            />
+                            <motion.div
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-2 border-4 border-yellow-500/20 border-b-yellow-500 rounded-full"
+                            />
+                            {/* Inner Logo/Icon */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                >
+                                    <Icon name="CalendarIcon" size={32} className="text-white" />
+                                </motion.div>
+                            </div>
+                        </div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="mt-8 text-center"
+                        >
+                            <h3 className="text-xl font-black text-white tracking-widest uppercase">
+                                {uploading ? t('loading.uploadTitle') : t('loading.confirmTitle')}
+                            </h3>
+                            <p className="mt-2 text-gray-400 font-medium max-w-xs mx-auto text-sm">
+                                {uploading
+                                    ? t('loading.uploadDesc')
+                                    : t('loading.confirmDesc')}
+                            </p>
+                        </motion.div>
+
+                        {/* Progress Bar (Visual Only) */}
+                        <div className="w-48 h-1 bg-white/10 rounded-full mt-6 overflow-hidden">
+                            <motion.div
+                                initial={{ x: "-100%" }}
+                                animate={{ x: "0%" }}
+                                transition={{ duration: uploading ? 2 : 1.5, repeat: Infinity }}
+                                className="h-full bg-gradient-to-r from-transparent via-primary to-transparent"
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {showSuccess && reservationDetails && (
                 <SuccessModal

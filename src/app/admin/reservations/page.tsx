@@ -14,8 +14,12 @@ import {
 } from '@heroicons/react/24/outline';
 import ReservationModal from './components/ReservationModal';
 import { BookingSlip } from './components/BookingSlip';
+import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useTranslation } from '@/lib/i18n';
 
 export default function AdminReservationsPage() {
+  const locale = useAdminLocale();
+  const { t } = useTranslation(locale);
   const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -104,18 +108,18 @@ export default function AdminReservationsPage() {
         setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
       } else {
         const errorData = await response.json();
-        alert(`เกิดข้อผิดพลาด: ${errorData.error || 'ไม่สามารถอัปเดตสถานะได้'}`);
+        alert(`${t('common.error')}: ${errorData.error || (locale === 'th' ? 'ไม่สามารถอัปเดตสถานะได้' : 'Failed to update status')}`);
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่' : 'Connection error. Please try again.');
     } finally {
       setUpdatingId(null);
     }
   };
 
   const deleteReservation = async (id: string) => {
-    if (!confirm('ยืนยันการลบรายการจองนี้ถาวร? (ไม่สามารถกู้คืนได้)')) return;
+    if (!confirm(locale === 'th' ? 'ยืนยันการลบรายการจองนี้ถาวร? (ไม่สามารถกู้คืนได้)' : 'Confirm permanent deletion? (Cannot be undone)')) return;
 
     setUpdatingId(id);
     try {
@@ -127,11 +131,11 @@ export default function AdminReservationsPage() {
         setReservations((prev) => prev.filter((r) => r.id !== id));
       } else {
         const errorData = await response.json();
-        alert(`เกิดข้อผิดพลาด: ${errorData.error || 'ไม่สามารถลบรายการได้'}`);
+        alert(`${t('common.error')}: ${errorData.error || (locale === 'th' ? 'ไม่สามารถลบรายการได้' : 'Failed to delete')}`);
       }
     } catch (error) {
       console.error('Error deleting reservation:', error);
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการเชื่อมต่อ' : 'Connection error');
     } finally {
       setUpdatingId(null);
     }
@@ -162,7 +166,10 @@ export default function AdminReservationsPage() {
       fetchReservations();
       setIsModalOpen(false);
       setEditingReservation(null);
-      alert(editingReservation ? 'แก้ไขข้อมูลสำเร็จ' : 'สร้างการจองสำเร็จ');
+      alert(editingReservation
+        ? (locale === 'th' ? 'แก้ไขข้อมูลสำเร็จ' : 'Successfully updated')
+        : (locale === 'th' ? 'สร้างการจองสำเร็จ' : 'Successfully created')
+      );
     } catch (error: any) {
       console.error(error);
       alert(error.message);
@@ -207,7 +214,7 @@ export default function AdminReservationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-900">รายการจองทั้งหมด</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('admin.reservations.title')}</h1>
 
         {/* Action Bar */}
         <div className="flex items-center space-x-2">
@@ -231,7 +238,7 @@ export default function AdminReservationsPage() {
                 r.guest_name,
                 r.guest_phone,
                 r.party_size,
-                r.table_number || '-',
+                r.table_name || r.table_number || '-',
                 r.status,
                 r.admin_notes || '',
               ]);
@@ -260,14 +267,14 @@ export default function AdminReservationsPage() {
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               ></path>
             </svg>
-            Export CSV
+            {t('admin.reservations.exportCSV')}
           </button>
           <button
             onClick={openCreateModal}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm text-sm font-medium transition-colors"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
-            สร้างการจอง
+            {t('admin.reservations.create')}
           </button>
         </div>
       </div>
@@ -280,7 +287,7 @@ export default function AdminReservationsPage() {
           </div>
           <input
             type="text"
-            placeholder="ค้นหาชื่อ หรือ เบอร์โทร..."
+            placeholder={t('admin.reservations.search')}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900 placeholder-gray-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -317,43 +324,43 @@ export default function AdminReservationsPage() {
                   scope="col"
                   className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  วัน-เวลา
+                  {t('admin.reservations.table.datetime')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  ลูกค้า
+                  {t('admin.reservations.table.guest')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  โต๊ะ
+                  {t('admin.reservations.table.table')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  หมายเหตุ (Staff)
+                  {t('admin.reservations.table.notes')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  สถานะ
+                  {t('admin.reservations.table.status')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  สลิป
+                  {t('admin.reservations.table.slip')}
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
-                  จัดการ
+                  {t('admin.reservations.table.actions')}
                 </th>
               </tr>
             </thead>
@@ -363,14 +370,14 @@ export default function AdminReservationsPage() {
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex justify-center flex-col items-center">
                       <div className="w-8 h-8 border-4 border-blue-600 rounded-full border-t-transparent animate-spin mb-2"></div>
-                      กำลังโหลดข้อมูล...
+                      {t('admin.reservations.loading')}
                     </div>
                   </td>
                 </tr>
               ) : filteredReservations.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    ไม่พบข้อมูลการจอง
+                    {t('admin.reservations.noData')}
                   </td>
                 </tr>
               ) : (
@@ -398,12 +405,12 @@ export default function AdminReservationsPage() {
                       </div>
                       <div className="text-sm text-gray-600">{reservation.guest_phone}</div>
                       <div className="text-sm font-medium text-gray-500 mt-1">
-                        จำนวน {reservation.party_size} ท่าน
+                        {locale === 'th' ? 'จำนวน' : 'Guests:'} {reservation.party_size} {t('admin.reservations.guests')}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
-                        {reservation.table_number ? `โต๊ะ ${reservation.table_number}` : '-'}
+                        {reservation.table_name || reservation.table_number || '-'}
                       </span>
                     </td>
                     <td className="px-6 py-4 max-w-[200px]">
@@ -435,10 +442,10 @@ export default function AdminReservationsPage() {
                               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             ></path>
                           </svg>
-                          <span className="text-xs font-bold">ดูสลิป</span>
+                          <span className="text-xs font-bold">{t('admin.reservations.viewSlip')}</span>
                         </a>
                       ) : (
-                        <span className="text-xs text-gray-400 italic">ไม่มีสลิป</span>
+                        <span className="text-xs text-gray-400 italic">{t('admin.reservations.noSlip')}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -446,13 +453,13 @@ export default function AdminReservationsPage() {
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(reservation.status)}`}
                       >
                         {reservation.status === 'pending'
-                          ? 'รอยืนยัน'
+                          ? t('admin.reservations.filter.pending')
                           : reservation.status === 'confirmed'
-                            ? 'ยืนยันแล้ว'
+                            ? t('admin.reservations.filter.confirmed')
                             : reservation.status === 'cancelled'
-                              ? 'ยกเลิก'
+                              ? t('admin.reservations.filter.cancelled')
                               : reservation.status === 'completed'
-                                ? 'เสร็จสิ้น'
+                                ? t('admin.reservations.filter.completed')
                                 : reservation.status}
                       </span>
                     </td>
@@ -461,14 +468,14 @@ export default function AdminReservationsPage() {
                         <button
                           onClick={() => setPrintReservation(reservation)}
                           className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
-                          title="พิมพ์ใบยืนยัน"
+                          title={t('admin.reservations.actions.print')}
                         >
                           <PrinterIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => openEditModal(reservation)}
                           className="p-1.5 text-gray-600 hover:text-orange-600 hover:bg-orange-100 rounded-md transition-colors"
-                          title="แก้ไขข้อมูล"
+                          title={t('admin.reservations.actions.edit')}
                         >
                           <PencilSquareIcon className="w-5 h-5" />
                         </button>
@@ -480,7 +487,7 @@ export default function AdminReservationsPage() {
                             disabled={!!updatingId}
                             className={`px-3 py-1 text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-md hover:bg-green-200 transition-colors ${updatingId === reservation.id ? 'opacity-50 cursor-wait' : ''}`}
                           >
-                            {updatingId === reservation.id ? '...' : 'อนุมัติ'}
+                            {updatingId === reservation.id ? '...' : t('admin.reservations.actions.approve')}
                           </button>
                         )}
                         {reservation.status === 'confirmed' && (
@@ -489,26 +496,26 @@ export default function AdminReservationsPage() {
                             disabled={!!updatingId}
                             className={`px-3 py-1 text-xs font-bold text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 transition-colors ${updatingId === reservation.id ? 'opacity-50 cursor-wait' : ''}`}
                           >
-                            {updatingId === reservation.id ? '...' : 'เสร็จสิ้น'}
+                            {updatingId === reservation.id ? '...' : t('admin.reservations.actions.complete')}
                           </button>
                         )}
                         {(reservation.status === 'pending' ||
                           reservation.status === 'confirmed') && (
-                          <button
-                            onClick={() => updateStatus(reservation.id, 'cancelled')}
-                            disabled={!!updatingId}
-                            className={`px-3 py-1 text-xs font-bold text-red-700 bg-red-100 border border-red-200 rounded-md hover:bg-red-200 transition-colors ${updatingId === reservation.id ? 'opacity-50 cursor-wait' : ''}`}
-                          >
-                            {updatingId === reservation.id ? '...' : 'ยกเลิก'}
-                          </button>
-                        )}
+                            <button
+                              onClick={() => updateStatus(reservation.id, 'cancelled')}
+                              disabled={!!updatingId}
+                              className={`px-3 py-1 text-xs font-bold text-red-700 bg-red-100 border border-red-200 rounded-md hover:bg-red-200 transition-colors ${updatingId === reservation.id ? 'opacity-50 cursor-wait' : ''}`}
+                            >
+                              {updatingId === reservation.id ? '...' : t('admin.reservations.actions.cancel')}
+                            </button>
+                          )}
                         {reservation.status === 'cancelled' && (
                           <button
                             onClick={() => deleteReservation(reservation.id)}
                             disabled={!!updatingId}
                             className={`px-3 py-1 text-xs font-bold text-white bg-red-600 border border-red-700 rounded-md hover:bg-red-700 transition-colors ${updatingId === reservation.id ? 'opacity-50 cursor-wait' : ''}`}
                           >
-                            {updatingId === reservation.id ? '...' : 'ลบถาวร'}
+                            {updatingId === reservation.id ? '...' : t('admin.reservations.actions.delete')}
                           </button>
                         )}
                       </div>
@@ -527,12 +534,12 @@ export default function AdminReservationsPage() {
           <div className="bg-white p-12 rounded-lg shadow-sm text-center text-gray-500">
             <div className="flex justify-center flex-col items-center">
               <div className="w-8 h-8 border-4 border-blue-600 rounded-full border-t-transparent animate-spin mb-2"></div>
-              กำลังโหลดข้อมูล...
+              {t('admin.reservations.loading')}
             </div>
           </div>
         ) : filteredReservations.length === 0 ? (
           <div className="bg-white p-12 rounded-lg shadow-sm text-center text-gray-500 italic">
-            ไม่พบข้อมูลการจอง
+            {t('admin.reservations.noData')}
           </div>
         ) : (
           filteredReservations.map((reservation) => (
@@ -554,13 +561,13 @@ export default function AdminReservationsPage() {
                   className={`px-3 py-1 text-[10px] font-black rounded-full border uppercase tracking-widest ${getStatusColor(reservation.status)}`}
                 >
                   {reservation.status === 'pending'
-                    ? 'พิจารณา'
+                    ? t('admin.reservations.filter.pending')
                     : reservation.status === 'confirmed'
-                      ? 'อนุมัติ'
+                      ? t('admin.reservations.filter.confirmed')
                       : reservation.status === 'cancelled'
-                        ? 'ยกเลิก'
+                        ? t('admin.reservations.filter.cancelled')
                         : reservation.status === 'completed'
-                          ? 'เสร็จสิ้น'
+                          ? t('admin.reservations.filter.completed')
                           : reservation.status}
                 </span>
               </div>
@@ -568,23 +575,21 @@ export default function AdminReservationsPage() {
               <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    นัดหมาย
+                    {locale === 'th' ? 'นัดหมาย' : 'Schedule'}
                   </p>
                   <p className="text-sm font-bold text-gray-800">{reservation.reservation_date}</p>
                   <p className="text-xs text-gray-600">
-                    เวลา {reservation.reservation_time.substring(0, 5)} น.
+                    {locale === 'th' ? 'เวลา' : 'Time:'} {reservation.reservation_time.substring(0, 5)} {locale === 'th' ? 'น.' : ''}
                   </p>
                 </div>
                 <div className="space-y-0.5 border-l border-gray-200 pl-3">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    โต๊ะ & จำนวน
+                    {locale === 'th' ? 'โต๊ะ & จำนวน' : 'Table & Pax'}
                   </p>
                   <p className="text-sm font-bold text-gray-800">
-                    {reservation.table_number
-                      ? `โต๊ะที่ ${reservation.table_number}`
-                      : 'ยังไม่ระบุ'}
+                    {reservation.table_name || reservation.table_number || 'ยังไม่ระบุ'}
                   </p>
-                  <p className="text-xs text-gray-600">{reservation.party_size} ที่นั่ง</p>
+                  <p className="text-xs text-gray-600">{reservation.party_size} {t('admin.reservations.guests')}</p>
                 </div>
               </div>
 
@@ -611,7 +616,7 @@ export default function AdminReservationsPage() {
                       disabled={!!updatingId}
                       className="px-4 py-2.5 bg-green-600 text-white text-xs font-black rounded-lg shadow-sm hover:bg-green-700 uppercase tracking-widest transition-all active:scale-95"
                     >
-                      {updatingId === reservation.id ? '...' : 'อนุมัติ'}
+                      {updatingId === reservation.id ? '...' : t('admin.reservations.actions.approve')}
                     </button>
                   )}
                   {reservation.status === 'confirmed' && (
@@ -620,7 +625,7 @@ export default function AdminReservationsPage() {
                       disabled={!!updatingId}
                       className="px-4 py-2.5 bg-blue-600 text-white text-xs font-black rounded-lg shadow-sm hover:bg-blue-700 uppercase tracking-widest transition-all active:scale-95"
                     >
-                      {updatingId === reservation.id ? '...' : 'เช็คอิน'}
+                      {updatingId === reservation.id ? '...' : t('admin.reservations.actions.complete')}
                     </button>
                   )}
                   {(reservation.status === 'pending' || reservation.status === 'confirmed') && (
@@ -629,7 +634,7 @@ export default function AdminReservationsPage() {
                       disabled={!!updatingId}
                       className="px-4 py-2.5 bg-red-50 text-red-600 text-xs font-black rounded-lg border border-red-100 hover:bg-red-100 uppercase tracking-widest transition-all active:scale-95"
                     >
-                      {updatingId === reservation.id ? '...' : 'ยกเลิก'}
+                      {updatingId === reservation.id ? '...' : t('admin.reservations.actions.cancel')}
                     </button>
                   )}
                 </div>

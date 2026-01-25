@@ -22,21 +22,7 @@ interface TimeGridPickerProps {
   success?: boolean;
 }
 
-// Generate a session ID for this browser session
-const getSessionId = () => {
-  if (typeof window === 'undefined') return '';
-  try {
-    let sessionId = sessionStorage.getItem('bookingSessionId');
-    if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem('bookingSessionId', sessionId);
-    }
-    return sessionId;
-  } catch (e) {
-    // Fallback for private browsing where sessionStorage might be blocked
-    return `anon_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-  }
-};
+
 
 const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
   id,
@@ -53,133 +39,69 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
-  const [holdingTime, setHoldingTime] = useState<string | null>(null);
-  const [currentHold, setCurrentHold] = useState<string | null>(null);
-  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sessionId = useRef(getSessionId());
 
   // Fetch time slots from API
-  const fetchTimeSlots = useCallback(async () => {
+  const fetchTimeSlots = useCallback(async (isInitialLoad = false) => {
     if (!selectedDate) return;
 
-    setLoading(true);
+    // Only show loading spinner on initial load, not background refreshes
+    if (isInitialLoad) {
+      setLoading(true);
+    }
+
     try {
       const response = await fetch(
-        `/api/timeslots?date=${selectedDate}&sessionId=${sessionId.current}`
+        `/api/timeslots?date=${selectedDate}`
       );
       const data = await response.json();
+
       if (data.slots) {
-        setTimeSlots(data.slots);
+        // Smart comparison: detect status changes (e.g., available → held)
+        setTimeSlots(prev => {
+          // Check if lengths differ
+          if (prev.length !== data.slots.length) {
+            return data.slots;
+          }
+
+          // Check if any slot status changed
+          const hasStatusChange = prev.some((prevSlot, idx) => {
+            const newSlot = data.slots[idx];
+            return newSlot && (prevSlot.status !== newSlot.status || prevSlot.time !== newSlot.time);
+          });
+
+          // Only update if something actually changed
+          return hasStatusChange ? data.slots : prev;
+        });
       }
     } catch (error) {
       console.error('Failed to fetch time slots:', error);
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+      }
     }
   }, [selectedDate]);
 
   // Fetch on mount and when date changes
   useEffect(() => {
-    fetchTimeSlots();
+    fetchTimeSlots(true); // Initial load with loading spinner
   }, [fetchTimeSlots]);
 
-  // Refresh slots periodically when picker is open
+  // Refresh slots periodically when picker is open (background updates without loading spinner)
   useEffect(() => {
     if (!isOpen) return;
 
-    const interval = setInterval(fetchTimeSlots, 3000);
+    const interval = setInterval(() => fetchTimeSlots(false), 3000);
     return () => clearInterval(interval);
   }, [isOpen, fetchTimeSlots]);
 
-  // Hold a time slot
-  const holdTimeSlot = async (time: string) => {
-    if (!selectedDate) return false;
 
-    try {
-      const response = await fetch('/api/timeslots', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: selectedDate,
-          time,
-          action: 'hold',
-          sessionId: sessionId.current,
-        }),
-      });
-      const data = await response.json();
-      return data.success;
-    } catch (error) {
-      console.error('Failed to hold time slot:', error);
-      return false;
-    }
-  };
 
-  // Release a time slot
-  const releaseTimeSlot = async (time: string) => {
-    if (!selectedDate) return;
-
-    try {
-      await fetch('/api/timeslots', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: selectedDate,
-          time,
-          action: 'release',
-          sessionId: sessionId.current,
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to release time slot:', error);
-    }
-  };
-
-  // Handle time selection with hold
-  const handleSelect = async (e: React.MouseEvent, time: string) => {
+  // Handle time selection
+  const handleSelect = (e: React.MouseEvent, time: string) => {
     e.preventDefault();
-    if (holdingTime) return;
-
-    setHoldingTime(time);
-    try {
-      // Release previous hold if any
-      if (currentHold && currentHold !== time) {
-        await releaseTimeSlot(currentHold);
-      }
-
-      // Try to hold the new slot
-      const response = await fetch('/api/timeslots', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: selectedDate,
-          time,
-          action: 'hold',
-          sessionId: sessionId.current,
-          locale,
-        }),
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        setCurrentHold(time);
-        onChange(time);
-        setIsOpen(false);
-      } else {
-        // Refresh slots immediately to show accurate state
-        const fetchPromise = fetchTimeSlots();
-        setHoldingTime(null); // Clear loading state before alert
-        alert(
-          data.error ||
-            (locale === 'th' ? 'ขออภัย ช่วงเวลานี้ไม่ว่างแล้ว' : 'Sorry, this slot is unavailable')
-        );
-        await fetchPromise;
-      }
-    } catch (error) {
-      console.error('Failed to hold time slot:', error);
-      alert(t('alert.connectionError'));
-    } finally {
-      setHoldingTime(null);
-    }
+    onChange(time);
+    setIsOpen(false);
   };
 
   // ... (keep effect)
@@ -203,15 +125,11 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
     }
   };
 
-  const getStatusColor = (status: string, isSelected: boolean, isHolding: boolean) => {
-    // ... same
-    if (isHolding) return 'bg-primary/40 text-primary-foreground animate-pulse';
+  const getStatusColor = (status: string, isSelected: boolean) => {
     if (isSelected) return 'bg-primary text-primary-foreground shadow-warm-sm';
     switch (status) {
       case 'booked':
         return 'bg-error/20 text-error cursor-not-allowed line-through';
-      case 'held':
-        return 'bg-warning/20 text-warning cursor-not-allowed';
       default:
         return 'bg-muted/50 text-foreground hover:bg-primary/20 hover:text-primary';
     }
@@ -221,8 +139,6 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
     switch (status) {
       case 'booked':
         return locale === 'th' ? ' (จองแล้ว)' : ' (Booked)';
-      case 'held':
-        return locale === 'th' ? ' (กำลังจอง)' : ' (Held)';
       default:
         return '';
     }
@@ -236,7 +152,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         onClick={() => {
           if (selectedDate) {
             setIsOpen(!isOpen);
-            if (!isOpen) fetchTimeSlots();
+            if (!isOpen) fetchTimeSlots(true); // Show spinner when manually opening
           }
         }}
         disabled={!selectedDate}
@@ -304,7 +220,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                 </p>
                 <button
                   type="button"
-                  onClick={() => fetchTimeSlots()}
+                  onClick={() => fetchTimeSlots(true)}
                   className="text-xs text-primary font-bold uppercase mt-2 hover:underline"
                 >
                   {locale === 'th' ? 'ลองใหม่อีกครั้ง' : 'Try Again'}
@@ -314,8 +230,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
               <div className="grid grid-cols-2 min-[400px]:grid-cols-3 sm:grid-cols-4 gap-3">
                 {timeSlots.map(({ time, label, status }) => {
                   const isSelected = value === time;
-                  const isHolding = holdingTime === time;
-                  const isDisabled = (status !== 'available' && !isSelected) || isHolding;
+                  const isDisabled = status !== 'available' && !isSelected;
 
                   // Format label for display
                   let displayLabel = label;
@@ -340,15 +255,11 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                       title={`${displayLabel}`}
                       className={`
                         flex items-center justify-center py-3.5 px-2 rounded-xl text-sm font-bold transition-all duration-200
-                        ${getStatusColor(status, isSelected, isHolding)}
+                        ${getStatusColor(status, isSelected)}
                         ${isDisabled ? '' : 'active:scale-90 cursor-pointer shadow-sm hover:shadow-md'}
                       `}
                     >
-                      {isHolding ? (
-                        <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        displayLabel
-                      )}
+                      {displayLabel}
                     </button>
                   );
                 })}

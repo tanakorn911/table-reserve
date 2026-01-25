@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/tables - Create a new table
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -47,14 +46,58 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const { data, error } = await supabase.from('tables').insert(body).select().single();
+    // 🔒 SECURITY FIX: Input validation
+    const { name, capacity, x, y, zone, shape, width, height } = body;
+
+    // Validate name
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json({ error: 'Table name is required' }, { status: 400 });
+    }
+    if (name.length > 50) {
+      return NextResponse.json({ error: 'Table name must be 50 characters or less' }, { status: 400 });
+    }
+
+    // Validate capacity
+    if (!capacity || typeof capacity !== 'number' || !Number.isInteger(capacity)) {
+      return NextResponse.json({ error: 'Capacity must be a valid number' }, { status: 400 });
+    }
+    if (capacity < 1 || capacity > 20) {
+      return NextResponse.json({ error: 'Capacity must be between 1 and 20' }, { status: 400 });
+    }
+
+    // Validate coordinates
+    if (typeof x !== 'number' || typeof y !== 'number') {
+      return NextResponse.json({ error: 'Invalid position coordinates' }, { status: 400 });
+    }
+
+    // Validate shape (optional)
+    if (shape && !['rectangle', 'circle'].includes(shape)) {
+      return NextResponse.json({ error: 'Shape must be rectangle or circle' }, { status: 400 });
+    }
+
+    // Create validated data object (only include validated fields)
+    const validatedData: any = {
+      name: name.trim(),
+      capacity,
+      x,
+      y,
+    };
+
+    if (zone) validatedData.zone = zone;
+    if (shape) validatedData.shape = shape;
+    if (width && typeof width === 'number') validatedData.width = width;
+    if (height && typeof height === 'number') validatedData.height = height;
+
+    const { data, error } = await supabase.from('tables').insert(validatedData).select().single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Database error:', error);
+      return NextResponse.json({ error: 'Failed to create table' }, { status: 500 });
     }
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
+    console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,14 +1,10 @@
 import type { NextConfig } from 'next';
-import type { Configuration } from 'webpack';
 
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: true,
   distDir: process.env.DIST_DIR || '.next',
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   images: {
     remotePatterns: [
@@ -39,17 +35,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack(config: Configuration) {
-    config.module?.rules?.push({
-      test: /\.(jsx|tsx)$/,
-      exclude: [/node_modules/],
-      use: [
-        {
-          loader: '@dhiwise/component-tagger/nextLoader',
-        },
-      ],
-    });
-    return config;
+  // Enable Turbopack configuration
+  turbopack: {
+    root: __dirname,
   },
 };
 

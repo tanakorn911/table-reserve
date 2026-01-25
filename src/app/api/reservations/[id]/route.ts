@@ -103,7 +103,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         if (body.reservation_date || body.reservation_time) {
           changeMsg += `\n📅 เปลี่ยนเป็น: ${body.reservation_date || data.reservation_date} เวลา ${body.reservation_time || data.reservation_time}`;
         }
-        if (body.table_number) changeMsg += `\n🪑 ย้ายไปโต๊ะ: ${body.table_number}`;
+
+        // Get table name if table changed
+        if (body.table_number) {
+          const { data: tableData } = await supabase
+            .from('tables')
+            .select('name')
+            .eq('id', body.table_number)
+            .single();
+
+          const tableName = tableData?.name || body.table_number;
+          changeMsg += `\n🪑 ย้ายไปโต๊ะ: ${tableName}`;
+        }
 
         // Get staff details from profiles table for up-to-date info
         const { user } = session;

@@ -13,6 +13,8 @@ import {
   PencilIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
+import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 
 interface BusinessHours {
   [key: string]: { open: string; close: string };
@@ -37,9 +39,13 @@ const DEFAULT_HOURS: BusinessHours = {
   '6': { open: '10:00', close: '23:00' },
 };
 
-const DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const DAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function AdminSettingsPage() {
+  const locale = useAdminLocale();
+  const { t } = useTranslation(locale);
+  const DAYS = locale === 'th' ? DAYS_TH : DAYS_EN;
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -75,13 +81,13 @@ export default function AdminSettingsPage() {
 
       if (error) {
         console.error('Supabase Error:', error);
-        alert('ไม่สามารถดึงข้อมูลพนักงานได้: ' + (error.message || JSON.stringify(error)));
+        alert((locale === 'th' ? 'ไม่สามารถดึงข้อมูลพนักงานได้: ' : 'Failed to fetch staff: ') + (error.message || JSON.stringify(error)));
         return;
       }
       setProfiles(data || []);
     } catch (error: any) {
       console.error('System Error:', error);
-      alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (error.message || 'Unknown error'));
+      alert((locale === 'th' ? 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' : 'Error loading data: ') + (error.message || 'Unknown error'));
     } finally {
       setProfilesLoading(false);
     }
@@ -123,7 +129,7 @@ export default function AdminSettingsPage() {
   }, []);
 
   const syncProfiles = async () => {
-    if (!confirm('ต้องการดึงรายชื่อพนักงานทั้งหมดจากระบบ Authentication มาลงตารางใหม่หรือไม่?'))
+    if (!confirm(locale === 'th' ? 'ต้องการดึงรายชื่อพนักงานทั้งหมดจากระบบ Authentication มาลงตารางใหม่หรือไม่?' : 'Do you want to sync all staff from Authentication system?'))
       return;
 
     setProfilesLoading(true);
@@ -131,7 +137,7 @@ export default function AdminSettingsPage() {
       // ในทางปฏิบัติเราอาจจะเรียกผ่าน API Route เพื่อความปลอดภัย
       // แต่สำหรับการแก้ปัญหาเฉพาะหน้า เราจะใช้เครื่องมือ SQL ที่ให้ไปก่อนหน้า
       // หรือถ้ามีรายชื่อแล้วแต่สิทธิ์ไม่ขึ้น ให้ลอง Login ใหม่ครับ
-      alert('ระบบจะทำการรีโหลดข้อมูลจาก Server อีกครั้ง...');
+      alert(locale === 'th' ? 'ระบบจะทำการรีโหลดข้อมูลจาก Server อีกครั้ง...' : 'Reloading data from server...');
       await fetchProfiles();
     } finally {
       setProfilesLoading(false);
@@ -140,9 +146,10 @@ export default function AdminSettingsPage() {
 
   const toggleRole = async (profileId: string, currentRole: 'admin' | 'staff') => {
     const newRole = currentRole === 'admin' ? 'staff' : 'admin';
+    const roleLabel = newRole === 'admin' ? (locale === 'th' ? 'ผู้ดูแลระบบ' : 'Administrator') : (locale === 'th' ? 'พนักงาน' : 'Staff');
     if (
       !confirm(
-        `คุณแน่ใจหรือไม่ที่จะเปลี่ยนสิทธิ์เป็น ${newRole === 'admin' ? 'ผู้ดูแลระบบ' : 'พนักงาน'}?`
+        locale === 'th' ? `คุณแน่ใจหรือไม่ที่จะเปลี่ยนสิทธิ์เป็น ${roleLabel}?` : `Are you sure you want to change role to ${roleLabel}?`
       )
     ) {
       return;
@@ -158,10 +165,10 @@ export default function AdminSettingsPage() {
 
       // Refresh list
       await fetchProfiles();
-      alert('อัปเดตสิทธิ์เรียบร้อยแล้ว');
+      alert(locale === 'th' ? 'อัปเดตสิทธิ์เรียบร้อยแล้ว' : 'Role updated successfully');
     } catch (error) {
       console.error('Error updating role:', error);
-      alert('เกิดข้อผิดพลาดในการอัปเดตสิทธิ์');
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการอัปเดตสิทธิ์' : 'Error updating role');
     }
   };
 
@@ -177,10 +184,10 @@ export default function AdminSettingsPage() {
 
       if (error) throw error;
 
-      setMessage({ type: 'success', text: 'เปลี่ยนรหัสผ่านสำเร็จ' });
+      setMessage({ type: 'success', text: locale === 'th' ? 'เปลี่ยนรหัสผ่านสำเร็จ' : 'Password changed successfully' });
       setPassword('');
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน' });
+      setMessage({ type: 'error', text: error.message || (locale === 'th' ? 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน' : 'Error changing password') });
     } finally {
       setLoading(false);
     }
@@ -211,9 +218,9 @@ export default function AdminSettingsPage() {
 
       if (!response.ok) throw new Error('Failed to save settings');
 
-      alert('บันทึกเวลาทำการเรียบร้อยแล้ว');
+      alert(locale === 'th' ? 'บันทึกเวลาทำการเรียบร้อยแล้ว' : 'Business hours saved successfully');
     } catch (error) {
-      alert('เกิดข้อผิดพลาดในการบันทึกเวลาทำการ');
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการบันทึกเวลาทำการ' : 'Error saving business hours');
       console.error(error);
     } finally {
       setHoursSaving(false);
@@ -245,12 +252,12 @@ export default function AdminSettingsPage() {
       const { error } = await supabase.from('holidays').insert(datesToInsert);
 
       if (error) {
-        if (error.code === '23505') alert('บางวันในกลุ่มนี้ถูกตั้งเป็นวันหยุดอยู่แล้ว');
-        else alert('เกิดข้อผิดพลาด: ' + error.message);
+        if (error.code === '23505') alert(locale === 'th' ? 'บางวันในกลุ่มนี้ถูกตั้งเป็นวันหยุดอยู่แล้ว' : 'Some dates in this range are already holidays');
+        else alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + error.message);
         return;
       }
 
-      alert('เพิ่มวันหยุดเรียบร้อย');
+      alert(locale === 'th' ? 'เพิ่มวันหยุดเรียบร้อย' : 'Holiday added successfully');
       setHolidayDate('');
       setHolidayEndDate('');
       setHolidayDesc('');
@@ -266,13 +273,13 @@ export default function AdminSettingsPage() {
   };
 
   const handleDeleteHoliday = async (id: string) => {
-    if (!confirm('ต้องการลบวันหยุดนี้ใช่หรือไม่?')) return;
+    if (!confirm(locale === 'th' ? 'ต้องการลบวันหยุดนี้ใช่หรือไม่?' : 'Are you sure you want to delete this holiday?')) return;
     try {
       const { error } = await supabase.from('holidays').delete().eq('id', id);
       if (error) throw error;
       setHolidays((prev) => prev.filter((h) => h.id !== id));
     } catch (e) {
-      alert('เกิดข้อผิดพลาด');
+      alert(locale === 'th' ? 'เกิดข้อผิดพลาด' : 'An error occurred');
     }
   };
 
@@ -319,7 +326,7 @@ export default function AdminSettingsPage() {
         throw new Error(err.error || 'Failed to update');
       }
 
-      alert('อัปเดตข้อมูลพนักงานเรียบร้อย');
+      alert(locale === 'th' ? 'อัปเดตข้อมูลพนักงานเรียบร้อย' : 'Staff information updated successfully');
       setIsStaffModalOpen(false);
       fetchProfiles(); // Refresh list
     } catch (error: any) {
@@ -331,7 +338,7 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
-      <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">ตั้งค่าระบบ</h1>
+      <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{t('admin.settings.title')}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Business Hours Configuration */}
@@ -340,11 +347,11 @@ export default function AdminSettingsPage() {
             <div className="p-2 bg-blue-50 rounded-lg">
               <ClockIcon className="w-6 h-6 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">เวลาทำการ</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('admin.settings.hours.title')}</h2>
           </div>
 
           {hoursLoading ? (
-            <div className="py-8 text-center text-gray-500">กำลังโหลดข้อมูล...</div>
+            <div className="py-8 text-center text-gray-500">{t('common.loading')}</div>
           ) : (
             <div className="space-y-4 flex-1">
               {DAYS.map((day, index) => (
@@ -360,9 +367,9 @@ export default function AdminSettingsPage() {
                       onChange={(e) => handleHoursChange(String(index), 'open', e.target.value)}
                       className="px-2 py-1.5 border border-gray-300 rounded font-medium text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <span className="text-sm text-gray-500">น.</span>
+                    <span className="text-sm text-gray-500">{locale === 'th' ? 'น.' : ''}</span>
                   </div>
-                  <span className="text-gray-400 font-medium">-</span>
+                  <span className="text-gray-400 font-medium">{t('admin.settings.hours.to')}</span>
                   <div className="flex items-center gap-1">
                     <input
                       type="time"
@@ -370,7 +377,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) => handleHoursChange(String(index), 'close', e.target.value)}
                       className="px-2 py-1.5 border border-gray-300 rounded font-medium text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <span className="text-sm text-gray-500">น.</span>
+                    <span className="text-sm text-gray-500">{locale === 'th' ? 'น.' : ''}</span>
                   </div>
                 </div>
               ))}
@@ -402,10 +409,10 @@ export default function AdminSettingsPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    กำลังบันทึก...
+                    {t('common.loading')}
                   </>
                 ) : (
-                  'บันทึกเวลาทำการ'
+                  t('admin.settings.hours.save')
                 )}
               </button>
             </div>
@@ -419,12 +426,12 @@ export default function AdminSettingsPage() {
               <div className="p-2 bg-purple-50 rounded-lg">
                 <UserGroupIcon className="w-6 h-6 text-purple-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">จัดการพนักงาน ({profiles.length})</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('admin.settings.staff.title').replace('(2)', '').trim()} ({profiles.length})</h2>
             </div>
             <button
               onClick={fetchProfiles}
               className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-              title="รีเฟรชรายชื่อ"
+              title={locale === 'th' ? "รีเฟรชรายชื่อ" : "Refresh list"}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -439,13 +446,13 @@ export default function AdminSettingsPage() {
 
           <div className="flex-1 bg-gray-50 rounded-xl border border-gray-100 p-4 mb-6 overflow-y-auto max-h-[400px]">
             {profilesLoading ? (
-              <div className="py-8 text-center text-gray-500">กำลังโหลดข้อมูล...</div>
+              <div className="py-8 text-center text-gray-500">{t('common.loading')}</div>
             ) : profiles.length === 0 ? (
               <div className="py-12 text-center">
                 <UserGroupIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">ไม่พบรายชื่อพนักงาน</p>
+                <p className="text-gray-500 font-medium">{locale === 'th' ? 'ไม่พบรายชื่อพนักงาน' : 'No staff found'}</p>
                 <p className="text-xs text-gray-400 mt-2">
-                  กรุณารัน SQL เพื่อ Sync ข้อมูล หรือรีเฟรชหน้าจอ
+                  {locale === 'th' ? 'กรุณารัน SQL เพื่อ Sync ข้อมูล หรือรีเฟรชหน้าจอ' : 'Please run SQL to sync data or refresh the page'}
                 </p>
               </div>
             ) : (
@@ -459,7 +466,7 @@ export default function AdminSettingsPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-gray-900">
-                            {p.full_name || 'ไม่ระบุชื่อ'}
+                            {p.full_name || (locale === 'th' ? 'ไม่ระบุชื่อ' : 'N/A')}
                           </span>
                           {p.staff_id && (
                             <span className="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
@@ -469,17 +476,16 @@ export default function AdminSettingsPage() {
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">{p.email}</div>
                         <div className="text-xs font-medium text-indigo-600 mt-1">
-                          {p.position || 'ยังไม่ระบุตำแหน่ง'}
+                          {p.position || (locale === 'th' ? 'ยังไม่ระบุตำแหน่ง' : 'Position not set')}
                         </div>
                       </div>
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                          p.role === 'admin'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-gray-100 text-gray-600 border-gray-200'
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-bold border ${p.role === 'admin'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-gray-100 text-gray-600 border-gray-200'
+                          }`}
                       >
-                        {p.role === 'admin' ? 'ผู้ดูแลระบบ' : 'พนักงาน'}
+                        {p.role === 'admin' ? t('admin.login.role.admin') : t('admin.login.role.staff')}
                       </span>
                     </div>
 
@@ -489,18 +495,17 @@ export default function AdminSettingsPage() {
                         className="flex-1 py-1.5 px-3 rounded-md border border-gray-300 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
                       >
                         <PencilIcon className="w-3.5 h-3.5" />
-                        แก้ไขข้อมูล
+                        {t('admin.settings.staff.edit')}
                       </button>
                       <button
                         onClick={() => toggleRole(p.id, p.role)}
-                        className={`flex-1 py-1.5 px-3 rounded-md border text-xs font-bold transition-colors flex items-center justify-center gap-1 ${
-                          p.role === 'admin'
-                            ? 'border-gray-300 text-gray-500 hover:bg-gray-50'
-                            : 'border-blue-200 text-blue-600 hover:bg-blue-50'
-                        }`}
+                        className={`flex-1 py-1.5 px-3 rounded-md border text-xs font-bold transition-colors flex items-center justify-center gap-1 ${p.role === 'admin'
+                          ? 'border-gray-300 text-gray-500 hover:bg-gray-50'
+                          : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                          }`}
                       >
                         <ShieldCheckIcon className="w-3.5 h-3.5" />
-                        {p.role === 'admin' ? 'ลดระดับ' : 'ตั้งเป็น Admin'}
+                        {p.role === 'admin' ? (locale === 'th' ? 'ลดระดับ' : 'Demote') : t('admin.settings.staff.promote')}
                       </button>
                     </div>
                   </li>
@@ -509,7 +514,7 @@ export default function AdminSettingsPage() {
             )}
           </div>
           <p className="text-xs text-gray-400 italic text-center">
-            * ผู้ดูแลระบบสามารถแก้ไขรายละเอียดของพนักงานทุกคนได้จากตรงนี้
+            * {t('admin.settings.staff.description')}
           </p>
         </div>
 
@@ -519,24 +524,24 @@ export default function AdminSettingsPage() {
             <div className="p-2 bg-green-50 rounded-lg">
               <TableCellsIcon className="w-6 h-6 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">ข้อมูลโต๊ะ ({tables.length})</h2>
+            <h2 className="text-xl font-bold text-gray-900">{locale === 'th' ? 'ข้อมูลโต๊ะ' : 'Table Information'} ({tables.length})</h2>
           </div>
 
           <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-6">
             <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {tables.map((t) => (
+              {tables.map((tableItem) => (
                 <li
-                  key={t.id}
+                  key={tableItem.id}
                   className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm"
                 >
                   <div className="overflow-hidden">
-                    <span className="font-bold text-gray-900 block truncate">{t.name}</span>
+                    <span className="font-bold text-gray-900 block truncate">{tableItem.name}</span>
                     <span className="text-xs text-gray-500 truncate block">
-                      {t.description || '-'}
+                      {tableItem.description || '-'}
                     </span>
                   </div>
                   <span className="flex-shrink-0 ml-3 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-200">
-                    {t.capacity} ที่นั่ง
+                    {tableItem.capacity} {t('form.guests.label')}
                   </span>
                 </li>
               ))}
@@ -544,10 +549,10 @@ export default function AdminSettingsPage() {
           </div>
 
           <Link
-            href="/admin/tables"
+            href="/admin/floor-plan"
             className="w-full py-3 px-4 bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold rounded-lg transition-colors text-center"
           >
-            ไปหน้าจัดการข้อมูลโต๊ะ
+            {locale === 'th' ? 'ไปหน้าจัดการผังร้านและข้อมูลโต๊ะ' : 'Go to Floor Plan & Table Management'}
           </Link>
         </div>
 
@@ -557,13 +562,13 @@ export default function AdminSettingsPage() {
             <div className="p-2 bg-red-50 rounded-lg">
               <CalendarDaysIcon className="w-6 h-6 text-red-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">วันหยุดร้าน / วันปิดทำการพิเศษ</h2>
+            <h2 className="text-xl font-bold text-gray-900">{locale === 'th' ? 'วันหยุดร้าน / วันปิดทำการพิเศษ' : 'Business Holidays / Closures'}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 p-6 bg-red-50 rounded-2xl border border-red-100">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-red-800 uppercase pl-1">
-                เริ่มตั้งแต่วันที่
+                {locale === 'th' ? 'เริ่มตั้งแต่วันที่' : 'From Date'}
               </label>
               <input
                 type="date"
@@ -574,7 +579,7 @@ export default function AdminSettingsPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-red-800 uppercase pl-1">
-                ถึงวันที่ (ไม่บังคับ)
+                {locale === 'th' ? 'ถึงวันที่ (ไม่บังคับ)' : 'To Date (Optional)'}
               </label>
               <input
                 type="date"
@@ -585,11 +590,11 @@ export default function AdminSettingsPage() {
               />
             </div>
             <div className="space-y-1.5 md:col-span-1">
-              <label className="text-xs font-bold text-red-800 uppercase pl-1">หมายเหตุ</label>
+              <label className="text-xs font-bold text-red-800 uppercase pl-1">{locale === 'th' ? 'หมายเหตุ' : 'Notes'}</label>
               <input
                 type="text"
                 value={holidayDesc}
-                placeholder="เหตุผล"
+                placeholder={locale === 'th' ? "เหตุผล" : "Reason"}
                 onChange={(e) => setHolidayDesc(e.target.value)}
                 className="w-full px-4 py-2 border-2 border-red-200 rounded-lg focus:ring-4 focus:ring-red-500/10 focus:border-red-500 font-bold text-gray-900"
               />
@@ -599,27 +604,27 @@ export default function AdminSettingsPage() {
                 onClick={handleAddHoliday}
                 className="w-full h-[42px] bg-red-600 text-white font-black rounded-lg uppercase tracking-widest hover:bg-red-700 shadow-lg active:scale-95 transition-all"
               >
-                เพิ่มวันหยุด
+                {locale === 'th' ? 'เพิ่มวันหยุด' : 'Add Holiday'}
               </button>
             </div>
           </div>
 
           <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 max-h-[300px] overflow-y-auto">
             {holidaysLoading ? (
-              <p className="text-center py-4">กำลังโหลด...</p>
+              <p className="text-center py-4">{t('common.loading')}</p>
             ) : holidays.length === 0 ? (
               <p className="text-center py-8 text-gray-400 font-medium italic">
-                ยังไม่มีวันหยุดพิเศษที่ตั้งไว้
+                {locale === 'th' ? 'ยังไม่มีวันหยุดพิเศษที่ตั้งไว้' : 'No holidays scheduled'}
               </p>
             ) : (
               <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">
-                      วันที่
+                      {t('form.date')}
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">
-                      เหตุผล
+                      {locale === 'th' ? 'เหตุผล' : 'Reason'}
                     </th>
                     <th className="px-4 py-2 text-right"></th>
                   </tr>
@@ -653,12 +658,12 @@ export default function AdminSettingsPage() {
       {/* Password Change Section (Collapsed/Secondary) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-2xl mx-auto mt-8">
         <h2 className="text-xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-100">
-          ความปลอดภัย
+          {locale === 'th' ? 'ความปลอดภัย' : 'Security'}
         </h2>
         <form onSubmit={handleUpdatePassword} className="space-y-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1.5">
-              เปลี่ยนรหัสผ่านผู้ดูแลระบบ
+              {locale === 'th' ? 'เปลี่ยนรหัสผ่านผู้ดูแลระบบ' : 'Change Administrator Password'}
             </label>
             <div className="flex gap-4">
               <input
@@ -668,14 +673,14 @@ export default function AdminSettingsPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="flex-1 px-4 py-2.5 text-gray-900 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium placeholder-gray-400"
-                placeholder="รหัสผ่านใหม่"
+                placeholder={locale === 'th' ? "รหัสผ่านใหม่" : "New password"}
               />
               <button
                 type="submit"
                 disabled={loading || !password}
                 className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
               >
-                {loading ? '...' : 'เปลี่ยน'}
+                {loading ? '...' : (locale === 'th' ? 'เปลี่ยน' : 'Change')}
               </button>
             </div>
           </div>
@@ -714,14 +719,16 @@ const EditStaffModal = ({
   staffFormData: any;
   setStaffFormData: React.Dispatch<React.SetStateAction<any>>;
 }) => {
+  const locale = useAdminLocale();
+  const { t } = useTranslation(locale);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">แก้ไขข้อมูลพนักงาน</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-4">{t('admin.settings.staff.edit')}</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">ชื่อ-นามสกุล</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.name')}</label>
             <input
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 font-medium"
@@ -732,7 +739,7 @@ const EditStaffModal = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">ตำแหน่ง</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">{locale === 'th' ? 'ตำแหน่ง' : 'Position'}</label>
             <select
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 font-medium"
               value={staffFormData.position}
@@ -740,7 +747,7 @@ const EditStaffModal = ({
                 setStaffFormData((prev: any) => ({ ...prev, position: e.target.value }))
               }
             >
-              <option value="">-- เลือกตำแหน่ง --</option>
+              <option value="">-- {locale === 'th' ? 'เลือกตำแหน่ง' : 'Select Position'} --</option>
               <option value="ผู้จัดการร้าน (Manager)">ผู้จัดการร้าน (Manager)</option>
               <option value="พนักงานบริการ (Server)">พนักงานบริการ (Server)</option>
               <option value="พนักงานต้อนรับ (Host)">พนักงานต้อนรับ (Host)</option>
@@ -749,7 +756,7 @@ const EditStaffModal = ({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">รหัสพนักงาน</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">{locale === 'th' ? 'รหัสพนักงาน' : 'Staff ID'}</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -758,7 +765,7 @@ const EditStaffModal = ({
                 onChange={(e) =>
                   setStaffFormData((prev: any) => ({ ...prev, staff_id: e.target.value }))
                 }
-                placeholder="เช่น ST-001"
+                placeholder={locale === 'th' ? "เช่น ST-001" : "e.g., ST-001"}
               />
               <button
                 type="button"
@@ -767,7 +774,7 @@ const EditStaffModal = ({
                   setStaffFormData((prev: any) => ({ ...prev, staff_id: randomId }));
                 }}
                 className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg border border-gray-300 hover:bg-gray-200"
-                title="สุ่มรหัสพนักงาน"
+                title={locale === 'th' ? "สุ่มรหัสพนักงาน" : "Generate Staff ID"}
               >
                 🎲
               </button>
@@ -779,13 +786,13 @@ const EditStaffModal = ({
             onClick={onClose}
             className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg"
           >
-            ยกเลิก
+            {t('common.cancel')}
           </button>
           <button
             onClick={onSave}
             className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-sm"
           >
-            บันทึก
+            {t('common.save')}
           </button>
         </div>
       </div>

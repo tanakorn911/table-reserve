@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useTranslation } from '@/lib/i18n';
+import { useAdminLocale } from './LanguageSwitcher';
 
 interface TimeSlot {
   time: string;
@@ -16,6 +18,8 @@ interface AdminTimeGridProps {
 }
 
 const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onChange }) => {
+  const locale = useAdminLocale();
+  const { t } = useTranslation(locale);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -51,7 +55,7 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
     <div className="space-y-2">
       <div className="grid grid-cols-3 gap-2">
         {loading ? (
-          <div className="col-span-3 py-4 text-center text-xs text-gray-400">Loading...</div>
+          <div className="col-span-3 py-4 text-center text-xs text-gray-400">{t('common.loading')}</div>
         ) : (
           timeSlots.map((slot) => {
             const isSelected = value === slot.time;
@@ -82,8 +86,8 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
           })
         )}
       </div>
-      <p className="text-[10px] text-gray-400 text-center">
-        * สีแดง = มีการจองเต็ม/หนาแน่น, สีขาว = ว่าง
+      <p className="text-[10px] text-slate-700 font-bold text-center bg-white/50 py-1 rounded">
+        {t('admin.floorPlan.timeGridTips')}
       </p>
     </div>
   );
