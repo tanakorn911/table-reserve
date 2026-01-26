@@ -80,14 +80,22 @@ const Footer: React.FC<FooterProps> = ({ restaurantName, socialLinks }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="
-                  flex items-center justify-center w-10 h-10 rounded-full
+                  group flex items-center justify-center w-[52px] h-[52px] rounded-full
                   bg-muted text-foreground
                   transition-smooth hover:bg-primary hover:text-primary-foreground
-                  active:scale-[0.95] min-w-[44px] min-h-[44px]
+                  active:scale-[0.95]
                 "
                 aria-label={link.name}
               >
-                <Icon name={link.icon} size={20} />
+                {link.icon.endsWith('.png') ? (
+                  <img
+                    src={link.icon}
+                    alt={link.name}
+                    className="w-7 h-7 object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
+                  />
+                ) : (
+                  <Icon name={link.icon} size={26} />
+                )}
               </a>
             ))}
           </div>
