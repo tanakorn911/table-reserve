@@ -15,6 +15,16 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import { useTranslation } from '@/lib/i18n';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 
 interface Reservation {
   id: string;
@@ -43,6 +53,7 @@ export default function DashboardPage() {
   });
   const [recentReservations, setRecentReservations] = useState<Reservation[]>([]);
   const [allReservations, setAllReservations] = useState<Reservation[]>([]);
+  const [hourlyPaxData, setHourlyPaxData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
@@ -60,7 +71,10 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
+      // Get today's date in Thailand time (UTC+7)
+      const now = new Date();
+      const thailandTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+      const todayStr = thailandTime.toISOString().split('T')[0];
 
       // Fetch ALL reservations (today and future)
       const allRes = await fetch('/api/reservations');
@@ -80,7 +94,7 @@ export default function DashboardPage() {
         const pending = upcomingData.filter((r: Reservation) => r.status === 'pending').length;
         const confirmed = upcomingData.filter((r: Reservation) => r.status === 'confirmed').length;
         const pax = upcomingData
-          .filter((r: Reservation) => r.status !== 'cancelled')
+          .filter((r: Reservation) => r.status === 'confirmed')
           .reduce((sum: number, r: Reservation) => sum + (r.party_size || 0), 0);
         const bookedTables = new Set(
           upcomingData
@@ -104,6 +118,21 @@ export default function DashboardPage() {
           );
         setAllReservations(sorted);
         setRecentReservations(sorted.slice(0, 5));
+
+        // Calculate Peak Occupancy Forecast (Today only)
+        const hoursMap = new Map<string, number>();
+        upcomingData
+          .filter((r: Reservation) => r.reservation_date === todayStr && r.status !== 'cancelled')
+          .forEach((r: Reservation) => {
+            const hour = r.reservation_time.split(':')[0] + ':00';
+            hoursMap.set(hour, (hoursMap.get(hour) || 0) + r.party_size);
+          });
+
+        const hourlyData = Array.from(hoursMap.entries())
+          .map(([time, pax]) => ({ time, pax }))
+          .sort((a, b) => a.time.localeCompare(b.time));
+
+        setHourlyPaxData(hourlyData);
       } else {
         setStats({
           todayTotal: 0,
@@ -115,6 +144,7 @@ export default function DashboardPage() {
         });
         setAllReservations([]);
         setRecentReservations([]);
+        setHourlyPaxData([]);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -127,7 +157,7 @@ export default function DashboardPage() {
     setConfirming(id);
     try {
       const res = await fetch(`/api/reservations/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'confirmed' }),
       });
@@ -291,116 +321,139 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Operational Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Reservations */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">{locale === 'th' ? 'รายการจองล่าสุด' : 'Recent Bookings'}</h2>
-            <Link href="/admin/reservations" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-              {locale === 'th' ? 'ดูทั้งหมด' : 'View all'}
-              <ArrowRightIcon className="w-4 h-4" />
-            </Link>
+        {/* Peak Occupancy Forecast (PRIORITY) */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{locale === 'th' ? 'ความหนาแน่นรายชั่วโมง' : 'Peak Occupancy'}</h2>
+              <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
+                {locale === 'th' ? 'จำนวนลูกค้าคาดการณ์ในแต่ละช่วงเวลา' : 'Forecasted guests for today'}
+              </p>
+            </div>
+            {/* Legend or extra info can go here */}
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase">{locale === 'th' ? 'จำนวนลูกค้า (Pax)' : 'Guests'}</span>
+            </div>
           </div>
 
-          {recentReservations.length === 0 ? (
-            <div className="py-12 text-center text-gray-400">
-              <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>{locale === 'th' ? 'ยังไม่มีการจองวันนี้' : 'No bookings today'}</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentReservations.map((r) => (
-                <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-10 rounded-full ${r.status === 'confirmed' ? 'bg-green-500' : r.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-400'}`}></div>
-                    <div>
-                      <p className="font-bold text-gray-900">{r.guest_name}</p>
-                      <p className="text-sm text-gray-500">
-                        {r.reservation_time.substring(0, 5)} • {r.party_size} {locale === 'th' ? 'คน' : 'guests'}
-                        {r.table_name && ` • ${r.table_name}`}
-                      </p>
+          <div className="flex-1 min-h-[300px] -ml-5">
+            {hourlyPaxData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm italic">
+                {locale === 'th' ? 'ไม่มีข้อมูลการจองในวันนี้' : 'No data for today'}
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyPaxData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis
+                    dataKey="time"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 11, fontWeight: 700 }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 11, fontWeight: 700 }}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f9f9f9' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 700 }}
+                  />
+                  <Bar dataKey="pax" radius={[6, 6, 0, 0]} barSize={40}>
+                    {hourlyPaxData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={'#d4af37'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div className="mt-6 pt-5 border-t border-gray-100">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <h3 className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">{locale === 'th' ? 'สถานะโต๊ะวันนี้' : 'Table Status'}</h3>
+                <div className="space-y-1.5 text-center">
+                  <div className="flex items-center justify-center gap-8">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-bold text-gray-600 uppercase tracking-tighter">{locale === 'th' ? 'ว่าง' : 'Available'}</span>
+                      <span className="text-lg font-black text-gray-900 ml-1">{stats.totalTables - stats.bookedTables}</span>
+                    </div>
+                    <div className="w-px h-8 bg-gray-100"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                      <span className="text-xs font-bold text-gray-600 uppercase tracking-tighter">{locale === 'th' ? 'จองแล้ว' : 'Booked'}</span>
+                      <span className="text-lg font-black text-gray-900 ml-1">{stats.bookedTables}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {r.status === 'pending' ? (
-                      <button
-                        onClick={() => handleQuickConfirm(r.id)}
-                        disabled={confirming === r.id}
-                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                      >
-                        {confirming === r.id ? '...' : (locale === 'th' ? 'ยืนยัน' : 'Confirm')}
-                      </button>
-                    ) : (
-                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                        {locale === 'th' ? 'ยืนยันแล้ว' : 'Confirmed'}
-                      </span>
-                    )}
-                  </div>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">{locale === 'th' ? 'ทางลัด' : 'Quick Actions'}</h2>
-
-          <div className="space-y-3">
-            <Link
-              href="/admin/reservations"
-              className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <CalendarIcon className="w-5 h-5 text-blue-600" />
-                <span className="font-medium text-gray-900">{locale === 'th' ? 'จัดการการจอง' : 'Manage Reservations'}</span>
-              </div>
-              <ArrowRightIcon className="w-4 h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/admin/floor-plan"
-              className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <TableCellsIcon className="w-5 h-5 text-green-600" />
-                <span className="font-medium text-gray-900">{locale === 'th' ? 'ผังโต๊ะ' : 'Floor Plan'}</span>
-              </div>
-              <ArrowRightIcon className="w-4 h-4 text-green-600 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/admin/settings"
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <Cog6ToothIcon className="w-5 h-5 text-gray-600" />
-                <span className="font-medium text-gray-900">{locale === 'th' ? 'ตั้งค่าระบบ' : 'Settings'}</span>
-              </div>
-              <ArrowRightIcon className="w-4 h-4 text-gray-600 group-hover:translate-x-1 transition-transform" />
+        {/* Today's Arrival Timeline (SECONDARY) */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{locale === 'th' ? 'ลำดับการจอง' : "Who's Next?"}</h2>
+              <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-tighter font-bold">
+                {locale === 'th' ? 'ใครจะมาถึงในลำดับถัดไป' : 'Arrival priority'}
+              </p>
+            </div>
+            <Link href="/admin/reservations" className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowRightIcon className="w-4 h-4 text-gray-400" />
             </Link>
           </div>
 
-          {/* Table Status Summary */}
-          <div className="mt-6 pt-5 border-t border-gray-100">
-            <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">{locale === 'th' ? 'สถานะโต๊ะวันนี้' : 'Table Status'}</h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-600">{locale === 'th' ? 'ว่าง' : 'Available'}</span>
-                </div>
-                <span className="font-bold text-gray-900">{stats.totalTables - stats.bookedTables}</span>
+          <div className="flex-1 overflow-y-auto max-h-[480px] -mx-1 px-1">
+            {recentReservations.length === 0 ? (
+              <div className="py-12 text-center text-gray-400">
+                <CalendarIcon className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+                <p className="text-xs">{locale === 'th' ? 'ยังไม่มีการจองวันนี้' : 'No bookings'}</p>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-sm text-gray-600">{locale === 'th' ? 'จองแล้ว' : 'Booked'}</span>
-                </div>
-                <span className="font-bold text-gray-900">{stats.bookedTables}</span>
+            ) : (
+              <div className="relative border-l border-gray-100 ml-2 space-y-4 pb-2">
+                {recentReservations.map((r) => {
+                  const now = new Date();
+                  const [h, m] = r.reservation_time.split(':').map(Number);
+                  const resTime = new Date();
+                  resTime.setHours(h, m, 0);
+                  const isComingSoon = r.reservation_date === new Date().toISOString().split('T')[0] &&
+                    resTime.getTime() > now.getTime() &&
+                    (resTime.getTime() - now.getTime()) < 3600000;
+
+                  return (
+                    <div key={r.id} className="relative pl-5">
+                      <div className={`absolute -left-[4.5px] top-1.5 w-2 h-2 rounded-full border border-white ${isComingSoon ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}></div>
+
+                      <div className={`p-3 rounded-xl border transition-all ${isComingSoon ? 'bg-blue-50 border-blue-200' : 'bg-gray-50/50 border-gray-100'
+                        }`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <span className={`text-xs font-black ${isComingSoon ? 'text-blue-700' : 'text-gray-900'}`}>{r.reservation_time.substring(0, 5)}</span>
+                            <p className="font-bold text-[13px] text-gray-900 leading-tight mt-0.5">{r.guest_name}</p>
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500 font-bold uppercase">
+                              <span>{r.party_size} {locale === 'th' ? 'คน' : 'pax'}</span>
+                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                              <span>{r.table_name || '-'}</span>
+                            </div>
+                          </div>
+                          <div className={`w-2 h-8 rounded-full ${r.status === 'confirmed' ? 'bg-green-500/20' : 'bg-yellow-500/20'}`}></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

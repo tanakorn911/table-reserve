@@ -101,9 +101,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <LanguageSwitcher className="hidden sm:flex" />
             <button
               onClick={async () => {
-                await supabase.auth.signOut();
-                router.push('/admin/login');
-                router.refresh();
+                if (window.confirm(adminT('logout.confirm', locale))) {
+                  await supabase.auth.signOut();
+                  router.push('/admin/login');
+                  router.refresh();
+                }
               }}
               className="p-2 md:p-2.5 text-red-400 hover:text-white hover:bg-red-500/20 rounded-xl transition-all border border-red-500/20"
               title={adminT('sidebar.logout', locale)}

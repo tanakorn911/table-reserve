@@ -256,9 +256,9 @@ const LandingPageInteractive: React.FC = () => {
       mapLng: -73.9855,
     },
     socialLinks: [
-      { name: 'Facebook', icon: 'GlobeAltIcon', url: 'https://facebook.com' },
-      { name: 'Instagram', icon: 'CameraIcon', url: 'https://instagram.com' },
-      { name: 'Line', icon: 'ChatBubbleLeftIcon', url: 'https://line.me' },
+      { name: 'Facebook', icon: 'Facebook', url: 'https://facebook.com' },
+      { name: 'Instagram', icon: 'Instagram', url: 'https://instagram.com' },
+      { name: 'Line', icon: 'Line', url: 'https://line.me' },
     ],
   };
 

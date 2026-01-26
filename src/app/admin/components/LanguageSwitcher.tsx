@@ -87,6 +87,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'sidebar.floorPlan': { th: 'จัดการผังร้าน', en: 'Floor Plan' },
         'sidebar.settings': { th: 'ตั้งค่าระบบ', en: 'Settings' },
         'sidebar.logout': { th: 'ออกจากระบบ', en: 'Logout' },
+        'logout.confirm': { th: 'คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?', en: 'Are you sure you want to log out?' },
         'sidebar.admin': { th: 'Admin', en: 'Admin' },
         'sidebar.staff': { th: 'Staff', en: 'Staff' },
 

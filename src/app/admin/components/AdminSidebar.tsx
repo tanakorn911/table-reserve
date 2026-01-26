@@ -50,9 +50,11 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   }, [supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/admin/login');
-    router.refresh();
+    if (window.confirm(adminT('logout.confirm', locale))) {
+      await supabase.auth.signOut();
+      router.push('/admin/login');
+      router.refresh();
+    }
   };
 
   const allMenuItems = [
