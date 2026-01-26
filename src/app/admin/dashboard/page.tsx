@@ -1,117 +1,120 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   UsersIcon,
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
-  BanknotesIcon,
-  UserGroupIcon,
-  LightBulbIcon,
+  TableCellsIcon,
+  ArrowRightIcon,
+  Cog6ToothIcon,
+  ArrowDownTrayIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import { useTranslation } from '@/lib/i18n';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+
+interface Reservation {
+  id: string;
+  guest_name: string;
+  guest_phone: string;
+  party_size: number;
+  reservation_date: string;
+  reservation_time: string;
+  status: string;
+  table_number?: number;
+  table_name?: string;
+  created_at: string;
+}
 
 export default function DashboardPage() {
   const locale = useAdminLocale();
   const { t } = useTranslation(locale);
+
   const [stats, setStats] = useState({
     todayTotal: 0,
     todayPending: 0,
     todayConfirmed: 0,
-    todayCancelled: 0,
-    todayPax: 0, // Total people expected today
+    todayPax: 0,
+    bookedTables: 0,
+    totalTables: 0,
   });
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [hourlyData, setHourlyData] = useState<any[]>([]); // For Peak Hours
+  const [recentReservations, setRecentReservations] = useState<Reservation[]>([]);
+  const [allReservations, setAllReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'today' | 'week'>('today');
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch ALL reservations (or optimize API to support range, but GET /api/reservations supports date)
-      // Ideally: fetch today separately from history.
-
       const todayStr = new Date().toISOString().split('T')[0];
 
-      // 1. Fetch Today's Data
-      const todayRes = await fetch(`/api/reservations?date=${todayStr}`);
-      const { data: todayData } = await todayRes.json();
-
-      // 2. Fetch History (Last 7 days) if needed for 'week' tab
-      // For now, let's just fetch everything for the week chart (simulated with existing API or fetch all)
-      // If the dataset is huge, this is bad. But for now...
-      const allRes = await fetch('/api/reservations'); // This takes status filter but defaults to all if auth
+      // Fetch ALL reservations (today and future)
+      const allRes = await fetch('/api/reservations');
       const { data: allData } = await allRes.json();
 
-      if (todayData) {
-        const total = todayData.length;
-        const pending = todayData.filter((r: any) => r.status === 'pending').length;
-        const confirmed = todayData.filter((r: any) => r.status === 'confirmed').length;
-        const cancelled = todayData.filter((r: any) => r.status === 'cancelled').length;
-        const pax = todayData
-          .filter((r: any) => r.status !== 'cancelled')
-          .reduce((sum: number, r: any) => sum + (r.party_size || 0), 0);
+      // Filter for today and future reservations
+      const upcomingData = (allData || []).filter((r: Reservation) =>
+        r.reservation_date >= todayStr
+      );
+
+      // Fetch tables count
+      const tablesRes = await fetch('/api/tables');
+      const { data: tablesData } = await tablesRes.json();
+
+      if (upcomingData && upcomingData.length > 0) {
+        const total = upcomingData.length;
+        const pending = upcomingData.filter((r: Reservation) => r.status === 'pending').length;
+        const confirmed = upcomingData.filter((r: Reservation) => r.status === 'confirmed').length;
+        const pax = upcomingData
+          .filter((r: Reservation) => r.status !== 'cancelled')
+          .reduce((sum: number, r: Reservation) => sum + (r.party_size || 0), 0);
+        const bookedTables = new Set(
+          upcomingData
+            .filter((r: Reservation) => r.status !== 'cancelled' && r.table_number)
+            .map((r: Reservation) => r.table_number)
+        ).size;
 
         setStats({
           todayTotal: total,
           todayPending: pending,
           todayConfirmed: confirmed,
-          todayCancelled: cancelled,
           todayPax: pax,
+          bookedTables: bookedTables,
+          totalTables: tablesData?.length || 0,
         });
 
-        // Calculate Hourly Distribution (Peak Hours)
-        const hoursMap = new Map<string, number>();
-        todayData
-          .filter((r: any) => r.status !== 'cancelled')
-          .forEach((r: any) => {
-            const hour = r.reservation_time.substring(0, 2); // "18"
-            const key = `${hour}:00`;
-            hoursMap.set(key, (hoursMap.get(key) || 0) + r.party_size);
-          });
-
-        // Sort keys by time
-        const sortedHours = Array.from(hoursMap.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([time, pax]) => ({ time, pax }));
-
-        setHourlyData(sortedHours);
-      }
-
-      if (allData) {
-        // Prepare weekly chart
-        const last7Days = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          return d.toISOString().split('T')[0];
-        }).reverse();
-
-        const chart = last7Days.map((date) => {
-          const dayReservations = allData.filter((r: any) => r.reservation_date === date);
-          return {
-            name: new Date(date).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric' }),
-            bookings: dayReservations.length,
-          };
+        // Get recent reservations (latest 5)
+        const sorted = [...upcomingData]
+          .sort((a: Reservation, b: Reservation) =>
+            new Date(a.reservation_date + 'T' + a.reservation_time).getTime() - new Date(b.reservation_date + 'T' + b.reservation_time).getTime()
+          );
+        setAllReservations(sorted);
+        setRecentReservations(sorted.slice(0, 5));
+      } else {
+        setStats({
+          todayTotal: 0,
+          todayPending: 0,
+          todayConfirmed: 0,
+          todayPax: 0,
+          bookedTables: 0,
+          totalTables: tablesData?.length || 0,
         });
-
-        setChartData(chart);
+        setAllReservations([]);
+        setRecentReservations([]);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -120,20 +123,74 @@ export default function DashboardPage() {
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon, color, subtitle }: any) => (
-    <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start justify-between hover:shadow-md transition-shadow group">
-      <div>
-        <p className="text-sm font-bold text-slate-500 mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-gray-900">{value}</h3>
-        {subtitle && <p className="text-[12px] text-slate-800 mt-1 font-bold">{subtitle}</p>}
-      </div>
-      <div
-        className={`p-4 rounded-xl ${color} shadow-lg transition-transform group-hover:scale-110`}
-      >
-        <Icon className="w-8 h-8 text-white" />
-      </div>
-    </div>
-  );
+  const handleQuickConfirm = async (id: string) => {
+    setConfirming(id);
+    try {
+      const res = await fetch(`/api/reservations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'confirmed' }),
+      });
+      if (res.ok) {
+        await fetchDashboardData();
+      }
+    } catch (error) {
+      console.error('Error confirming:', error);
+    } finally {
+      setConfirming(null);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (allReservations.length === 0) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const headers = ['ID', 'Guest Name', 'Phone', 'Party Size', 'Date', 'Time', 'Status', 'Table'];
+    const rows = allReservations.map(r => [
+      r.id,
+      r.guest_name,
+      r.guest_phone,
+      r.party_size,
+      r.reservation_date,
+      r.reservation_time,
+      r.status,
+      r.table_name || '-'
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reservations_${todayStr}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleClearDay = async () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const confirmMsg = locale === 'th'
+      ? `ยืนยันการเคลียร์รายการจองวันที่ ${todayStr}?\n\n⚠️ แนะนำให้ Export CSV ก่อนลบ!`
+      : `Confirm clearing reservations for ${todayStr}?\n\n⚠️ Recommended to Export CSV first!`;
+
+    if (!confirm(confirmMsg)) return;
+
+    setClearing(true);
+    try {
+      // Delete all reservations for today
+      for (const r of allReservations) {
+        await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' });
+      }
+      await fetchDashboardData();
+    } catch (error) {
+      console.error('Error clearing:', error);
+    } finally {
+      setClearing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -144,12 +201,12 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">{t('admin.dashboard.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {t('admin.dashboard.subtitle')}{' '}
+          <p className="text-sm text-gray-400 mt-1">
             {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
               weekday: 'long',
               year: 'numeric',
@@ -159,140 +216,191 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setActiveTab('today')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'today'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-              }`}
+            onClick={handleExportCSV}
+            disabled={allReservations.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {t('admin.dashboard.today')}
+            <ArrowDownTrayIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">{locale === 'th' ? 'Export CSV' : 'Export CSV'}</span>
           </button>
           <button
-            onClick={() => setActiveTab('week')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'week'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-              }`}
+            onClick={handleClearDay}
+            disabled={clearing || allReservations.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {locale === 'th' ? 'สัปดาห์นี้' : 'This Week'}
+            <TrashIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">{clearing ? '...' : (locale === 'th' ? 'เคลียร์วันนี้' : 'Clear Today')}</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title={t('admin.dashboard.stats.guests')}
-          value={stats.todayPax}
-          subtitle={locale === 'th' ? 'คาดการณ์ลูกค้าวันนี้' : 'Expected guests today'}
-          icon={UserGroupIcon}
-          color="bg-purple-600"
-        />
-        <StatCard
-          title={locale === 'th' ? 'จองวันนี้ทั้งหมด' : 'Total Bookings Today'}
-          value={stats.todayTotal}
-          subtitle={`${stats.todayConfirmed} ${locale === 'th' ? 'ยืนยัน' : 'confirmed'} / ${stats.todayPending} ${locale === 'th' ? 'รอ' : 'pending'}`}
-          icon={CalendarIcon}
-          color="bg-blue-600"
-        />
-        <StatCard
-          title={t('admin.dashboard.stats.waiting')}
-          value={stats.todayPending}
-          subtitle={locale === 'th' ? 'ต้องกดอนุมัติ' : 'Needs approval'}
-          icon={ClockIcon}
-          color={stats.todayPending > 0 ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'}
-        />
-        <StatCard
-          title={t('admin.dashboard.stats.confirmed')}
-          value={stats.todayConfirmed}
-          subtitle={locale === 'th' ? 'พร้อมให้บริการ' : 'Ready to serve'}
-          icon={CheckCircleIcon}
-          color="bg-green-600"
-        />
-      </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Today's Bookings */}
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <CalendarIcon className="w-5 h-5 text-blue-600" />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'การจองวันนี้' : 'Today\'s Bookings'}</p>
+          <p className="text-3xl font-black text-gray-900 mt-1">{stats.todayTotal}</p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Chart */}
-        <div className="lg:col-span-2 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-          <h2 className="mb-6 text-lg font-bold text-gray-900 flex items-center">
-            {activeTab === 'today'
-              ? t('admin.dashboard.peak.title')
-              : locale === 'th' ? 'แนวโน้มการจอง (7 วันย้อนหลัง)' : 'Booking Trend (Last 7 Days)'}
-          </h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              {activeTab === 'today' ? (
-                <AreaChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" stroke="#9CA3AF" />
-                  <YAxis allowDecimals={false} stroke="#9CA3AF" />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="pax"
-                    stroke="#8884d8"
-                    fill="#8884d8"
-                    fillOpacity={0.2}
-                    name={locale === 'th' ? 'จำนวนลูกค้า' : 'Guests'}
-                  />
-                </AreaChart>
-              ) : (
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#9CA3AF" />
-                  <YAxis allowDecimals={false} stroke="#9CA3AF" />
-                  <Tooltip />
-                  <Bar dataKey="bookings" fill="#3B82F6" radius={[4, 4, 0, 0]} name={locale === 'th' ? 'จำนวนการจอง' : 'Bookings'} />
-                </BarChart>
-              )}
-            </ResponsiveContainer>
-            {activeTab === 'today' && hourlyData.length === 0 && (
-              <div className="flex h-full items-center justify-center text-gray-400 pb-20 -mt-80">
-                {locale === 'th' ? 'ยังไม่มีข้อมูลการจองสำหรับวันนี้' : 'No reservations data for today'}
-              </div>
+        {/* Pending */}
+        <div className={`bg-white rounded-xl p-5 border ${stats.todayPending > 0 ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'}`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className={`p-2 rounded-lg ${stats.todayPending > 0 ? 'bg-yellow-100' : 'bg-gray-100'}`}>
+              <ClockIcon className={`w-5 h-5 ${stats.todayPending > 0 ? 'text-yellow-600' : 'text-gray-500'}`} />
+            </div>
+            {stats.todayPending > 0 && (
+              <span className="text-xs font-bold text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded-full animate-pulse">
+                {locale === 'th' ? 'ต้องดำเนินการ' : 'Action needed'}
+              </span>
             )}
           </div>
+          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'รอยืนยัน' : 'Pending'}</p>
+          <p className={`text-3xl font-black mt-1 ${stats.todayPending > 0 ? 'text-yellow-700' : 'text-gray-900'}`}>{stats.todayPending}</p>
         </div>
 
-        {/* Quick Actions / Summary */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('admin.dashboard.tableStatus.title')}</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                <span className="text-gray-700 font-medium">{t('admin.dashboard.tableStatus.available')}</span>
-              </div>
-              <span className="font-bold text-gray-900">-</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                <span className="text-gray-700 font-medium">{t('admin.dashboard.tableStatus.booked')}</span>
-              </div>
-              <span className="font-bold text-gray-900">{stats.todayTotal}</span>
+        {/* Expected Guests */}
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <UsersIcon className="w-5 h-5 text-purple-600" />
             </div>
           </div>
+          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'ลูกค้าที่จะมา' : 'Expected Guests'}</p>
+          <p className="text-3xl font-black text-gray-900 mt-1">{stats.todayPax}</p>
+          <p className="text-xs text-gray-400 mt-1">{locale === 'th' ? 'คน (ยืนยันแล้ว)' : 'guests (confirmed)'}</p>
+        </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 bg-slate-50/50 p-4 rounded-xl shadow-inner">
-            <h3 className="text-base font-black text-slate-900 mb-3 uppercase tracking-wider flex items-center gap-2">
-              <LightBulbIcon className="w-5 h-5 text-yellow-500" />
-              {t('admin.dashboard.forecast.title')}
-            </h3>
-            <ul className="text-sm text-slate-700 space-y-3 list-disc pl-4 font-bold">
-              <li>
-                {locale === 'th' ? 'ช่วงเวลา Peak วันนี้คือ' : 'Peak hour today is'}{' '}
-                <strong>
-                  {hourlyData.length > 0
-                    ? hourlyData.reduce((prev, current) =>
-                      prev.pax > current.pax ? prev : current
-                    ).time
-                    : '-'}
-                </strong>
-              </li>
-              <li>{locale === 'th' ? 'เตรียมพนักงานให้เพียงพอก่อนเวลา 17:00' : 'Prepare adequate staff before 17:00'}</li>
-            </ul>
+        {/* Tables Booked */}
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-green-50 rounded-lg">
+              <TableCellsIcon className="w-5 h-5 text-green-600" />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'โต๊ะที่จองแล้ว' : 'Tables Booked'}</p>
+          <p className="text-3xl font-black text-gray-900 mt-1">{stats.bookedTables}</p>
+          <p className="text-xs text-gray-400 mt-1">{locale === 'th' ? `จาก ${stats.totalTables} โต๊ะ` : `of ${stats.totalTables} tables`}</p>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Reservations */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">{locale === 'th' ? 'รายการจองล่าสุด' : 'Recent Bookings'}</h2>
+            <Link href="/admin/reservations" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+              {locale === 'th' ? 'ดูทั้งหมด' : 'View all'}
+              <ArrowRightIcon className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {recentReservations.length === 0 ? (
+            <div className="py-12 text-center text-gray-400">
+              <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>{locale === 'th' ? 'ยังไม่มีการจองวันนี้' : 'No bookings today'}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentReservations.map((r) => (
+                <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-10 rounded-full ${r.status === 'confirmed' ? 'bg-green-500' : r.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-400'}`}></div>
+                    <div>
+                      <p className="font-bold text-gray-900">{r.guest_name}</p>
+                      <p className="text-sm text-gray-500">
+                        {r.reservation_time.substring(0, 5)} • {r.party_size} {locale === 'th' ? 'คน' : 'guests'}
+                        {r.table_name && ` • ${r.table_name}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {r.status === 'pending' ? (
+                      <button
+                        onClick={() => handleQuickConfirm(r.id)}
+                        disabled={confirming === r.id}
+                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                      >
+                        {confirming === r.id ? '...' : (locale === 'th' ? 'ยืนยัน' : 'Confirm')}
+                      </button>
+                    ) : (
+                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                        {locale === 'th' ? 'ยืนยันแล้ว' : 'Confirmed'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{locale === 'th' ? 'ทางลัด' : 'Quick Actions'}</h2>
+
+          <div className="space-y-3">
+            <Link
+              href="/admin/reservations"
+              className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <CalendarIcon className="w-5 h-5 text-blue-600" />
+                <span className="font-medium text-gray-900">{locale === 'th' ? 'จัดการการจอง' : 'Manage Reservations'}</span>
+              </div>
+              <ArrowRightIcon className="w-4 h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            <Link
+              href="/admin/floor-plan"
+              className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <TableCellsIcon className="w-5 h-5 text-green-600" />
+                <span className="font-medium text-gray-900">{locale === 'th' ? 'ผังโต๊ะ' : 'Floor Plan'}</span>
+              </div>
+              <ArrowRightIcon className="w-4 h-4 text-green-600 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            <Link
+              href="/admin/settings"
+              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <Cog6ToothIcon className="w-5 h-5 text-gray-600" />
+                <span className="font-medium text-gray-900">{locale === 'th' ? 'ตั้งค่าระบบ' : 'Settings'}</span>
+              </div>
+              <ArrowRightIcon className="w-4 h-4 text-gray-600 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Table Status Summary */}
+          <div className="mt-6 pt-5 border-t border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">{locale === 'th' ? 'สถานะโต๊ะวันนี้' : 'Table Status'}</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">{locale === 'th' ? 'ว่าง' : 'Available'}</span>
+                </div>
+                <span className="font-bold text-gray-900">{stats.totalTables - stats.bookedTables}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">{locale === 'th' ? 'จองแล้ว' : 'Booked'}</span>
+                </div>
+                <span className="font-bold text-gray-900">{stats.bookedTables}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
