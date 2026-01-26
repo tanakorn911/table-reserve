@@ -124,6 +124,9 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     // Check against minDate & maxDate
     if (date < minDateObj || date > maxDate) return true;
 
+    // 🛡️ PERMANENT FRIDAY HOLIDAY: Friday is day 5
+    if (date.getDay() === 5) return true;
+
     // Check against holidays
     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     if (holidays.some((h) => h.date === dateStr)) return true;
@@ -222,6 +225,9 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     maxDate.setDate(maxDate.getDate() + 30);
     maxDate.setHours(0, 0, 0, 0);
     if (date > maxDate) return true;
+
+    // 🛡️ PERMANENT FRIDAY HOLIDAY
+    if (date.getDay() === 5) return true;
 
     if (holidays.some((h) => h.date === dateValue)) return true;
 
@@ -336,9 +342,8 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
               {currentDays.map((day, i) => (
                 <div
                   key={day}
-                  className={`text-center text-sm font-medium py-2 ${
-                    i === 0 ? 'text-red-400' : i === 6 ? 'text-primary' : 'text-gray-400'
-                  }`}
+                  className={`text-center text-sm font-medium py-2 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-primary' : 'text-gray-400'
+                    }`}
                 >
                   {day}
                 </div>
@@ -358,17 +363,16 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                       className={`
                                                 relative w-full h-full flex flex-col items-center justify-center rounded-lg text-sm font-medium
                                                 transition-all duration-200
-                                                ${
-                                                  isSelected(day)
-                                                    ? 'bg-primary text-white shadow-md'
-                                                    : isToday(day)
-                                                      ? 'bg-primary/20 text-primary border border-primary'
-                                                      : getHoliday(day)
-                                                        ? 'bg-red-900/30 text-red-400 border border-red-900/50'
-                                                        : isDateDisabled(day)
-                                                          ? 'text-gray-600 cursor-not-allowed'
-                                                          : 'text-white hover:bg-white/10'
-                                                }
+                                                ${isSelected(day)
+                          ? 'bg-primary text-white shadow-md'
+                          : isToday(day)
+                            ? 'bg-primary/20 text-primary border border-primary'
+                            : getHoliday(day)
+                              ? 'bg-red-900/30 text-red-400 border border-red-900/50'
+                              : isDateDisabled(day)
+                                ? 'text-gray-600 cursor-not-allowed'
+                                : 'text-white hover:bg-white/10'
+                        }
                                             `}
                     >
                       {day}

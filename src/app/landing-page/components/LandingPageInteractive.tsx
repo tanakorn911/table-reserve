@@ -62,9 +62,9 @@ const DEFAULT_HOURS: any = {
   '1': { open: '11:00', close: '22:00' },
   '2': { open: '11:00', close: '22:00' },
   '3': { open: '11:00', close: '22:00' },
-  '4': { open: '11:00', close: '23:00' },
-  '5': { open: '11:00', close: '23:00' },
-  '6': { open: '10:00', close: '23:00' },
+  '4': { open: '11:00', close: '23:00' }, // Thursday
+  // 🛡️ Friday is skipped in default (Permanent Holiday)
+  '6': { open: '10:00', close: '23:00' }, // Saturday
 };
 
 const LandingPageInteractive: React.FC = () => {
@@ -116,28 +116,31 @@ const LandingPageInteractive: React.FC = () => {
         const thailandTime = getThailandTime();
         const currentDayIndex = thailandTime.getDay();
 
-        const displayOrder = [1, 2, 3, 4, 5, 6, 0];
+        const displayOrder = [0, 1, 2, 3, 4, 5, 6];
 
         const newSchedule = displayOrder.map((dayIndex) => {
-          const dayConfig = hoursData[String(dayIndex)];
           let timeRange = t('hours.closed');
 
-          if (dayConfig) {
-            if (locale === 'th') {
-              timeRange = `${dayConfig.open} - ${dayConfig.close} น.`;
-            } else {
-              const toAmPm = (timeStr: string) => {
-                try {
-                  const [h, m] = timeStr.split(':');
-                  let hour = parseInt(h, 10);
-                  const ampm = hour >= 12 ? 'PM' : 'AM';
-                  hour = hour % 12 || 12;
-                  return `${hour}:${m} ${ampm}`;
-                } catch {
-                  return timeStr;
-                }
-              };
-              timeRange = `${toAmPm(dayConfig.open)} - ${toAmPm(dayConfig.close)}`;
+          // 🛡️ PERMANENT FRIDAY HOLIDAY: Hard override for display
+          if (dayIndex !== 5) {
+            const dayConfig = hoursData[String(dayIndex)];
+            if (dayConfig) {
+              if (locale === 'th') {
+                timeRange = `${dayConfig.open} - ${dayConfig.close} น.`;
+              } else {
+                const toAmPm = (timeStr: string) => {
+                  try {
+                    const [h, m] = timeStr.split(':');
+                    let hour = parseInt(h, 10);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    hour = hour % 12 || 12;
+                    return `${hour}:${m} ${ampm}`;
+                  } catch {
+                    return timeStr;
+                  }
+                };
+                timeRange = `${toAmPm(dayConfig.open)} - ${toAmPm(dayConfig.close)}`;
+              }
             }
           }
 
@@ -156,13 +159,12 @@ const LandingPageInteractive: React.FC = () => {
           const currentDayIndex = thailandTime.getDay();
 
           const fallbackSchedule = [
+            { id: 0, open: '10:00', close: '21:00' },
             { id: 1, open: '11:00', close: '22:00' },
             { id: 2, open: '11:00', close: '22:00' },
             { id: 3, open: '11:00', close: '22:00' },
             { id: 4, open: '11:00', close: '23:00' },
-            { id: 5, open: '11:00', close: '23:00' },
             { id: 6, open: '10:00', close: '23:00' },
-            { id: 0, open: '10:00', close: '21:00' },
           ].map((item) => {
             const hoursStr = `${item.open} - ${item.close}`;
             return {
@@ -183,8 +185,7 @@ const LandingPageInteractive: React.FC = () => {
           .from('holidays')
           .select('*')
           .gte('holiday_date', today)
-          .order('holiday_date', { ascending: true })
-          .limit(3);
+          .order('holiday_date', { ascending: true });
         if (isMounted && data) {
           setHolidays(data);
         }

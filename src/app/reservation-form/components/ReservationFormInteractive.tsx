@@ -677,12 +677,11 @@ const ReservationFormInteractive = () => {
                         htmlFor="slip_upload"
                         className={`
                             flex flex-col items-center justify-center w-full min-h-[160px] px-6 py-6
-                            rounded-2xl border-2 border-dashed transition-all cursor-pointer
-                            ${
-                              slipFile
-                                ? 'bg-primary/10 border-primary shadow-glow-sm'
-                                : 'bg-muted/20 border-border hover:border-primary/50 hover:bg-muted/40'
-                            }
+                            rounded-2xl border-2 border-dashed transition-all cursor-pointer group
+                            ${slipFile
+                            ? 'bg-primary/10 border-primary shadow-glow-sm'
+                            : 'bg-muted/20 border-border hover:border-accent/50 hover:bg-accent/5'
+                          }
                         `}
                       >
                         {slipFile ? (
@@ -699,14 +698,14 @@ const ReservationFormInteractive = () => {
                           </div>
                         ) : (
                           <div className="flex flex-col items-center text-center">
-                            <div className="p-4 bg-card rounded-full mb-3 border border-border shadow-sm group-hover:scale-110 transition-transform">
+                            <div className="p-4 bg-card rounded-full mb-3 border border-border shadow-sm group-hover:scale-110 group-hover:border-accent/50 group-hover:shadow-glow-sm transition-all duration-300">
                               <Icon
                                 name="ArrowUpTrayIcon"
                                 size={24}
-                                className="text-muted-foreground"
+                                className="text-muted-foreground group-hover:text-accent transition-colors"
                               />
                             </div>
-                            <p className="text-base font-bold text-foreground">
+                            <p className="text-base font-bold text-foreground group-hover:text-accent transition-colors">
                               {t('payment.upload.label')}
                             </p>
                             <p className="text-xs text-muted-foreground mt-2 max-w-[200px]">

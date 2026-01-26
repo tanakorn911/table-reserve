@@ -108,10 +108,19 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
 
         const table = tables.find((t) => t.id === draggingTableId);
         if (table) {
+            // 🛡️ Auto-Zone Detection Logic
+            let detectedZone = 'Indoor';
+            if (snappedX > 70) {
+                detectedZone = 'Outdoor';
+            } else if (snappedX >= 6 && snappedX <= 44 && snappedY >= 46 && snappedY <= 94) {
+                detectedZone = 'VIP';
+            }
+
             onTableUpdate({
                 ...table,
                 x: Number(snappedX.toFixed(2)),
                 y: Number(snappedY.toFixed(2)),
+                zone: detectedZone, // Update zone automatically
             });
         }
     };
@@ -165,16 +174,13 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
         const capacity = table.capacity;
 
         const isSelected = selectedTableId === table.id;
-        // bookedInfo is computed each render in map, but here we need to find it again or pass it.
-        // The renderChairs is called inside map, so it has access to table.
-        // But `bookedTables` is prop.
         const isBooked = bookedTables.find((t) => t.id === table.id);
 
         const chairColorClass = isSelected
-            ? 'bg-primary/20 border-primary/40'
+            ? 'bg-primary border-primary/40' // Bright chairs when selected
             : isBooked
-                ? 'bg-red-900/50 border-red-700/50'
-                : 'bg-slate-400 border-slate-500'; // Darker silver chairs
+                ? 'bg-red-500/50 border-red-700/50'
+                : 'bg-slate-400 border-slate-500';
 
         if (table.shape === 'circle') {
             for (let i = 0; i < capacity; i++) {
@@ -182,9 +188,9 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                 chairs.push(
                     <div
                         key={i}
-                        className={`absolute w-3 h-3 rounded-full border shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${chairColorClass}`}
+                        className={`absolute w-3.5 h-3.5 rounded-full border shadow-sm ${chairColorClass}`}
                         style={{
-                            transform: `rotate(${angle}deg) translate(0, -140%)`,
+                            transform: `rotate(${angle}deg) translate(0, -145%)`,
                         }}
                     />
                 );
@@ -192,24 +198,46 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
             return <div className="absolute inset-0 flex items-center justify-center">{chairs}</div>;
         }
 
-        const sideCapacity = Math.ceil(capacity / 2);
+        // Rectangle/Square Table - Distribute chairs around 4 sides
+        const chairsPerSide = {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0
+        };
+
+        // Distribution logic
+        for (let i = 0; i < capacity; i++) {
+            if (i % 4 === 0) chairsPerSide.top++;
+            else if (i % 4 === 1) chairsPerSide.bottom++;
+            else if (i % 4 === 2) chairsPerSide.left++;
+            else chairsPerSide.right++;
+        }
 
         return (
             <>
-                <div className="absolute -top-3 w-full flex justify-center gap-1">
-                    {Array.from({ length: sideCapacity }).map((_, i) => (
-                        <div
-                            key={`t-${i}`}
-                            className={`w-6 h-2 rounded-t-sm border-t border-x ${chairColorClass}`}
-                        />
+                {/* Top Chairs */}
+                <div className="absolute -top-3.5 left-0 w-full flex justify-center gap-1 px-2">
+                    {Array.from({ length: chairsPerSide.top }).map((_, i) => (
+                        <div key={`t-${i}`} className={`w-6 h-3 rounded-t-lg border-t border-x ${chairColorClass} shadow-sm`} />
                     ))}
                 </div>
-                <div className="absolute -bottom-3 w-full flex justify-center gap-1">
-                    {Array.from({ length: capacity - sideCapacity }).map((_, i) => (
-                        <div
-                            key={`b-${i}`}
-                            className={`w-6 h-2 rounded-b-sm border-b border-x ${chairColorClass}`}
-                        />
+                {/* Bottom Chairs */}
+                <div className="absolute -bottom-3.5 left-0 w-full flex justify-center gap-1 px-2">
+                    {Array.from({ length: chairsPerSide.bottom }).map((_, i) => (
+                        <div key={`b-${i}`} className={`w-6 h-3 rounded-b-lg border-b border-x ${chairColorClass} shadow-sm`} />
+                    ))}
+                </div>
+                {/* Left Chairs */}
+                <div className="absolute -left-3.5 top-0 h-full flex flex-col justify-center gap-1 py-2">
+                    {Array.from({ length: chairsPerSide.left }).map((_, i) => (
+                        <div key={`l-${i}`} className={`w-3 h-6 rounded-l-lg border-l border-y ${chairColorClass} shadow-sm`} />
+                    ))}
+                </div>
+                {/* Right Chairs */}
+                <div className="absolute -right-3.5 top-0 h-full flex flex-col justify-center gap-1 py-2">
+                    {Array.from({ length: chairsPerSide.right }).map((_, i) => (
+                        <div key={`r-${i}`} className={`w-3 h-6 rounded-r-lg border-r border-y ${chairColorClass} shadow-sm`} />
                     ))}
                 </div>
             </>
@@ -346,6 +374,17 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                             {t('admin.floorPlan.entrance') || 'Entrance'}
                         </div>
                     </div>
+
+                    {/* NEW: Cashier Area - In front of VIP, aligned bottom */}
+                    <div className="absolute bottom-6 left-[46%] w-32 h-20 bg-slate-800 rounded-[1rem] border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                        <div className="flex flex-col items-center">
+                            <Icon name="CreditCardIcon" size={20} className="text-blue-400 mb-1" />
+                            <span className="text-[12px] font-black text-slate-300 uppercase tracking-tight text-center px-2">
+                                {t('admin.floorPlan.cashier')}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {filteredTables.map((table) => {
@@ -380,6 +419,16 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                             }}
                         >
                             {renderChairs(table)}
+
+                            {/* Capacity Badge - New! */}
+                            <div className={`absolute -top-2 -left-2 z-20 px-1.5 py-0.5 rounded-md text-[10px] font-black shadow-sm border
+                                ${selectedTableId === table.id
+                                    ? 'bg-white text-primary border-primary'
+                                    : 'bg-slate-800 text-white border-slate-600'}
+                            `}>
+                                {table.capacity}
+                            </div>
+
                             <div
                                 className={`px-4 py-2 rounded-full text-[14px] font-black z-10 pointer-events-none transition-all duration-300 shadow-md backdrop-blur-md
                                     ${selectedTableId === table.id ? 'text-white' : 'text-slate-900 bg-white border-2 border-slate-300'}

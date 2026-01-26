@@ -58,6 +58,7 @@
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    UPSTASH_REDIS_REST_URL=your_upstash_url # For Rate Limiting
    UPSTASH_REDIS_REST_TOKEN=your_upstash_token
    LINE_CHANNEL_ACCESS_TOKEN=your_line_token

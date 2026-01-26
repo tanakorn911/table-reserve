@@ -328,7 +328,7 @@ const ReservationWizard = () => {
                 }}
             />
 
-            <div className="container mx-auto px-2 md:px-4 max-w-5xl relative z-10">
+            <div className="container mx-auto px-2 md:px-4 max-w-7xl relative z-10">
                 {/* Stepper */}
                 <div className="mb-4 md:mb-12">
                     <div className="flex justify-between relative px-1 md:px-4 max-w-2xl mx-auto">
@@ -512,7 +512,7 @@ const ReservationWizard = () => {
                                                         bookedTables={bookedTables}
                                                         partySize={parseInt(formData.guests)}
                                                         onTableSelect={(id) => setFormData((p) => ({ ...p, tableId: id }))}
-                                                        height={typeof window !== 'undefined' && window.innerWidth < 768 ? 550 : 700}
+                                                        height={typeof window !== 'undefined' && window.innerWidth < 768 ? 600 : 850}
                                                         locale={locale}
                                                     />
                                                 </div>
@@ -635,12 +635,12 @@ const ReservationWizard = () => {
                                                     border-2 border-dashed rounded-2xl p-6 transition-all text-center relative overflow-hidden
                                                     ${previewSlipUrl
                                                             ? 'border-green-500/50 bg-green-500/10'
-                                                            : 'border-white/20 hover:border-primary/50 hover:bg-white/5'
+                                                            : 'border-white/20 hover:border-accent/50 hover:bg-accent/5 shadow-glow-sm'
                                                         }
                                                 `}
                                                 >
                                                     {/* Hover glow */}
-                                                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                                                    <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
                                                     {previewSlipUrl ? (
                                                         <div className="text-green-400 font-bold text-sm flex flex-col items-center justify-center gap-2 relative z-10">
@@ -654,14 +654,14 @@ const ReservationWizard = () => {
                                                         </div>
                                                     ) : (
                                                         <div className="text-white/80 text-xs relative z-10">
-                                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
+                                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:border-accent/30 group-hover:shadow-glow-sm transition-all duration-300">
                                                                 <Icon
                                                                     name="ArrowUpTrayIcon"
                                                                     size={24}
-                                                                    className="text-white group-hover:text-primary transition-colors"
+                                                                    className="text-white group-hover:text-accent transition-colors"
                                                                 />
                                                             </div>
-                                                            <span className="font-bold text-white block mb-1 text-sm">
+                                                            <span className="font-bold text-white block mb-1 text-sm group-hover:text-accent transition-colors">
                                                                 {t('payment.upload')}
                                                             </span>
                                                             {t('payment.upload.label')}
@@ -709,6 +709,9 @@ const ReservationWizard = () => {
                                                 <Icon name="CheckCircleIcon" size={16} className="text-white" />
                                                 <span className="font-bold text-sm md:text-base">
                                                     {tables.find((t) => t.id === formData.tableId)?.name}
+                                                    <span className="ml-1 opacity-80 text-xs">
+                                                        ({tables.find((t) => t.id === formData.tableId)?.capacity} {t('form.guests.label')})
+                                                    </span>
                                                 </span>
                                             </>
                                         ) : (
