@@ -19,7 +19,7 @@ const DEFAULT_OPENING_HOURS: { [key: number]: { open: string; close: string } } 
   2: { open: '11:00', close: '22:00' }, // Tuesday
   3: { open: '11:00', close: '22:00' }, // Wednesday
   4: { open: '11:00', close: '23:00' }, // Thursday
-  5: { open: '11:00', close: '23:00' }, // Friday
+  // 🛡️ Friday Holiday (Permanent)
   6: { open: '10:00', close: '23:00' }, // Saturday
 };
 
@@ -63,6 +63,10 @@ function generateTimeSlots(
 ) {
   const dateObj = new Date(date + 'T00:00:00');
   const dayOfWeek = dateObj.getDay();
+
+  // 🛡️ PERMANENT FRIDAY HOLIDAY: Always closed on Fridays
+  if (dayOfWeek === 5) return [];
+
   const hours = openingHours[String(dayOfWeek)] || openingHours[dayOfWeek];
 
   if (!hours) return []; // Closed

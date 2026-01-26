@@ -203,6 +203,7 @@ export const translations = {
     'admin.floorPlan.zone.indoor': 'โซนห้องแอร์',
     'admin.floorPlan.zone.outdoor': 'โซนด้านนอก',
     'admin.floorPlan.zone.vip': 'โซน VIP',
+    'admin.floorPlan.cashier': 'เคาน์เตอร์แคชเชียร์',
     'admin.floorPlan.entrance': 'ทางเข้า',
     'admin.floorPlan.allZones': 'ทุกโซน',
     'admin.floorPlan.noTablesInZone': 'ไม่มีโต๊ะในโซนนี้',
@@ -514,6 +515,7 @@ export const translations = {
     'admin.floorPlan.zone.indoor': 'Indoor Zone',
     'admin.floorPlan.zone.outdoor': 'Outdoor Zone',
     'admin.floorPlan.zone.vip': 'VIP Zone',
+    'admin.floorPlan.cashier': 'Cashier Counter',
 
     // Wizard Steps
     'wizard.step.schedule': 'Schedule',

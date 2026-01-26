@@ -81,71 +81,74 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               {t('success.title')}
             </h2>
             <p className="text-base text-muted-foreground text-center">{t('success.subtitle')}</p>
-            <p className="text-base text-muted-foreground text-center font-semibold text-primary">
-              {t('success.screenshot')}
-            </p>
+            <div className="bg-accent px-6 py-3 rounded-2xl animate-pulse shadow-[0_0_20px_rgba(212,175,55,0.4)] mt-4">
+              <p className="text-sm md:text-base font-black text-slate-900 text-center flex items-center gap-2 tracking-tight">
+                <Icon name="CameraIcon" size={20} variant="solid" />
+                {t('success.screenshot')}
+              </p>
+            </div>
           </div>
 
           <div className="px-6 pb-6">
-            <div className="bg-muted rounded-md p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <Icon name="IdentificationIcon" size={20} className="text-primary mt-0.5" />
+            <div className="bg-white/5 rounded-2xl p-6 space-y-4 border border-white/10">
+              <div className="flex items-start gap-4">
+                <Icon name="IdentificationIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">{t('success.code')}</p>
-                  <p className="text-xl font-black text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border-2 border-blue-200 inline-block tracking-widest">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{t('success.code')}</p>
+                  <p className="text-xl font-black text-blue-400 bg-blue-400/10 px-4 py-1.5 rounded-xl border border-blue-400/30 inline-block tracking-widest shadow-glow-sm">
                     {activeReservation.bookingCode || activeReservation.id.slice(0, 8)}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Icon name="UserIcon" size={20} className="text-primary mt-0.5" />
+              <div className="flex items-start gap-4">
+                <Icon name="UserIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">{t('form.name')}</p>
-                  <p className="text-base font-medium text-foreground">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.name')}</p>
+                  <p className="text-base font-bold text-white">
                     {activeReservation.fullName}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Icon name="PhoneIcon" size={20} className="text-primary mt-0.5" />
+              <div className="flex items-start gap-4">
+                <Icon name="PhoneIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">{t('form.phone')}</p>
-                  <p className="text-base font-medium text-foreground">{activeReservation.phone}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.phone')}</p>
+                  <p className="text-base font-bold text-white">{activeReservation.phone}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Icon name="CalendarIcon" size={20} className="text-primary mt-0.5" />
+              <div className="flex items-start gap-4">
+                <Icon name="CalendarIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">{t('form.date')}</p>
-                  <p className="text-base font-medium text-foreground">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.date')}</p>
+                  <p className="text-base font-bold text-white">
                     {formatDate(activeReservation.date)}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Icon name="ClockIcon" size={20} className="text-primary mt-0.5" />
+              <div className="flex items-start gap-4">
+                <Icon name="ClockIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">{t('form.time')}</p>
-                  <p className="text-base font-medium text-foreground">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.time')}</p>
+                  <p className="text-base font-bold text-white">
                     {formatTime(activeReservation.time)}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Icon name="UsersIcon" size={20} className="text-primary mt-0.5" />
+              <div className="flex items-start gap-4">
+                <Icon name="UsersIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">{t('form.guests')}</p>
-                  <p className="text-base font-medium text-foreground">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.guests')}</p>
+                  <p className="text-base font-bold text-white">
                     {activeReservation.guests} {t('form.guests.label')}
                   </p>
                 </div>
               </div>
               {activeReservation.specialRequests && (
-                <div className="flex items-start gap-3">
-                  <Icon name="ChatBubbleLeftRightIcon" size={20} className="text-primary mt-0.5" />
+                <div className="flex items-start gap-4">
+                  <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                   <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">{t('form.requests')}</p>
-                    <p className="text-base font-medium text-foreground">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.requests')}</p>
+                    <p className="text-base font-bold text-white">
                       {activeReservation.specialRequests}
                     </p>
                   </div>

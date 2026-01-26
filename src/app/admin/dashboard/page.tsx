@@ -147,7 +147,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
+          <h1 className="text-2xl font-bold text-white">{t('admin.dashboard.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {t('admin.dashboard.subtitle')}{' '}
             {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {

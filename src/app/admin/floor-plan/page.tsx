@@ -37,7 +37,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
   };
 
   const handleSubmit = () => {
-    if (formData) {
+    if (formData && formData.name) {
       onSave(formData as Table);
       onClose();
     }
@@ -218,8 +218,8 @@ export default function FloorPlanAdminPage() {
           ...t,
           x: t.x ?? 0,
           y: t.y ?? 0,
-          width: t.width || 60,
-          height: t.height || 40,
+          width: 80, // Standard width
+          height: 80, // Standard height
           shape: t.shape || 'rectangle',
           zone: t.zone || 'Indoor',
         }));
@@ -280,6 +280,13 @@ export default function FloorPlanAdminPage() {
   }, [viewMode, checkDate, checkTime]);
 
   const handleTableUpdate = async (updatedTable: Table) => {
+    // Check for duplicate names (excluding itself)
+    const isDuplicate = tables.some(t => t.name.toLowerCase() === updatedTable.name.toLowerCase() && t.id !== updatedTable.id);
+    if (isDuplicate) {
+      alert(locale === 'th' ? 'ชื่อโต๊ะนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น' : 'Table name already exists, please use another name');
+      return;
+    }
+
     setTables((prev) => prev.map((t) => (t.id === updatedTable.id ? updatedTable : t)));
 
     try {
@@ -293,8 +300,8 @@ export default function FloorPlanAdminPage() {
           zone: updatedTable.zone,
           x: updatedTable.x,
           y: updatedTable.y,
-          width: updatedTable.width,
-          height: updatedTable.height,
+          width: 80, // Ensure standard size
+          height: 80, // Ensure standard size
         }),
       });
     } catch (error) {
@@ -315,8 +322,8 @@ export default function FloorPlanAdminPage() {
           body: JSON.stringify({
             x: t.x,
             y: t.y,
-            width: t.width,
-            height: t.height,
+            width: 80, // Force standard size
+            height: 80, // Force standard size
           }),
         })
       );
@@ -333,18 +340,27 @@ export default function FloorPlanAdminPage() {
 
   const addTable = async (shape: TableShape, zone: string = 'Indoor') => {
     const newTableCount = tables.length + 1;
+    let newName = `T-${newTableCount}`;
+
+    // Ensure unique default name
+    let counter = 1;
+    while (tables.some(t => t.name === newName)) {
+      newName = `T-${newTableCount + counter}`;
+      counter++;
+    }
+
     try {
       const response = await fetch('/api/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: `T-${newTableCount}`,
+          name: newName,
           capacity: 4,
           description: locale === 'th' ? 'โต๊ะใหม่' : 'New Table',
           x: 50,
           y: 50,
-          width: shape === 'circle' ? 80 : 80,
-          height: shape === 'circle' ? 80 : 60,
+          width: 80, // Standard size
+          height: 80, // Standard size
           shape: shape,
           zone: zone,
           locale: locale,
