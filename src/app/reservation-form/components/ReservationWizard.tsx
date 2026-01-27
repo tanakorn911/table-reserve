@@ -383,7 +383,7 @@ const ReservationWizard = () => {
                     </div>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-md rounded-2xl md:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-visible">
+                <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl overflow-visible outline-none ring-0">
                     <AnimatePresence mode="wait">
                         {step === 1 && (
                             <motion.div

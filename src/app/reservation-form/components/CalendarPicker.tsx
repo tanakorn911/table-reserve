@@ -314,7 +314,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
             className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] cursor-pointer"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-[#2D3748] border-2 border-gray-600 rounded-xl shadow-xl p-4 pointer-events-auto">
+          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-[#2D3748] border-2 border-gray-600 rounded-2xl shadow-xl p-4 pointer-events-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <button
@@ -353,7 +353,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
             {/* Days grid */}
             <div className="grid grid-cols-7 gap-1">
               {days.map((day, index) => (
-                <div key={index} className="h-12">
+                <div key={index} className="aspect-[2/1]">
                   {day && (
                     <button
                       type="button"
