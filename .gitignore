@@ -40,3 +40,6 @@ jest-test-results.json
 
 # Optional: if using TurboRepo or monorepo
 turbo/
+
+# Optional: if using IDEs
+detailed_code_walkthrough.md/
