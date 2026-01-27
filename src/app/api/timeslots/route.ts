@@ -67,7 +67,10 @@ function generateTimeSlots(
   // 🛡️ PERMANENT FRIDAY HOLIDAY: Always closed on Fridays
   if (dayOfWeek === 5) return [];
 
-  const hours = openingHours[String(dayOfWeek)] || openingHours[dayOfWeek];
+  const hours =
+    openingHours[String(dayOfWeek)] ||
+    openingHours[dayOfWeek] ||
+    DEFAULT_OPENING_HOURS[dayOfWeek];
 
   if (!hours) return []; // Closed
 
@@ -80,7 +83,12 @@ function generateTimeSlots(
   const DURATION_MINUTES = 105;
 
   let currentMinutes = openHour * 60 + openMin;
-  const endMinutes = closeHour * 60 + closeMin;
+  let endMinutes = closeHour * 60 + closeMin;
+
+  // Handle midnight crossing (e.g. close at 00:00 or 01:00)
+  if (endMinutes <= currentMinutes) {
+    endMinutes += 24 * 60;
+  }
 
   // Get current time in Thailand (UTC+7)
   const now = new Date();
@@ -161,7 +169,7 @@ function generateTimeSlots(
       status,
     });
 
-    currentMinutes += 90; // 90-minute intervals
+    currentMinutes += 30; // 30-minute intervals for flexibility
   }
 
   return slots;

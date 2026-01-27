@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
         const settingsJson = await settingsRes.json();
 
         if (settingsJson.data && settingsJson.data.value) {
-          setBusinessHours(settingsJson.data.value);
+          setBusinessHours({ ...DEFAULT_HOURS, ...settingsJson.data.value });
         }
 
         // Fetch Staff Profiles
