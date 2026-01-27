@@ -252,12 +252,12 @@ const LandingPageInteractive: React.FC = () => {
       phone: '054-466-666',
       email: 'contact@up.ac.th',
       address: t('contact.address.full'),
-      mapLat: 19.0283,
-      mapLng: 99.8961,
+      mapLat: 40.7128,
+      mapLng: -74.0060,
     },
     socialLinks: [
-      { name: 'Facebook', icon: 'Facebook', url: 'https://facebook.com/demo' },
-      { name: 'Instagram', icon: 'Instagram', url: 'https://instagram.com/demo' },
+      { name: 'Facebook', icon: 'Facebook', url: 'https://facebook.com/chanasorn.phaochuad' },
+      { name: 'Instagram', icon: 'Instagram', url: 'https://instagram.com/csphf' },
     ],
   };
 

@@ -87,15 +87,7 @@ const Footer: React.FC<FooterProps> = ({ restaurantName, socialLinks }) => {
                 "
                 aria-label={link.name}
               >
-                {link.icon.endsWith('.png') ? (
-                  <img
-                    src={link.icon}
-                    alt={link.name}
-                    className="w-7 h-7 object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
-                  />
-                ) : (
-                  <Icon name={link.icon} size={26} />
-                )}
+                <Icon name={link.icon} size={26} />
               </a>
             ))}
           </div>
