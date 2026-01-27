@@ -15,6 +15,8 @@ import {
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import PasswordChangeModal from './PasswordChangeModal';
+
 
 interface BusinessHours {
   [key: string]: { open: string; close: string };
@@ -69,6 +71,11 @@ export default function AdminSettingsPage() {
   const [holidaysLoading, setHolidaysLoading] = useState(true);
 
   const supabase = createClientSupabaseClient();
+
+  // 🔐 Password Change State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+
 
   const fetchProfiles = async () => {
     setProfilesLoading(true);
@@ -474,6 +481,43 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
       <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('admin.settings.title')}</h1>
+
+      {/* 🔐 Password Change Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {locale === 'th' ? 'เปลี่ยนรหัสผ่าน' : 'Change Password'}
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {locale === 'th' ? 'เปลี่ยนรหัสผ่านของคุณเพื่อความปลอดภัย' : 'Change your password for security'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-all active:scale-95 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+            </svg>
+            {locale === 'th' ? 'เปลี่ยนรหัสผ่าน' : 'Change Password'}
+          </button>
+        </div>
+      </div>
+
+      {/* 🔐 Password Change Modal Component */}
+      <PasswordChangeModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        locale={locale}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Business Hours Configuration */}

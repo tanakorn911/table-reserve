@@ -130,6 +130,21 @@ export async function PUT(request: NextRequest) {
             },
         });
 
+        // 🔒 Smart Password Change Logic
+        // If changing own password, warn that it will cause logout
+        // But allow admin to change other users' passwords freely
+        const isChangingOwnPassword = password && id === user.id;
+
+        if (isChangingOwnPassword) {
+            // Option 1: Block it completely (current behavior)
+            // return NextResponse.json({ 
+            //     error: 'Cannot change your own password here. Use /api/change-password instead to avoid logout.' 
+            // }, { status: 400 });
+
+            // Option 2: Allow but warn (recommended)
+            console.warn(`Admin ${user.email} is changing their own password. They will be logged out.`);
+        }
+
         // Update Auth (Email/Password)
         const updateData: any = {};
         if (email) updateData.email = email;
