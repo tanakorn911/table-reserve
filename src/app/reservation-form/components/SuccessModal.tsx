@@ -81,8 +81,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               {t('success.title')}
             </h2>
             <p className="text-base text-muted-foreground text-center">{t('success.subtitle')}</p>
-            <div className="bg-accent px-6 py-3 rounded-2xl animate-pulse shadow-[0_0_20px_rgba(212,175,55,0.4)] mt-4">
-              <p className="text-sm md:text-base font-black text-slate-900 text-center flex items-center gap-2 tracking-tight">
+            <div className="bg-red-600 px-6 py-3 rounded-2xl animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-4">
+              <p className="text-sm md:text-base font-black text-white text-center flex items-center gap-2 tracking-tight">
                 <Icon name="CameraIcon" size={20} variant="solid" />
                 {t('success.screenshot')}
               </p>
