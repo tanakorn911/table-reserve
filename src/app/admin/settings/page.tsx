@@ -398,6 +398,16 @@ export default function AdminSettingsPage() {
 
       alert(locale === 'th' ? 'อัปเดตข้อมูลพนักงานเรียบร้อย' : 'Staff information updated successfully');
       setIsStaffModalOpen(false);
+
+      // 🔄 Refresh session if password was changed (prevents logout)
+      if (staffFormData.password) {
+        try {
+          await supabase.auth.refreshSession();
+        } catch (refreshError) {
+          console.warn('Session refresh failed:', refreshError);
+        }
+      }
+
       fetchProfiles(); // Refresh list
     } catch (error: any) {
       alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + error.message);
