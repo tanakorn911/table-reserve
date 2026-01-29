@@ -19,19 +19,19 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
 
   return (
     <section className="py-16 lg:py-24 bg-card">
-      <div className="container mx-auto px-4 lg:px-6">
+      <div className="container px-4 mx-auto lg:px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <Icon name="ClockIcon" size={32} className="text-primary" />
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-primary/10">
+              <Icon name="ClockIcon" size={32} className="text-white" />
             </div>
-            <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
+            <h2 className="mb-4 text-4xl font-bold lg:text-5xl font-heading text-foreground">
               {t('hours.title')}
             </h2>
             <p className="text-lg text-muted-foreground">{t('hours.subtitle')}</p>
           </div>
 
-          <div className="bg-background rounded-xl shadow-warm-md p-6 lg:p-8">
+          <div className="p-6 bg-background rounded-xl shadow-warm-md lg:p-8">
             <div className="space-y-4">
               {schedule.map((item, index) => (
                 <div
@@ -53,7 +53,7 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                     <span
                       className={`
                         text-lg font-semibold
-                        ${item.isToday ? 'text-primary' : 'text-foreground'}
+                        ${item.isToday ? 'text-gray-300' : 'text-foreground'}
                       `}
                     >
                       {item.day}
@@ -62,7 +62,7 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                   <span
                     className={`
                       text-lg font-medium
-                      ${item.isToday ? 'text-primary' : 'text-muted-foreground'}
+                      ${item.isToday ? 'text-gray-300' : 'text-muted-foreground'}
                     `}
                   >
                     {item.hours}
