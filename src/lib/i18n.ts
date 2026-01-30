@@ -224,6 +224,7 @@ export const translations = {
     'wizard.table': 'เลือกโต๊ะ',
     'wizard.view.map': 'มุมมองแผนผัง',
     'wizard.view.list': 'มุมมองรายการ',
+    'wizard.ai.magic': 'AI ช่วยเลือกโต๊ะ ✨',
 
     // Table Status
     'table.status.available': 'ว่าง',
@@ -309,6 +310,17 @@ export const translations = {
     'admin.login.button': 'เข้าสู่ระบบ',
     'admin.login.role.admin': 'ผู้ดูแลระบบ',
     'admin.login.role.staff': 'พนักงาน',
+
+    // AI Recommendation
+    'ai.title': 'AI ผู้ช่วยเลือกโต๊ะ',
+    'ai.poweredBy': 'ขับเคลื่อนโดย Gemini',
+    'ai.instruction': 'บอก AI ว่าคุณอยากได้โต๊ะแบบไหน?',
+    'ai.placeholder': 'เช่น ขอโต๊ะมุมเงียบๆ สำหรับคุยงาน, อยากได้วิวสวยๆ ถ่ายรูป, หรือขอโต๊ะใหญ่สำหรับปาร์ตี้วันเกิด...',
+    'ai.thinking': 'กำลังประมวลผล...',
+    'ai.ask': 'ให้ AI ช่วยเลือก',
+    'ai.suggested': 'แนะนำสำหรับคุณ',
+    'ai.retry': 'ลองใหม่',
+    'ai.select': 'เลือกโต๊ะนี้',
   },
   en: {
     // Common
@@ -541,6 +553,7 @@ export const translations = {
     'wizard.table': 'Select Table',
     'wizard.view.map': 'Map View',
     'wizard.view.list': 'List View',
+    'wizard.ai.magic': 'AI Table Helper ✨',
 
     // Admin Dashboard
     'admin.dashboard.title': 'Today\'s Reservations Overview',
@@ -615,6 +628,17 @@ export const translations = {
     'admin.login.button': 'Login',
     'admin.login.role.admin': 'Administrator',
     'admin.login.role.staff': 'Staff',
+
+    // AI Recommendation
+    'ai.title': 'AI Magic Select',
+    'ai.poweredBy': 'Powered by Gemini',
+    'ai.instruction': 'Tell AI what kind of table you prefer',
+    'ai.placeholder': 'e.g., A quiet corner for a meeting, a table with good view, or a big table for birthday party...',
+    'ai.thinking': 'Thinking...',
+    'ai.ask': 'Ask AI',
+    'ai.suggested': 'Suggested for You',
+    'ai.retry': 'Try Again',
+    'ai.select': 'Select This Table',
   },
 };
 

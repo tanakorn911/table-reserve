@@ -13,6 +13,7 @@ import FloorPlan from '@/components/floor-plan/FloorPlan';
 import TableListView from './TableListView';
 import SubmitButton from './SubmitButton';
 import SuccessModal from './SuccessModal';
+import AIRecommendationModal from './AIRecommendationModal';
 import Icon from '@/components/ui/AppIcon';
 import { Table } from '@/types/tables';
 import { useNavigation } from '@/contexts/NavigationContext';
@@ -80,6 +81,7 @@ const ReservationWizard = () => {
     const [bookedTables, setBookedTables] = useState<{ id: number; time: string }[]>([]); // Changed state
     const [previewSlipUrl, setPreviewSlipUrl] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+    const [showAIModal, setShowAIModal] = useState(false);
 
     useEffect(() => {
         // Simple client-side check to default to list on mobile
@@ -471,25 +473,35 @@ const ReservationWizard = () => {
                                     </div>
 
                                     {/* View Toggle */}
-                                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 w-full md:w-auto">
+                                    <div className="flex gap-2 w-full md:w-auto flex-col md:flex-row">
                                         <button
-                                            onClick={() => setViewMode('list')}
-                                            className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
-                                                ${viewMode === 'list' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}
-                                            `}
+                                            onClick={() => setShowAIModal(true)}
+                                            className="px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white"
                                         >
-                                            <Icon name="ListBulletIcon" size={18} />
-                                            {t('wizard.view.list')}
+                                            <Icon name="SparklesIcon" size={18} />
+                                            {t('wizard.ai.magic')}
                                         </button>
-                                        <button
-                                            onClick={() => setViewMode('map')}
-                                            className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
-                                                ${viewMode === 'map' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}
-                                            `}
-                                        >
-                                            <Icon name="MapIcon" size={18} />
-                                            {t('wizard.view.map')}
-                                        </button>
+
+                                        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10">
+                                            <button
+                                                onClick={() => setViewMode('list')}
+                                                className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
+                                                    ${viewMode === 'list' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}
+                                                `}
+                                            >
+                                                <Icon name="ListBulletIcon" size={18} />
+                                                {t('wizard.view.list')}
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('map')}
+                                                className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
+                                                    ${viewMode === 'map' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}
+                                                `}
+                                            >
+                                                <Icon name="MapIcon" size={18} />
+                                                {t('wizard.view.map')}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -835,6 +847,16 @@ const ReservationWizard = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <AIRecommendationModal
+                isOpen={showAIModal}
+                onClose={() => setShowAIModal(false)}
+                onSelectTable={(id) => setFormData(prev => ({ ...prev, tableId: id }))}
+                date={formData.date}
+                time={formData.time}
+                guests={parseInt(formData.guests)}
+                locale={locale}
+            />
 
             {showSuccess && reservationDetails && (
                 <SuccessModal
