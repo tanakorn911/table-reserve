@@ -189,7 +189,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
             className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] cursor-pointer"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-xl shadow-warm-lg p-4 max-h-[350px] overflow-y-auto pointer-events-auto">
+          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-2xl shadow-warm-lg p-4 max-h-[350px] overflow-y-auto pointer-events-auto">
             <div className="flex items-center justify-between mb-3 sticky top-0 bg-card/90 backdrop-blur-sm pb-2 z-10">
               <h4 className="text-sm font-semibold text-foreground">
                 {locale === 'th' ? 'เลือกเวลา' : 'Select Time'}
@@ -227,7 +227,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 min-[400px]:grid-cols-3 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 min-[400px]:grid-cols-4 sm:grid-cols-5 gap-3">
                 {timeSlots.map(({ time, label, status }) => {
                   const isSelected = value === time;
                   const isDisabled = status !== 'available' && !isSelected;
@@ -254,7 +254,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
                       onClick={(e) => !isDisabled && handleSelect(e, time)}
                       title={`${displayLabel}`}
                       className={`
-                        flex items-center justify-center py-3.5 px-2 rounded-xl text-sm font-bold transition-all duration-200
+                        flex items-center justify-center py-2 px-1 rounded-lg text-sm font-bold transition-all duration-200
                         ${getStatusColor(status, isSelected)}
                         ${isDisabled ? '' : 'active:scale-90 cursor-pointer shadow-sm hover:shadow-md'}
                       `}

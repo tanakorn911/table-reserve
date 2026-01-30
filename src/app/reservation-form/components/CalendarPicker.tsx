@@ -314,7 +314,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
             className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] cursor-pointer"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-[#2D3748] border-2 border-gray-600 rounded-xl shadow-xl p-4 pointer-events-auto">
+          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-[#2D3748] border-2 border-gray-600 rounded-2xl shadow-xl p-4 pointer-events-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <button
@@ -342,7 +342,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
               {currentDays.map((day, i) => (
                 <div
                   key={day}
-                  className={`text-center text-sm font-medium py-2 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-primary' : 'text-gray-400'
+                  className={`text-center text-sm font-medium py-2 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-300' : 'text-gray-300'
                     }`}
                 >
                   {day}
@@ -353,7 +353,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
             {/* Days grid */}
             <div className="grid grid-cols-7 gap-1">
               {days.map((day, index) => (
-                <div key={index} className="aspect-square">
+                <div key={index} className="aspect-[2/1]">
                   {day && (
                     <button
                       type="button"
@@ -366,11 +366,11 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                                                 ${isSelected(day)
                           ? 'bg-primary text-white shadow-md'
                           : isToday(day)
-                            ? 'bg-primary/20 text-primary border border-primary'
+                            ? 'bg-primary/20 text-white border border-primary hover:bg-primary/30'
                             : getHoliday(day)
                               ? 'bg-red-900/30 text-red-400 border border-red-900/50'
                               : isDateDisabled(day)
-                                ? 'text-gray-600 cursor-not-allowed'
+                                ? 'text-gray-400 cursor-not-allowed opacity-50'
                                 : 'text-white hover:bg-white/10'
                         }
                                             `}
