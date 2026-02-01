@@ -80,6 +80,11 @@ export async function middleware(request: NextRequest) {
             return response;
         }
 
+        // Allow POST /api/ai/recommend-table (Public - AI Recommendations)
+        if (path === '/api/ai/recommend-table') {
+            return response;
+        }
+
         // Block everything if not logged in (other than allowed public above)
         if (isWrite && !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
