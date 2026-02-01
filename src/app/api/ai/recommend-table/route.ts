@@ -125,7 +125,14 @@ export async function POST(request: NextRequest) {
         const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsedResponse = JSON.parse(cleanedJson);
 
-        return NextResponse.json(parsedResponse);
+        // Enhance response with table name
+        const recommendedTable = availableTables.find(t => t.id === parsedResponse.recommendedTableId);
+        const finalResponse = {
+            ...parsedResponse,
+            recommendedTableName: recommendedTable?.name || `Table ${parsedResponse.recommendedTableId}`
+        };
+
+        return NextResponse.json(finalResponse);
     } catch (error: any) {
         console.error('AI Error:', error);
 

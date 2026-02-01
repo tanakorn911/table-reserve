@@ -27,7 +27,7 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
     const { t } = useTranslation(locale);
     const [query, setQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<{ recommendedTableId: number; reasoning: string } | null>(
+    const [result, setResult] = useState<{ recommendedTableId: number; recommendedTableName?: string; reasoning: string } | null>(
         null
     );
     const [error, setError] = useState('');
@@ -169,7 +169,7 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                                                     </span>
                                                 </div>
                                                 <h4 className="text-3xl font-black text-white mb-2">
-                                                    {t('checkStatus.label.tableNum', { num: result.recommendedTableId })}
+                                                    {result.recommendedTableName || t('checkStatus.label.tableNum', { num: result.recommendedTableId })}
                                                 </h4>
                                                 <p className="text-white/80 text-sm leading-relaxed font-medium">
                                                     "{result.reasoning}"

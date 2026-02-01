@@ -50,6 +50,7 @@ interface ReservationDetails {
     fullName: string;
     phone: string;
     guests: string;
+    tableName?: string;
     date: string;
     time: string;
     specialRequests: string;
@@ -290,6 +291,7 @@ const ReservationWizard = () => {
                 fullName: formData.fullName,
                 phone: formData.phone,
                 guests: formData.guests,
+                tableName: tables.find((t) => t.id === formData.tableId)?.name,
                 date: formData.date,
                 time: formData.time,
                 specialRequests: formData.specialRequests,

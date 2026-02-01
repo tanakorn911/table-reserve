@@ -18,6 +18,7 @@
 - **Premium UI** - ดีไซน์หรูหราพร้อมไอคอนแบบ Outline ที่สวยงามและทันสมัย
 - **ตรวจสอบสถานะ** - เช็คการจองแบบ Real-time ผ่านรหัส BX-XXXXXX หรือเบอร์โทร
 - **Rate Limiting** - ป้องกัน Spam การจองด้วย Upstash Redis
+- **AI Recommendation** - ผู้ช่วยเลือกโต๊ะอัจฉริยะ (Powered by Gemini) ที่แนะนำโต๊ะตามความต้องการของลูกค้า
 
 ### 🔐 สำหรับพนักงาน/Admin
 
@@ -97,7 +98,9 @@ SUPABASE_SERVICE_ROLE_KEY=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 LINE_CHANNEL_ACCESS_TOKEN=
+LINE_CHANNEL_ACCESS_TOKEN=
 LINE_TARGET_ID=
+GEMINI_API_KEY=
 ```
 
 ---
@@ -142,6 +145,8 @@ LINE_TARGET_ID=
 | **TypeScript** | Type Safety |
 | **Tailwind CSS** | Styling |
 | **Supabase** | Database + Auth + Storage |
+| **Google Gemini** | AI Table Recommendation |
+| **Upstash Redis** | Rate Limiting |
 | **React Context** | State Management |
 | **Heroicons** | Icon Library |
 

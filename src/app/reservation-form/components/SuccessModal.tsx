@@ -9,6 +9,7 @@ interface ReservationDetails {
   fullName: string;
   phone: string;
   guests: string;
+  tableName?: string;
   date: string;
   time: string;
   specialRequests: string;
@@ -143,6 +144,17 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </p>
                 </div>
               </div>
+              {activeReservation.tableName && (
+                <div className="flex items-start gap-4">
+                  <Icon name="MapIcon" size={22} className="text-accent mt-0.5" variant="solid" />
+                  <div className="flex-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('admin.floorPlan.editModal.name')}</p>
+                    <p className="text-base font-bold text-white">
+                      {activeReservation.tableName}
+                    </p>
+                  </div>
+                </div>
+              )}
               {activeReservation.specialRequests && (
                 <div className="flex items-start gap-4">
                   <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-accent mt-0.5" variant="solid" />

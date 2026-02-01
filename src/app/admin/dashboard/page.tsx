@@ -80,7 +80,12 @@ export default function DashboardPage() {
       const allRes = await fetch('/api/reservations');
       const { data: allData } = await allRes.json();
 
-      // Filter for today and future reservations
+      // Filter for today ONLY for stats
+      const todayData = (allData || []).filter((r: Reservation) =>
+        r.reservation_date === todayStr
+      );
+
+      // Filter for upcoming (Today + Future) for "Who's Next" list
       const upcomingData = (allData || []).filter((r: Reservation) =>
         r.reservation_date >= todayStr
       );
@@ -89,15 +94,17 @@ export default function DashboardPage() {
       const tablesRes = await fetch('/api/tables');
       const { data: tablesData } = await tablesRes.json();
 
-      if (upcomingData && upcomingData.length > 0) {
-        const total = upcomingData.length;
-        const pending = upcomingData.filter((r: Reservation) => r.status === 'pending').length;
-        const confirmed = upcomingData.filter((r: Reservation) => r.status === 'confirmed').length;
-        const pax = upcomingData
+      if (todayData) { // Check against todayData for stats
+        const total = todayData.length;
+        const pending = todayData.filter((r: Reservation) => r.status === 'pending').length;
+        const confirmed = todayData.filter((r: Reservation) => r.status === 'confirmed').length;
+        const pax = todayData
           .filter((r: Reservation) => r.status === 'confirmed')
           .reduce((sum: number, r: Reservation) => sum + (r.party_size || 0), 0);
+
+        // Count tables booked TODAY
         const bookedTables = new Set(
-          upcomingData
+          todayData
             .filter((r: Reservation) => r.status !== 'cancelled' && r.table_number)
             .map((r: Reservation) => r.table_number)
         ).size;
@@ -111,18 +118,31 @@ export default function DashboardPage() {
           totalTables: tablesData?.length || 0,
         });
 
-        // Get recent reservations (latest 5)
-        const sorted = [...upcomingData]
+
+
+        const sortedToday = [...todayData]
           .sort((a: Reservation, b: Reservation) =>
             new Date(a.reservation_date + 'T' + a.reservation_time).getTime() - new Date(b.reservation_date + 'T' + b.reservation_time).getTime()
           );
-        setAllReservations(sorted);
-        setRecentReservations(sorted.slice(0, 5));
+
+        setAllReservations(sortedToday);
+
+        // For "Who's Next", usually we want to see upcoming bookings even if today is empty?
+        // But the previous logic used `upcomingData`. 
+        // Let's stick to `upcomingData` for `setRecentReservations` to show context, 
+        // BUT `setAllReservations` (used for Export/Clear) must be TODAY ONLY.
+
+        const sortedUpcoming = [...upcomingData]
+          .sort((a: Reservation, b: Reservation) =>
+            new Date(a.reservation_date + 'T' + a.reservation_time).getTime() - new Date(b.reservation_date + 'T' + b.reservation_time).getTime()
+          );
+
+        setRecentReservations(sortedUpcoming.slice(0, 5));
 
         // Calculate Peak Occupancy Forecast (Today only)
         const hoursMap = new Map<string, number>();
-        upcomingData
-          .filter((r: Reservation) => r.reservation_date === todayStr && r.status !== 'cancelled')
+        todayData
+          .filter((r: Reservation) => r.status !== 'cancelled')
           .forEach((r: Reservation) => {
             const hour = r.reservation_time.split(':')[0] + ':00';
             hoursMap.set(hour, (hoursMap.get(hour) || 0) + r.party_size);
