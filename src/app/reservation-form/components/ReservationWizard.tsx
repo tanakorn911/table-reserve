@@ -84,14 +84,21 @@ const ReservationWizard = () => {
     const [showAIModal, setShowAIModal] = useState(false);
 
     useEffect(() => {
+        // Force scroll to top when landing on this page
+        // Use timeout to ensure it runs after any automatic scroll restoration
+        const timer = setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }, 10);
+
         // Simple client-side check to default to list on mobile
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setViewMode('list');
         } else {
             setViewMode('map');
         }
-    }, []);
 
+        return () => clearTimeout(timer);
+    }, []);
 
     const supabase = useMemo(() => createClientSupabaseClient(), []);
 
@@ -523,7 +530,7 @@ const ReservationWizard = () => {
                                                         selectedTableId={formData.tableId}
                                                         bookedTables={bookedTables}
                                                         partySize={parseInt(formData.guests)}
-                                                        onTableSelect={(id) => setFormData((p) => ({ ...p, tableId: id }))}
+                                                        onTableSelect={(id) => setFormData((p) => ({ ...p, tableId: p.tableId === id ? undefined : id }))}
                                                         height={typeof window !== 'undefined' && window.innerWidth < 768 ? 600 : 850}
                                                         locale={locale}
                                                     />
@@ -534,7 +541,7 @@ const ReservationWizard = () => {
                                         <TableListView
                                             tables={tables}
                                             selectedTableId={formData.tableId}
-                                            onSelect={(id) => setFormData((p) => ({ ...p, tableId: id }))}
+                                            onSelect={(id) => setFormData((p) => ({ ...p, tableId: p.tableId === id ? undefined : id }))}
                                             bookedTables={bookedTables}
                                             partySize={parseInt(formData.guests)}
                                         />
