@@ -35,7 +35,7 @@
 
 ### ข้อกำหนดระบบ
 
-- Node.js 18+ 
+- Node.js 20+ 
 - Supabase Account
 - Upstash Redis Account (สำหรับ Rate Limiting)
 - LINE Notify Token (สำหรับแจ้งเตือน, ไม่บังคับ)
@@ -69,38 +69,60 @@
 4. **Setup Database**
    - สร้างตาราง `reservations`, `tables`, `settings`, `profiles` ใน Supabase
    - เปิดใช้งาน Row Level Security (RLS)
-   - Import schema จาก `/supabase` (ถ้ามี)
+   - Import schema (ดูไฟล์ `database_schema.md` หรือใช้ SQL ใน `/supabase`)
 
 5. **รันโปรเจค**
+
+   **แบบที่ 1: รันด้วย Docker (แนะนำสำหรับ Production/Easy Setup)**
+   ```bash
+   # สร้างและรัน Container
+   docker compose up -d
+
+   # ดู Logs
+   docker compose logs -f
+   ```
+   เข้าใช้งานได้ที่ [http://localhost:3000](http://localhost:3000)
+
+   **แบบที่ 2: รันแบบ Local Development**
    ```bash
    npm run dev
    ```
-   เปิด [http://localhost:4028](http://localhost:4028)
+   เข้าใช้งานได้ที่ [http://localhost:4028](http://localhost:4028)
 
 ---
 
 ## 📦 Deploy ขึ้น Production
 
-### Deploy ด้วย Vercel (แนะนำ)
+มี 2 ทางเลือกหลัก:
 
+### ทางเลือกที่ 1: Deploy ด้วย Vercel (แนะนำ - ง่ายที่สุด)
+**ไม่ต้องใช้ Docker** เหมาะสำหรับผู้เริ่มต้นและต้องการความเสถียรสูง
 1. Push โค้ดขึ้น GitHub
 2. เข้า [Vercel](https://vercel.com) → Import Project
-3. เลือก Repository
-4. ตั้งค่า Environment Variables ใน Settings
-5. Deploy!
+3. ตั้งค่า Environment Variables (ตามรายการข้างล่าง)
+4. กด Deploy ได้เลย (Vercel จะจัดการ Build ให้เองอัตโนมัติ)
+
+### ทางเลือกที่ 2: Self-Allocated (ใช้ Docker)
+เหมาะสำหรับรันบน VPS (DigitalOcean, AWS EC2) หรือเครื่อง Server ของตัวเอง
+1. ติดตั้ง Docker และ Docker Compose บนเครื่อง Server
+2. Clone git repo ไปที่ Server
+3. สร้างไฟล์ `.env` (เปลี่ยนจาก .env.local)
+4. รันคำสั่ง:
+   ```bash
+   docker compose up -d --build
+   ```
 
 ### Environment Variables สำหรับ Production
-
+ต้องตั้งค่าตัวแปรเหล่านี้ทั้งใน Vercel หรือ .env.local ของ Server:
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-LINE_CHANNEL_ACCESS_TOKEN=
-LINE_CHANNEL_ACCESS_TOKEN=
-LINE_TARGET_ID=
-GEMINI_API_KEY=
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+LINE_CHANNEL_ACCESS_TOKEN=...
+LINE_TARGET_ID=...
+GEMINI_API_KEY=...
 ```
 
 ---
@@ -175,6 +197,18 @@ table-reserve/
 หากพบปัญหาหรือต้องการความช่วยเหลือ:
 - 📧 Email: tanakorn488@outlook.com
 - 🐛 Issues: [GitHub Issues](https://github.com/tanakorn911/table-reserve/issues)
+
+---
+
+---
+
+## 👥 คณะผู้จัดทำ
+
+| รหัสนิสิต | ชื่อ-นามสกุล (TH) | Name (EN) |
+|------------|-------------------|-----------|
+| **67020982** | นายธนกร แก้วใหม่ | Tanakorn Kaewmai |
+| **67024717** | นายกิตติพัฒน์ ยศวงค์ | Kittiphat Yotwong |
+| **67024740** | นายชนสรณ์ เผ่าชวด | Chanasorn Phaochoad |
 
 ---
 

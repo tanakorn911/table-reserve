@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  app:
+    container_name: table-reserve
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: ${NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY}
+        UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+        UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+        GEMINI_API_KEY: ${GEMINI_API_KEY}
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production

@@ -343,13 +343,6 @@ export async function GET(request: Request) {
     return json({ data: data?.value });
 }
 
-export async function POST(request: Request) {
-    const { key, value, description } = await request.json();
-    // Upsert (Update หรือ Insert)
-    await supabase.from('settings').upsert({ key, value, description });
-}
-```
-
 ---
 
 **สรุป**: โปรเจกต์นี้ใช้ Next.js 16 (App Router) + Supabase + TypeScript สร้างระบบจองโต๊ะที่มีทั้งหน้าสาธารณะและระบบ Admin ที่สมบูรณ์ พร้อม RBAC, Real-time updates, และ i18n (ไทย/อังกฤษ)
