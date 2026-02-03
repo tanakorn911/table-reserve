@@ -64,6 +64,7 @@
    UPSTASH_REDIS_REST_TOKEN=your_upstash_token
    LINE_CHANNEL_ACCESS_TOKEN=your_line_token
    LINE_TARGET_ID=your_line_id
+   GEMINI_API_KEY==your_key
    ```
 
 4. **Setup Database**
