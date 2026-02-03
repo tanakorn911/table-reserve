@@ -1,9 +1,67 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  /* Colors */
+  --color-border: var(--color-border);
+  --color-input: var(--color-input);
+  --color-ring: var(--color-ring);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-popover: var(--color-popover);
+  --color-popover-foreground: var(--color-popover-foreground);
+  --color-card: var(--color-card);
+  --color-card-foreground: var(--color-card-foreground);
+  --color-success: var(--color-success);
+  --color-success-foreground: var(--color-success-foreground);
+  --color-warning: var(--color-warning);
+  --color-warning-foreground: var(--color-warning-foreground);
+  --color-error: var(--color-error);
+  --color-error-foreground: var(--color-error-foreground);
+
+  /* Radius */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  /* Fonts */
+  --font-heading: Sarabun, serif;
+  --font-body: Sarabun, sans-serif;
+  --font-caption: Sarabun, sans-serif;
+  --font-data: 'JetBrains Mono', monospace;
+
+  /* Spacing */
+  --spacing-18: 4.5rem;
+  --spacing-72: 18rem;
+  --spacing-84: 21rem;
+  --spacing-96: 24rem;
+  --spacing-144: 36rem;
+
+  /* Max Width */
+  --max-width-70ch: 70ch;
+
+  /* Z-Index */
+  --z-index-100: 100;
+  --z-index-200: 200;
+  --z-index-300: 300;
+
+  /* Keyframes & Animations */
+  --animate-shimmer: shimmer 2s infinite linear;
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+}
 
 @layer base {
   :root {
@@ -88,7 +146,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Sarabun', sans-serif;
+    font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.65;
   }
@@ -99,7 +157,7 @@
   h4,
   h5,
   h6 {
-    font-family: 'Sarabun', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 700;
   }
 
@@ -144,7 +202,7 @@
   }
 
   .text-data {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-data);
     font-feature-settings:
       'tnum' on,
       'lnum' on;

@@ -163,7 +163,7 @@ GEMINI_API_KEY=...
 
 | Technology | Purpose |
 |------------|---------|
-| **Next.js 15** | React Framework (App Router) |
+| **Next.js 16** | React Framework (App Router) |
 | **TypeScript** | Type Safety |
 | **Tailwind CSS** | Styling |
 | **Supabase** | Database + Auth + Storage |
