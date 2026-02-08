@@ -1,7 +1,15 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
+import Confetti from '@/components/ui/Confetti';
+import {
+  createReservationEvent,
+  generateGoogleCalendarUrl,
+  downloadICSFile
+} from '@/lib/calendarUtils';
 
 interface ReservationDetails {
   id: string;
@@ -24,6 +32,43 @@ interface SuccessModalProps {
 const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservation }) => {
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Trigger confetti when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setShowConfetti(true);
+      // Stop confetti after 4 seconds
+      const timer = setTimeout(() => setShowConfetti(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Calendar event handlers
+  const handleAddToGoogleCalendar = () => {
+    const event = createReservationEvent(
+      reservation.bookingCode || reservation.id.slice(0, 8),
+      reservation.fullName,
+      reservation.date,
+      reservation.time,
+      parseInt(reservation.guests),
+      reservation.tableName
+    );
+    const url = generateGoogleCalendarUrl(event);
+    window.open(url, '_blank');
+  };
+
+  const handleAddToAppleCalendar = () => {
+    const event = createReservationEvent(
+      reservation.bookingCode || reservation.id.slice(0, 8),
+      reservation.fullName,
+      reservation.date,
+      reservation.time,
+      parseInt(reservation.guests),
+      reservation.tableName
+    );
+    downloadICSFile(event, `reservation-${reservation.bookingCode || reservation.id.slice(0, 8)}.ics`);
+  };
 
   if (!isOpen || !reservation) return null;
   const activeReservation = reservation;
@@ -56,6 +101,9 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
 
   return (
     <>
+      {/* Confetti Animation */}
+      <Confetti trigger={showConfetti} duration={3000} />
+
       <div
         className="fixed inset-0 z-300 bg-foreground/60 backdrop-blur-sm transition-smooth"
         onClick={onClose}
@@ -91,12 +139,12 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
           </div>
 
           <div className="px-6 pb-6">
-            <div className="bg-white/5 rounded-2xl p-6 space-y-4 border border-white/10">
+            <div className="bg-muted rounded-2xl p-6 space-y-4 border border-border">
               <div className="flex items-start gap-4">
                 <Icon name="IdentificationIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{t('success.code')}</p>
-                  <p className="text-xl font-black text-blue-400 bg-blue-400/10 px-4 py-1.5 rounded-xl border border-blue-400/30 inline-block tracking-widest shadow-glow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{t('success.code')}</p>
+                  <p className="text-xl font-black text-primary bg-primary/10 px-4 py-1.5 rounded-xl border border-primary/30 inline-block tracking-widest shadow-glow-sm">
                     {activeReservation.bookingCode || activeReservation.id.slice(0, 8)}
                   </p>
                 </div>
@@ -104,8 +152,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               <div className="flex items-start gap-4">
                 <Icon name="UserIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.name')}</p>
-                  <p className="text-base font-bold text-white">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('form.name')}</p>
+                  <p className="text-base font-bold text-foreground">
                     {activeReservation.fullName}
                   </p>
                 </div>
@@ -113,15 +161,15 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               <div className="flex items-start gap-4">
                 <Icon name="PhoneIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.phone')}</p>
-                  <p className="text-base font-bold text-white">{activeReservation.phone}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('form.phone')}</p>
+                  <p className="text-base font-bold text-foreground">{activeReservation.phone}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <Icon name="CalendarIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.date')}</p>
-                  <p className="text-base font-bold text-white">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('form.date')}</p>
+                  <p className="text-base font-bold text-foreground">
                     {formatDate(activeReservation.date)}
                   </p>
                 </div>
@@ -129,8 +177,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               <div className="flex items-start gap-4">
                 <Icon name="ClockIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.time')}</p>
-                  <p className="text-base font-bold text-white">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('form.time')}</p>
+                  <p className="text-base font-bold text-foreground">
                     {formatTime(activeReservation.time)}
                   </p>
                 </div>
@@ -138,8 +186,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               <div className="flex items-start gap-4">
                 <Icon name="UsersIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.guests')}</p>
-                  <p className="text-base font-bold text-white">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('form.guests')}</p>
+                  <p className="text-base font-bold text-foreground">
                     {activeReservation.guests} {t('form.guests.label')}
                   </p>
                 </div>
@@ -148,8 +196,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                 <div className="flex items-start gap-4">
                   <Icon name="MapIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                   <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('admin.floorPlan.editModal.name')}</p>
-                    <p className="text-base font-bold text-white">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('admin.floorPlan.editModal.name')}</p>
+                    <p className="text-base font-bold text-foreground">
                       {activeReservation.tableName}
                     </p>
                   </div>
@@ -159,8 +207,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                 <div className="flex items-start gap-4">
                   <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                   <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-0.5">{t('form.requests')}</p>
-                    <p className="text-base font-bold text-white">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{t('form.requests')}</p>
+                    <p className="text-base font-bold text-foreground">
                       {activeReservation.specialRequests}
                     </p>
                   </div>
@@ -169,11 +217,40 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
             </div>
           </div>
 
-          <div className="px-6 pb-6 flex gap-3">
+          <div className="px-6 pb-6 space-y-3">
+            {/* Calendar Sync Buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleAddToGoogleCalendar}
+                className="
+                  flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                  text-sm font-medium bg-muted text-foreground border border-border
+                  hover:bg-muted/80 transition-all active:scale-[0.97]
+                "
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.5 22h-15A2.5 2.5 0 0 1 2 19.5v-15A2.5 2.5 0 0 1 4.5 2h15A2.5 2.5 0 0 1 22 4.5v15a2.5 2.5 0 0 1-2.5 2.5zM8 7v10h2V7H8zm6 0v10h2V7h-2z" />
+                </svg>
+                <span>Google</span>
+              </button>
+              <button
+                onClick={handleAddToAppleCalendar}
+                className="
+                  flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                  text-sm font-medium bg-muted text-foreground border border-border
+                  hover:bg-muted/80 transition-all active:scale-[0.97]
+                "
+              >
+                <Icon name="CalendarIcon" size={16} />
+                <span>Apple/ICS</span>
+              </button>
+            </div>
+
+            {/* Back Home Button */}
             <button
               onClick={onClose}
               className="
-                flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-md
+                w-full flex items-center justify-center gap-2 px-6 py-3 rounded-md
                 text-base font-medium bg-primary text-primary-foreground
                 shadow-warm-sm transition-smooth hover:shadow-warm-md
                 hover:-translate-y-0.5 active:scale-[0.97] min-h-[44px]

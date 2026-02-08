@@ -56,9 +56,9 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
         disabled={!value || parseInt(value) <= min}
         className="
           flex items-center justify-center w-14 h-14 rounded-l-2xl
-          bg-white/5 border border-white/10 border-r-0
-          text-white transition-all duration-300
-          hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]
+          bg-muted border border-border border-r-0
+          text-foreground transition-all duration-300
+          hover:bg-muted/80 hover:shadow-md
           disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none
         "
       >
@@ -77,13 +77,13 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
           placeholder="0"
           className={`
             w-full h-full text-center text-xl font-bold
-            bg-white/5 border-y border-white/10 text-white
-            focus:outline-none focus:bg-white/10 transition-all duration-300
+            bg-muted border-y border-border text-foreground
+            focus:outline-none focus:bg-muted/80 transition-all duration-300
             [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
             ${error ? 'border-error/50 bg-error/10' : success ? 'border-success/50 bg-success/10' : ''}
           `}
         />
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 text-xs font-medium text-gray-400">
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 text-xs font-medium text-muted-foreground">
           {t('form.guests.label')}
         </div>
       </div>
@@ -93,9 +93,9 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
         disabled={parseInt(value) >= max}
         className="
           flex items-center justify-center w-14 h-14 rounded-r-2xl
-          bg-white/5 border border-white/10 border-l-0
-          text-white transition-all duration-300
-          hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]
+          bg-muted border border-border border-l-0
+          text-foreground transition-all duration-300
+          hover:bg-muted/80 hover:shadow-md
           disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none
         "
       >

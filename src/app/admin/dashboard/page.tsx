@@ -14,7 +14,9 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { useTranslation } from '@/lib/i18n';
+import AIInsightsCard from '@/app/admin/components/AIInsightsCard';
 import {
   BarChart,
   Bar,
@@ -41,6 +43,7 @@ interface Reservation {
 
 export default function DashboardPage() {
   const locale = useAdminLocale();
+  const { adminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
 
   const [stats, setStats] = useState({
@@ -255,7 +258,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">{t('admin.dashboard.title')}</h1>
+          <h1 className={`text-2xl font-bold ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.dashboard.title')}</h1>
           <p className="text-sm text-gray-400 mt-1">
             {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
               weekday: 'long',
@@ -340,6 +343,9 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 mt-1">{locale === 'th' ? `จาก ${stats.totalTables} โต๊ะ` : `of ${stats.totalTables} tables`}</p>
         </div>
       </div>
+
+      {/* AI Insights Card */}
+      <AIInsightsCard locale={locale} />
 
       {/* Operational Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

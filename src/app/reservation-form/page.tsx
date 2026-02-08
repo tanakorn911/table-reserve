@@ -5,7 +5,7 @@ import MobileMenu from '@/components/common/MobileMenu';
 import ReservationWizard from './components/ReservationWizard';
 
 export const metadata: Metadata = {
-  title: 'TableReserve - แบบฟอร์มจองโต๊ะ',
+  title: 'Savory Bistro - แบบฟอร์มจองโต๊ะ',
   description: 'จองประสบการณ์การรับประทานอาหารของคุณกับเรา',
 };
 

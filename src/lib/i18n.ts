@@ -5,16 +5,16 @@ export type Locale = 'th' | 'en';
 export const translations = {
   th: {
     // Common
-    'app.title': 'จองโต๊ะออนไลน์',
-    'app.tagline': 'สัมผัสประสบการณ์อาหารมื้อพิเศษที่ดีที่สุด',
+    'app.title': 'ซาโวรี่ บิสโทร',
+    'app.tagline': 'ทุกมื้ออาหารคือความทรงจำ',
     'nav.home': 'หน้าหลัก',
     'nav.reserve': 'จองโต๊ะ',
     'nav.checkStatus': 'ตรวจสอบสถานะ',
     'nav.admin': 'ผู้ดูแลระบบ',
 
     // Landing Page
-    'hero.title': 'ยินดีต้อนรับสู่ TableReserve',
-    'hero.subtitle': 'จองโต๊ะล่วงหน้าเพื่อความสะดวกและรวดเร็ว สัมผัสบรรยากาศที่ยอดเยี่ยม',
+    'hero.title': 'ยินดีต้อนรับสู่ ซาโวรี่ บิสโทร',
+    'hero.subtitle': 'ทุกมื้ออาหารคือความทรงจำ',
     'hero.cta': 'จองโต๊ะเลย',
     'hero.imageAlt': 'บรรยากาศร้านอาหารสุดหรู',
 
@@ -324,18 +324,18 @@ export const translations = {
   },
   en: {
     // Common
-    'app.title': 'TableReserve',
-    'app.tagline': 'Experience Fine Dining at Its Best',
+    'app.title': 'Savory Bistro',
+    'app.tagline': 'Where Every Meal Becomes a Memory',
     'nav.home': 'Home',
-    'nav.reserve': 'Book a Table',
+    'nav.reserve': 'Reserve a Table',
     'nav.checkStatus': 'Check Status',
     'nav.admin': 'Admin',
 
     // Landing Page
-    'hero.title': 'Welcome to TableReserve',
+    'hero.title': 'Welcome to Savory Bistro',
     'hero.subtitle':
-      'Book your table in advance for convenience and experience exceptional atmosphere.',
-    'hero.cta': 'Book Now',
+      'Where Every Meal Becomes a Memory',
+    'hero.cta': 'Reserve a Table Now',
     'hero.imageAlt': 'Elegant restaurant atmosphere',
 
     'info.whyChooseUs': 'Why Choose Us',

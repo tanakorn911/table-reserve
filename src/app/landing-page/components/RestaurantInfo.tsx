@@ -34,7 +34,7 @@ const RestaurantInfo: React.FC<RestaurantInfoProps> = ({ cards }) => {
             <div
               key={index}
               className="
-                bg-card rounded-xl p-8 shadow-warm-md
+                bg-card rounded-xl p-8 shadow-warm-md border border-border
                 transition-smooth hover:shadow-warm-lg hover:-translate-y-1
               "
             >

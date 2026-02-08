@@ -43,16 +43,16 @@ const TextArea: React.FC<TextAreaProps> = ({
         maxLength={maxLength}
         className={`
           w-full px-5 py-3.5 rounded-2xl text-base
-          bg-white/5 backdrop-blur-sm border border-white/10 transition-all duration-300
-          text-white placeholder:text-white/50 resize-none
-          focus:outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary/10 focus:border-primary/50
+          bg-muted backdrop-blur-sm border border-border transition-all duration-300
+          text-foreground placeholder:text-muted-foreground resize-none
+          focus:outline-none focus:bg-muted/80 focus:ring-4 focus:ring-primary/10 focus:border-primary/50
           disabled:opacity-50 disabled:cursor-not-allowed
           shadow-lg shadow-black/5 hover:shadow-black/10
-          hover:border-white/20 hover:bg-white/10
+          hover:border-primary/20 hover:bg-muted/80
         `}
       />
       {maxLength && (
-        <div className="absolute bottom-2 right-3 text-xs text-white/40">
+        <div className="absolute bottom-2 right-3 text-xs text-muted-foreground">
           {value.length}/{maxLength}
         </div>
       )}

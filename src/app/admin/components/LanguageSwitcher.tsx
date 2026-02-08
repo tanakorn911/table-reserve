@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { LanguageIcon } from '@heroicons/react/24/outline';
 
+import { createClientSupabaseClient } from '@/lib/supabase/client';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
+
 type Locale = 'th' | 'en';
 
 interface LanguageSwitcherProps {
@@ -11,6 +14,7 @@ interface LanguageSwitcherProps {
 
 export default function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
     const [locale, setLocale] = useState<Locale>('th');
+    const { adminTheme } = useAdminTheme();
 
     // Load locale from localStorage on mount
     useEffect(() => {
@@ -31,7 +35,10 @@ export default function LanguageSwitcher({ className = '' }: LanguageSwitcherPro
     return (
         <button
             onClick={toggleLanguage}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all bg-primary/10 text-yellow-400 hover:bg-primary/20 border border-primary/20 ${className}`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all border ${adminTheme === 'dark'
+                ? 'bg-primary/10 text-yellow-400 hover:bg-primary/20 border-primary/20'
+                : 'bg-gray-100 text-slate-700 hover:bg-gray-200 border-gray-200'
+                } ${className}`}
             title={locale === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
         >
             <LanguageIcon className="w-5 h-5" />

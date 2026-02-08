@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from './components/AdminSidebar';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { Bars3Icon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import LanguageSwitcher, { useAdminLocale, adminT } from './components/LanguageSwitcher';
 import AdminBottomNav from './components/AdminBottomNav';
+import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext';
+import AdminThemeToggle from './components/AdminThemeToggle';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClientSupabaseClient();
@@ -16,6 +18,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const locale = useAdminLocale();
+  const { adminTheme } = useAdminTheme();
+
+  // Auto-logout on tab close removed - was causing issues with page refresh
+  // Users will remain logged in and session will expire based on Supabase settings
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -60,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === '/admin/login';
 
   if (isLoginPage) {
-    return <main className="min-h-screen bg-background">{children}</main>;
+    return <main className="min-h-screen bg-gray-900">{children}</main>;
   }
 
   const getTitle = (path: string) => {
@@ -78,26 +84,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return adminT(titleMap[lastSegment] || lastSegment, locale);
   };
 
+  // Theme classes based on admin theme
+  const themeClasses = adminTheme === 'dark'
+    ? {
+      container: 'bg-gray-900',
+      header: 'bg-gray-800/50 border-yellow-500/20',
+      title: 'text-yellow-400',
+      roleTag: 'text-gray-200 bg-yellow-500/10 border-yellow-500/20',
+      main: 'bg-gray-900',
+      loading: 'bg-gray-900/90',
+    }
+    : {
+      container: 'bg-gray-100',
+      header: 'bg-white/80 border-amber-500/20 shadow-sm',
+      title: 'text-amber-600',
+      roleTag: 'text-gray-700 bg-amber-100 border-amber-200',
+      main: 'bg-gray-50',
+      loading: 'bg-white/90',
+    };
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className={`flex h-screen overflow-hidden ${themeClasses.container}`}>
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 md:px-6 py-4 bg-card/50 backdrop-blur-sm border-b border-primary/20">
+        <header className={`flex items-center justify-between px-4 md:px-6 py-4 backdrop-blur-sm border-b ${themeClasses.header}`}>
           <div className="flex items-center gap-4">
-            {/* Remove Hamburger button for mobile as we have bottom nav now */}
-            {/* <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 md:hidden text-foreground/60 hover:text-foreground hover:bg-primary/10 rounded-lg transition-colors"
-            >
-              <Bars3Icon className="w-6 h-6" />
-            </button> */}
-            <h2 className="text-base md:text-lg font-bold text-yellow-400">{getTitle(pathname)}</h2>
+            <h2 className={`text-base md:text-lg font-bold ${themeClasses.title}`}>{getTitle(pathname)}</h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-block text-[10px] md:text-sm font-bold text-gray-200 bg-primary/10 px-2 md:px-3 py-1 rounded-full border border-primary/20 whitespace-nowrap">
+            <span className={`hidden sm:inline-block text-[10px] md:text-sm font-bold px-2 md:px-3 py-1 rounded-full border whitespace-nowrap ${themeClasses.roleTag}`}>
               {roleName || adminT('header.role.checking', locale)}
             </span>
+            <AdminThemeToggle size="sm" />
             <LanguageSwitcher className="hidden sm:flex" />
             <button
               onClick={async () => {
@@ -116,12 +135,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 md:p-6 pb-24 md:pb-6 relative">
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto ${themeClasses.main} p-4 md:p-6 pb-24 md:pb-6 relative`}>
           {isLoading && (
-            <div className="absolute inset-0 bg-background/90 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className={`absolute inset-0 ${themeClasses.loading} backdrop-blur-sm z-50 flex items-center justify-center`}>
               <div className="flex flex-col items-center">
-                <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                <p className="mt-4 text-sm font-bold text-primary">{adminT('header.loading', locale)}</p>
+                {/* Loading spinner - fixed colors that don't change with theme */}
+                <div className="w-10 h-10 border-4 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin"></div>
+                <p className="mt-4 text-sm font-bold text-yellow-500">{adminT('header.loading', locale)}</p>
               </div>
             </div>
           )}
@@ -131,5 +151,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminBottomNav />
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminThemeProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminThemeProvider>
   );
 }

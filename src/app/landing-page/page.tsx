@@ -4,9 +4,9 @@ import MobileMenu from '@/components/common/MobileMenu';
 import LandingPageInteractive from './components/LandingPageInteractive';
 
 export const metadata: Metadata = {
-  title: 'TableReserve',
+  title: 'Savory Bistro',
   description:
-    'จองโต๊ะที่ TableReserve และสัมผัสกับอาหารรสเลิศ บรรยากาศที่หรูหรา และการบริการที่ยอดเยี่ยม จองออนไลน์ได้ทันทีเพื่อประสบการณ์การรับประทานอาหารที่น่าจดจำ',
+    'จองโต๊ะที่ Savory Bistro และสัมผัสกับอาหารรสเลิศ บรรยากาศที่หรูหรา และการบริการที่ยอดเยี่ยม จองออนไลน์ได้ทันทีเพื่อประสบการณ์การรับประทานอาหารที่น่าจดจำ',
 };
 
 export default function LandingPage() {

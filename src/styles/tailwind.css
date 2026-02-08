@@ -57,10 +57,11 @@
 
   /* Keyframes & Animations */
   --animate-shimmer: shimmer 2s infinite linear;
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
 }
 
 @layer base {
@@ -137,9 +138,36 @@
     --color-input: #1e2530;
     --color-ring: #e0c050;
   }
-}
 
-@layer base {
+  .light {
+    /* Light theme - warm white with brown/tan accents (Bistro style) */
+    --color-primary: #c96a2b; /* warm terracotta orange */
+    --color-primary-foreground: #ffffff;
+    --color-secondary: #8b5a2b; /* saddle brown */
+    --color-secondary-foreground: #ffffff;
+    --color-accent: #d4a574; /* light tan/caramel */
+    --color-accent-foreground: #3d2914;
+    --color-background: #faf8f5; /* warm off-white */
+    --color-foreground: #3d2914; /* dark brown */
+    --color-card: #ffffff;
+    --color-card-foreground: #3d2914;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #3d2914;
+    --color-muted: #f5f0e8; /* cream */
+    --color-muted-foreground: #6b5344; /* medium brown */
+    --color-border: rgba(139, 90, 43, 0.2); /* brown tinted border */
+    --color-input: #ffffff;
+    --color-ring: #c96a2b;
+    --color-success: #5d8c4a; /* olive green */
+    --color-success-foreground: #ffffff;
+    --color-warning: #d4872c; /* amber */
+    --color-warning-foreground: #ffffff;
+    --color-error: #c24a4a; /* muted red */
+    --color-error-foreground: #ffffff;
+    --color-destructive: #c24a4a;
+    --color-destructive-foreground: #ffffff;
+  }
+
   * {
     @apply border-border;
   }

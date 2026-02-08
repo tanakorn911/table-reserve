@@ -17,6 +17,7 @@ import AIRecommendationModal from './AIRecommendationModal';
 import Icon from '@/components/ui/AppIcon';
 import { Table } from '@/types/tables';
 import { useNavigation } from '@/contexts/NavigationContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useTranslation } from '@/lib/i18n';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import generatePayload from 'promptpay-qr';
@@ -59,6 +60,7 @@ interface ReservationDetails {
 const ReservationWizard = () => {
     const router = useRouter();
     const { locale } = useNavigation();
+    const { resolvedTheme } = useTheme();
     const { t } = useTranslation(locale);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<FormData>({
@@ -325,16 +327,16 @@ const ReservationWizard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#2D3748] to-[#1A202C] pt-24 md:pt-32 pb-10 md:pb-20 relative text-white overflow-x-hidden">
+        <div className="min-h-screen bg-background pt-24 md:pt-32 pb-10 md:pb-20 relative text-foreground overflow-x-hidden">
             {/* Ambient Background Glows */}
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] pointer-events-none mix-blend-screen opacity-60" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[128px] pointer-events-none mix-blend-screen opacity-60" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none mix-blend-screen opacity-40" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none mix-blend-screen opacity-40" />
 
             {/* Pattern Overlay */}
             <div
-                className="absolute inset-0 pointer-events-none opacity-[0.05]"
+                className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
                 style={{
-                    backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)',
+                    backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
                     backgroundSize: '32px 32px',
                 }}
             />
@@ -345,7 +347,7 @@ const ReservationWizard = () => {
                     <div className="flex justify-between relative px-1 md:px-4 max-w-2xl mx-auto">
                         {/* Connecting Line Container */}
                         <div className="absolute top-6 left-0 w-full -translate-y-1/2 px-8 md:px-10 pointer-events-none z-0">
-                            <div className="relative w-full h-1 bg-gray-700 rounded-full">
+                            <div className="relative w-full h-1 bg-muted rounded-full">
                                 {' '}
                                 {/* Darker track */}
                                 <div
@@ -372,19 +374,19 @@ const ReservationWizard = () => {
                                     className="flex flex-col items-center cursor-default bg-transparent z-10"
                                 >
                                     <div
-                                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xs md:text-sm font-bold border-4 transition-all duration-300 relative bg-[#2D3748]
-                                            ${isActive ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'border-gray-600 text-gray-400'}
+                                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xs md:text-sm font-bold border-4 transition-all duration-300 relative bg-card
+                                            ${isActive ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' : 'border-muted text-muted-foreground'}
                                             ${isCurrent ? 'scale-110 ring-4 ring-primary/20' : ''}
                                         `}
                                     >
                                         <Icon
                                             name={icon as any}
                                             size={16}
-                                            className={`md:w-5 md:h-5 ${isActive ? 'text-white' : 'text-gray-400'}`}
+                                            className={`md:w-5 md:h-5 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}
                                         />
                                     </div>
                                     <span
-                                        className={`text-[10px] md:text-xs font-bold mt-2 md:mt-3 transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-500'}`}
+                                        className={`text-[10px] md:text-xs font-bold mt-2 md:mt-3 transition-colors duration-300 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
                                     >
                                         {label}
                                     </span>
@@ -394,7 +396,7 @@ const ReservationWizard = () => {
                     </div>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl overflow-visible outline-none ring-0">
+                <div className="bg-card/80 backdrop-blur-md rounded-3xl shadow-2xl overflow-visible outline-none ring-0 border border-border">
                     <AnimatePresence mode="wait">
                         {step === 1 && (
                             <motion.div
@@ -406,10 +408,10 @@ const ReservationWizard = () => {
                                 className="p-4 md:p-10"
                             >
                                 <div className="text-center mb-8 md:mb-10">
-                                    <h2 className="text-2xl md:text-4xl font-black mb-2 text-white tracking-tight">
+                                    <h2 className="text-2xl md:text-4xl font-black mb-2 text-foreground tracking-tight">
                                         {t('form.title')}
                                     </h2>
-                                    <p className="text-sm md:text-lg text-gray-400 font-medium">
+                                    <p className="text-sm md:text-lg text-muted-foreground font-medium">
                                         {t('form.subtitle')}
                                     </p>
                                 </div>
@@ -417,7 +419,7 @@ const ReservationWizard = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 auto-rows-min">
                                     {/* 1. Guest Number (Mobile: 1, Desktop: Top-Left) */}
                                     <div className="space-y-2">
-                                        <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-white">
+                                        <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground">
                                             {t('form.guests')}
                                         </label>
                                         <GuestNumberInput
@@ -432,7 +434,7 @@ const ReservationWizard = () => {
 
                                     {/* 2. Date Selection (Mobile: 2, Desktop: Right-Column Spanning) */}
                                     <div className="space-y-2 md:col-start-2 md:row-start-1 md:row-span-2">
-                                        <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-white">
+                                        <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground">
                                             {t('form.date')}
                                         </label>
                                         <CalendarPicker
@@ -446,7 +448,7 @@ const ReservationWizard = () => {
 
                                     {/* 3. Time Selection (Mobile: 3, Desktop: Bottom-Left) */}
                                     <div className="space-y-2 md:col-start-1 md:row-start-2">
-                                        <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-white">
+                                        <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground">
                                             {t('form.time')}
                                         </label>
                                         <TimeGridPicker
@@ -472,10 +474,10 @@ const ReservationWizard = () => {
                             >
                                 <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                                     <div className="text-center md:text-left">
-                                        <h2 className="text-2xl md:text-3xl font-black mb-2 text-white tracking-tight">
+                                        <h2 className="text-2xl md:text-3xl font-black mb-2 text-foreground tracking-tight">
                                             {t('wizard.step.table')}
                                         </h2>
-                                        <p className="text-gray-400 font-medium text-xs md:text-sm">
+                                        <p className="text-muted-foreground font-medium text-xs md:text-sm">
                                             {t('checkStatus.label.date')} {formData.date} | {t('checkStatus.label.time')}{' '}
                                             {formData.time} | {formData.guests} {t('form.guests.label')}
                                         </p>
@@ -485,17 +487,17 @@ const ReservationWizard = () => {
                                     <div className="flex gap-2 w-full md:w-auto flex-col md:flex-row">
                                         <button
                                             onClick={() => setShowAIModal(true)}
-                                            className="px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+                                            className="px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-muted border border-border hover:bg-muted/80 text-foreground"
                                         >
                                             <Icon name="SparklesIcon" size={18} />
                                             {t('wizard.ai.magic')}
                                         </button>
 
-                                        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10">
+                                        <div className="flex bg-muted p-1 rounded-2xl border border-border">
                                             <button
                                                 onClick={() => setViewMode('list')}
                                                 className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
-                                                    ${viewMode === 'list' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}
+                                                    ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground'}
                                                 `}
                                             >
                                                 <Icon name="ListBulletIcon" size={18} />
@@ -504,7 +506,7 @@ const ReservationWizard = () => {
                                             <button
                                                 onClick={() => setViewMode('map')}
                                                 className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
-                                                    ${viewMode === 'map' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-white'}
+                                                    ${viewMode === 'map' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground'}
                                                 `}
                                             >
                                                 <Icon name="MapIcon" size={18} />
@@ -535,6 +537,7 @@ const ReservationWizard = () => {
                                                         onTableSelect={(id) => setFormData((p) => ({ ...p, tableId: p.tableId === id ? undefined : id }))}
                                                         height={typeof window !== 'undefined' && window.innerWidth < 768 ? 600 : 850}
                                                         locale={locale}
+                                                        theme={resolvedTheme}
                                                     />
                                                 </div>
                                             </div>
@@ -562,13 +565,13 @@ const ReservationWizard = () => {
                                 className="p-3 md:p-12"
                             >
                                 <div className="text-center mb-10">
-                                    <h2 className="text-xl md:text-4xl font-black mb-3 text-white tracking-tight">
+                                    <h2 className="text-xl md:text-4xl font-black mb-3 text-foreground tracking-tight">
                                         {t('wizard.step.confirm')}
                                     </h2>
-                                    <p className="text-base md:text-lg text-white/90 font-medium mb-1">
+                                    <p className="text-base md:text-lg text-muted-foreground font-medium mb-1">
                                         {t('form.subtitle')}
                                     </p>
-                                    <p className="text-blue-200/90 text-xs md:text-sm font-medium flex items-center justify-center gap-2">
+                                    <p className="text-primary/80 text-xs md:text-sm font-medium flex items-center justify-center gap-2">
                                         <Icon name="CurrencyDollarIcon" size={16} />
                                         {t('payment.deposit_info')}
                                     </p>
@@ -615,29 +618,29 @@ const ReservationWizard = () => {
                                     </div>
 
                                     <div className="lg:col-span-1">
-                                        <div className="bg-white/5 backdrop-blur-md rounded-3xl p-4 md:p-6 border border-white/10 h-full flex flex-col shadow-xl">
-                                            <h3 className="font-bold uppercase tracking-widest text-xs mb-6 text-white/80 border-b border-white/5 pb-4">
+                                        <div className="bg-muted/20 backdrop-blur-md rounded-3xl p-4 md:p-6 border border-border h-full flex flex-col shadow-xl">
+                                            <h3 className="font-bold uppercase tracking-widest text-xs mb-6 text-muted-foreground border-b border-border pb-4">
                                                 {t('payment.title')}
                                             </h3>
 
                                             <div className="flex-1 flex flex-col items-center justify-center mb-8">
-                                                <div className="bg-white p-4 rounded-2xl shadow-lg shadow-black/20 mb-4 transform hover:scale-105 transition-transform duration-300">
+                                                <div className="bg-white p-4 rounded-2xl shadow-lg shadow-black/20 mb-4 transform hover:scale-105 transition-transform duration-300 dark:bg-white">
                                                     <QRCodeCanvas
                                                         value={generatePayload('0809317630', { amount: 200 })}
                                                         size={160}
                                                     />
                                                 </div>
                                                 <div className="text-center">
-                                                    <p className="text-sm font-bold text-white mb-1">{t('payment.scan')}</p>
-                                                    <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200">
+                                                    <p className="text-sm font-bold text-foreground mb-1">{t('payment.scan')}</p>
+                                                    <p className="text-3xl font-black text-primary">
                                                         ฿200.00
                                                     </p>
                                                     <div className="mt-2 flex flex-col items-center gap-1">
-                                                        <p className="text-sm text-white flex items-center justify-center gap-2 font-bold">
-                                                            <Icon name="SparklesIcon" size={16} className="text-yellow-300" />
+                                                        <p className="text-sm text-foreground flex items-center justify-center gap-2 font-bold">
+                                                            <Icon name="SparklesIcon" size={16} className="text-yellow-500" />
                                                             {t('payment.promptpay')}
                                                         </p>
-                                                        <p className="text-sm text-white/80 mt-1">{t('payment.prepayment')}</p>
+                                                        <p className="text-sm text-muted-foreground mt-1">{t('payment.prepayment')}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -656,7 +659,7 @@ const ReservationWizard = () => {
                                                     border-2 border-dashed rounded-2xl p-6 transition-all text-center relative overflow-hidden
                                                     ${previewSlipUrl
                                                             ? 'border-green-500/50 bg-green-500/10'
-                                                            : 'border-white/20 hover:border-accent/50 hover:bg-accent/5 shadow-glow-sm'
+                                                            : 'border-border hover:border-accent/50 hover:bg-accent/5 shadow-glow-sm'
                                                         }
                                                 `}
                                                 >
@@ -664,25 +667,25 @@ const ReservationWizard = () => {
                                                     <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
                                                     {previewSlipUrl ? (
-                                                        <div className="text-green-400 font-bold text-sm flex flex-col items-center justify-center gap-2 relative z-10">
+                                                        <div className="text-green-500 font-bold text-sm flex flex-col items-center justify-center gap-2 relative z-10">
                                                             <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mb-1">
                                                                 <Icon name="CheckIcon" size={20} />
                                                             </div>
                                                             {t('payment.ready')}
-                                                            <span className="text-xs font-normal text-white/50">
+                                                            <span className="text-xs font-normal text-muted-foreground">
                                                                 คลิกเพื่อเปลี่ยนรูป
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-white/80 text-xs relative z-10">
-                                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:border-accent/30 group-hover:shadow-glow-sm transition-all duration-300">
+                                                        <div className="text-muted-foreground text-xs relative z-10">
+                                                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:border-accent/30 group-hover:shadow-glow-sm transition-all duration-300">
                                                                 <Icon
                                                                     name="ArrowUpTrayIcon"
                                                                     size={24}
-                                                                    className="text-white group-hover:text-accent transition-colors"
+                                                                    className="text-foreground group-hover:text-accent transition-colors"
                                                                 />
                                                             </div>
-                                                            <span className="font-bold text-white block mb-1 text-sm group-hover:text-accent transition-colors">
+                                                            <span className="font-bold text-foreground block mb-1 text-sm group-hover:text-accent transition-colors">
                                                                 {t('payment.upload')}
                                                             </span>
                                                             {t('payment.upload.label')}
@@ -697,7 +700,7 @@ const ReservationWizard = () => {
                         )}
                     </AnimatePresence>
                     {/* Footer Navigation */}
-                    <div className="mt-4 md:mt-8 pt-4 md:pt-6 pb-6 md:pb-8 border-t border-white/10 px-4 md:px-12 flex flex-col gap-4 relative">
+                    <div className="mt-4 md:mt-8 pt-4 md:pt-6 pb-6 md:pb-8 border-t border-border px-4 md:px-12 flex flex-col gap-4 relative">
                         <div className="flex items-center justify-between w-full gap-3">
                             {/* Back Button */}
                             <div className="flex-1">
@@ -705,7 +708,7 @@ const ReservationWizard = () => {
                                     <button
                                         onClick={prevStep}
                                         type="button"
-                                        className="w-full md:w-auto bg-white/10 hover:bg-white/20 text-white font-bold text-sm flex items-center justify-center gap-2 px-4 md:px-6 py-3.5 rounded-xl transition-all active:scale-95 border border-white/10 shadow-lg"
+                                        className="w-full md:w-auto bg-muted hover:bg-muted/80 text-foreground font-bold text-sm flex items-center justify-center gap-2 px-4 md:px-6 py-3.5 rounded-xl transition-all active:scale-95 border border-border shadow-lg"
                                     >
                                         <Icon name="ArrowLeftIcon" size={20} />
                                         <span className="hidden sm:inline">{t('wizard.back')}</span>
@@ -720,14 +723,14 @@ const ReservationWizard = () => {
                                         className={`
                       flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl transition-all duration-300 w-auto justify-center
                       ${formData.tableId
-                                                ? 'bg-primary border border-primary/20 text-white shadow-lg'
-                                                : 'bg-white/5 border border-white/10 text-gray-500'
+                                                ? 'bg-primary border border-primary/20 text-primary-foreground shadow-lg'
+                                                : 'bg-muted border border-border text-muted-foreground'
                                             }
                     `}
                                     >
                                         {formData.tableId ? (
                                             <>
-                                                <Icon name="CheckCircleIcon" size={16} className="text-white" />
+                                                <Icon name="CheckCircleIcon" size={16} className="text-primary-foreground" />
                                                 <span className="font-bold text-sm md:text-base">
                                                     {tables.find((t) => t.id === formData.tableId)?.name}
                                                     <span className="ml-1 opacity-80 text-xs">

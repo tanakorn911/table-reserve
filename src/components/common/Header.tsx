@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useNavigation } from '@/contexts/NavigationContext';
 import Icon from '@/components/ui/AppIcon';
 import { useTranslation } from '@/lib/i18n';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 interface NavigationItem {
   label: string;
@@ -68,10 +69,9 @@ const Header = () => {
                 className={`
                   flex items-center gap-2 px-6 py-3 rounded-md text-base font-medium
                   transition-smooth min-h-[44px]
-                  ${
-                    isActiveRoute(item.path)
-                      ? 'bg-primary text-primary-foreground shadow-warm-sm'
-                      : 'text-foreground hover:bg-muted hover:scale-[0.97] active:scale-[0.97]'
+                  ${isActiveRoute(item.path)
+                    ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                    : 'text-foreground hover:bg-muted hover:scale-[0.97] active:scale-[0.97]'
                   }
                 `}
               >
@@ -82,19 +82,24 @@ const Header = () => {
 
             <Link
               href="/reservation-form"
-              className="
+              className={`
                 flex items-center gap-2 px-8 py-3 ml-4 rounded-md text-base font-medium
-                bg-accent text-accent-foreground shadow-warm-sm
-                transition-smooth hover:shadow-warm-md hover:-translate-y-0.5
-                active:scale-[0.97] min-h-[44px]
-              "
+                transition-smooth min-h-[44px]
+                ${currentRoute.startsWith('/reservation-form')
+                  ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                  : 'text-foreground hover:bg-muted hover:scale-[0.97] active:scale-[0.97] border border-border'
+                }
+              `}
             >
               <Icon name="CalendarIcon" size={20} />
               <span>{t('nav.reserve')}</span>
             </Link>
 
+            {/* Theme Toggle */}
+            <ThemeToggle size="sm" className="ml-2" />
+
             {/* Language Switcher */}
-            <div className="flex items-center ml-4 bg-muted rounded-full p-1 border border-border">
+            <div className="flex items-center ml-2 bg-muted rounded-full p-1 border border-border">
               <button
                 onClick={() => setLocale('th')}
                 className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${locale === 'th' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}

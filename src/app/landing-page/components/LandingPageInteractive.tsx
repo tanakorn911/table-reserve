@@ -209,7 +209,7 @@ const LandingPageInteractive: React.FC = () => {
   }, [supabase, locale, dayNames, t]);
 
   const landingData: LandingPageData = {
-    restaurantName: t('app.title'),
+    restaurantName: t('hero.title'),
     tagline: t('app.tagline'),
     heroImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80',
     heroImageAlt: t('hero.imageAlt'),
@@ -261,10 +261,20 @@ const LandingPageInteractive: React.FC = () => {
     ],
   };
 
+  // Custom hero title with mobile line break for Thai
+  const heroTitle = locale === 'th'
+    ? (
+      <>
+        ยินดีต้อนรับสู่ <br className="md:hidden" />
+        ซาโวรี่ บิสโทร
+      </>
+    )
+    : t('hero.title');
+
   return (
     <>
       <HeroSection
-        restaurantName={landingData.restaurantName}
+        restaurantName={heroTitle}
         tagline={landingData.tagline}
         heroImage={landingData.heroImage}
         heroImageAlt={landingData.heroImageAlt}

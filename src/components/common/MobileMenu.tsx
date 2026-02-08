@@ -26,6 +26,12 @@ const MobileMenu = () => {
       staffOnly: false,
     },
     {
+      label: t('nav.reserve'),
+      path: '/reservation-form',
+      icon: 'CalendarIcon',
+      staffOnly: false,
+    },
+    {
       label: t('admin.reservations'),
       path: '/admin/dashboard',
       icon: 'ClipboardDocumentListIcon',
@@ -93,10 +99,9 @@ const MobileMenu = () => {
               className={`
                 flex items-center gap-3 px-6 py-4 rounded-md text-base font-medium
                 transition-smooth min-h-[44px]
-                ${
-                  isActiveRoute(item.path)
-                    ? 'bg-primary text-primary-foreground shadow-warm-sm'
-                    : 'text-foreground hover:bg-muted active:scale-[0.97]'
+                ${isActiveRoute(item.path)
+                  ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                  : 'text-foreground hover:bg-muted active:scale-[0.97]'
                 }
               `}
               style={{
@@ -108,22 +113,7 @@ const MobileMenu = () => {
             </Link>
           ))}
 
-          <Link
-            href="/reservation-form"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="
-              flex items-center gap-3 px-6 py-4 mt-4 rounded-md text-base font-medium
-              bg-accent text-accent-foreground shadow-warm-sm
-              transition-smooth hover:shadow-warm-md
-              active:scale-[0.97] min-h-[44px]
-            "
-            style={{
-              animationDelay: `${filteredNavItems.length * 150}ms`,
-            }}
-          >
-            <Icon name="CalendarIcon" size={24} />
-            <span>{t('nav.reserve')}</span>
-          </Link>
+
 
           {/* Language Switcher for Mobile */}
           <div className="mt-8 pt-6 border-t border-border">
@@ -136,10 +126,9 @@ const MobileMenu = () => {
                 }}
                 className={`
                   flex-1 py-3 rounded-lg text-sm font-bold transition-all border
-                  ${
-                    locale === 'th'
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-foreground border-border hover:bg-muted'
+                  ${locale === 'th'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-border hover:bg-muted'
                   }
                 `}
               >
@@ -152,10 +141,9 @@ const MobileMenu = () => {
                 }}
                 className={`
                   flex-1 py-3 rounded-lg text-sm font-bold transition-all border
-                  ${
-                    locale === 'en'
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-foreground border-border hover:bg-muted'
+                  ${locale === 'en'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-border hover:bg-muted'
                   }
                 `}
               >

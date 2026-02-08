@@ -23,7 +23,7 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
         <div className="max-w-4xl mx-auto">
           <div className="mb-12 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-primary/10">
-              <Icon name="ClockIcon" size={32} className="text-white" />
+              <Icon name="ClockIcon" size={32} className="text-primary" />
             </div>
             <h2 className="mb-4 text-4xl font-bold lg:text-5xl font-heading text-foreground">
               {t('hours.title')}
@@ -31,7 +31,7 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
             <p className="text-lg text-muted-foreground">{t('hours.subtitle')}</p>
           </div>
 
-          <div className="p-6 bg-background rounded-xl shadow-warm-md lg:p-8">
+          <div className="p-6 bg-background rounded-xl shadow-warm-md lg:p-8 border border-border">
             <div className="space-y-4">
               {schedule.map((item, index) => (
                 <div
@@ -39,10 +39,9 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                   className={`
                     flex items-center justify-between py-4 px-6 rounded-lg
                     transition-smooth
-                    ${
-                      item.isToday
-                        ? 'bg-primary/10 border-2 border-primary'
-                        : 'bg-muted/50 hover:bg-muted'
+                    ${item.isToday
+                      ? 'bg-primary/10 border-2 border-primary'
+                      : 'bg-muted/50 hover:bg-muted'
                     }
                   `}
                 >
@@ -53,7 +52,7 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                     <span
                       className={`
                         text-lg font-semibold
-                        ${item.isToday ? 'text-gray-300' : 'text-foreground'}
+                        ${item.isToday ? 'text-primary' : 'text-foreground'}
                       `}
                     >
                       {item.day}
@@ -62,7 +61,7 @@ const OpeningHours: React.FC<OpeningHoursProps> = ({ schedule }) => {
                   <span
                     className={`
                       text-lg font-medium
-                      ${item.isToday ? 'text-gray-300' : 'text-muted-foreground'}
+                      ${item.isToday ? 'text-primary' : 'text-muted-foreground'}
                     `}
                   >
                     {item.hours}
