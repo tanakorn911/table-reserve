@@ -5,11 +5,32 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Simple in-memory cache
+interface CacheEntry {
+    insight: string;
+    stats: any;
+    generatedAt: string;
+    date: string;
+    locale: string;
+}
+
+let insightsCache: CacheEntry | null = null;
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
 export async function GET(request: NextRequest) {
     try {
-        // Get date from query params or use today
+        // Check if Gemini API key is available
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json(
+                { success: false, error: 'Gemini API Key is not configured' },
+                { status: 500 }
+            );
+        }
+
+        // Get date and locale from query params
         const { searchParams } = new URL(request.url);
         const dateParam = searchParams.get('date');
+        const locale = searchParams.get('locale') || 'th';
 
         // Calculate Thailand time
         const now = new Date();
@@ -19,6 +40,23 @@ export async function GET(request: NextRequest) {
 
         const today = dateParam || thailandTime.toISOString().split('T')[0];
         const yesterday = new Date(thailandTime.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        // Check cache
+        if (
+            insightsCache &&
+            insightsCache.date === today &&
+            insightsCache.locale === locale &&
+            (Date.now() - new Date(insightsCache.generatedAt).getTime() < CACHE_DURATION)
+        ) {
+            return NextResponse.json({
+                success: true,
+                data: {
+                    insight: insightsCache.insight,
+                    stats: insightsCache.stats,
+                    generatedAt: insightsCache.generatedAt,
+                }
+            });
+        }
 
         // Initialize Supabase
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -65,24 +103,38 @@ export async function GET(request: NextRequest) {
         });
         const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
 
-        // Check if Gemini API key is available
-        if (!process.env.GEMINI_API_KEY) {
-            // Return mock insights if no API key
-            return NextResponse.json({
-                success: true,
-                data: {
-                    insight: generateMockInsight(stats, peakHour),
-                    stats,
-                    generatedAt: new Date().toISOString(),
-                }
-            });
-        }
-
         // Generate AI insight using Gemini
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-        const prompt = `
+        // Models to try in order
+        const modelsToTry = [
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-pro'
+        ];
+
+        let prompt;
+
+        if (locale === 'en') {
+            prompt = `
+You are an AI assistant for a restaurant reservation system. Please create a short summary (2-3 sentences) in English based on the statistics below.
+
+📊 Today's Stats (${today}):
+- Total bookings: ${stats.today.total}
+- Confirmed: ${stats.today.confirmed}
+- Pending: ${stats.today.pending}
+- Cancelled: ${stats.today.cancelled}
+- Expected guests: ${stats.today.totalGuests}
+- Peak hour: ${peakHour ? `${peakHour[0]}:00 (${peakHour[1]} bookings)` : 'No data'}
+
+📈 Comparison with Yesterday (${yesterday}):
+- Total bookings yesterday: ${stats.yesterday.total}
+- Total guests yesterday: ${stats.yesterday.totalGuests}
+
+Please provide a friendly, interesting short summary with appropriate emojis. Do not use markdown or bullet points.
+`;
+        } else {
+            prompt = `
 คุณเป็นผู้ช่วย AI สำหรับระบบจองโต๊ะร้านอาหาร โปรดสร้างข้อความสรุปสั้นๆ (2-3 ประโยค) เป็นภาษาไทย จากสถิติด้านล่างนี้
 
 📊 สถิติวันนี้ (${today}):
@@ -99,48 +151,96 @@ export async function GET(request: NextRequest) {
 
 กรุณาตอบเป็นข้อความสรุปสั้นๆ ที่เป็นมิตรและน่าสนใจ พร้อม emoji ที่เหมาะสม ห้ามใช้ markdown หรือ bullet points
 `;
+        }
 
-        const result = await model.generateContent(prompt);
-        const insight = result.response.text();
+        try {
+            // Helper for delay
+            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-        return NextResponse.json({
-            success: true,
-            data: {
-                insight: insight.trim(),
+            // Recursive function to try models with retry logic
+            const generateWithFallback = async (modelIndex = 0, retryCount = 0): Promise<string> => {
+                const modelName = modelsToTry[modelIndex];
+
+                // If we ran out of models, throw error to trigger fallback
+                if (!modelName) {
+                    throw new Error('All AI models failed');
+                }
+
+                try {
+                    console.log(`Attempting to generate with model: ${modelName} (Retry: ${retryCount})`);
+                    const modelInstance = genAI.getGenerativeModel({ model: modelName });
+                    const result = await modelInstance.generateContent(prompt);
+                    return result.response.text().trim();
+                } catch (error: any) {
+                    const isRateLimit = error.message?.includes('429') || error.status === 429;
+                    const isQuotaExceeded = error.message?.includes('quota') || error.message?.includes('limit');
+
+                    // If Rate Limit/Quota issue
+                    if (isRateLimit || isQuotaExceeded) {
+                        console.warn(`Model ${modelName} hit rate limit/quota.`);
+
+                        // If we can still retry this model (up to 1 time for transient errors), do it
+                        // But mostly for rate limits we want to switch models fast if it persists
+                        if (retryCount < 1) {
+                            await delay(1000); // Wait 1s
+                            return generateWithFallback(modelIndex, retryCount + 1);
+                        }
+
+                        // Move to next model
+                        return generateWithFallback(modelIndex + 1, 0);
+                    }
+
+                    // For other errors, also try next model just in case
+                    console.error(`Model ${modelName} error:`, error.message);
+                    return generateWithFallback(modelIndex + 1, 0);
+                }
+            };
+
+            const insight = await generateWithFallback();
+
+            // Update cache
+            insightsCache = {
+                insight,
                 stats,
                 generatedAt: new Date().toISOString(),
-            }
-        });
+                date: today,
+                locale
+            };
 
-    } catch (error) {
+            return NextResponse.json({
+                success: true,
+                data: {
+                    insight,
+                    stats,
+                    generatedAt: insightsCache.generatedAt,
+                }
+            });
+
+        } catch (error: any) {
+            // Handle Rate Limit gracefully by returning stats without AI text
+            if (error.message?.includes('429') || error.status === 429) {
+                console.warn('Gemini Rate Limit hit after retries. Returning fallback stats.');
+                const fallbackInsight = locale === 'en'
+                    ? "AI is currently experimenting high traffic. Here are your latest stats:"
+                    : "ขณะนี้มีผู้ใช้งาน AI จำนวนมาก โปรดดูสถิติล่าสุดของคุณได้ที่นี่:";
+
+                return NextResponse.json({
+                    success: true,
+                    data: {
+                        insight: fallbackInsight,
+                        stats,
+                        generatedAt: new Date().toISOString(),
+                    }
+                });
+            }
+            throw error; // Re-throw other errors to be caught by outer catch
+        }
+
+    } catch (error: any) {
         console.error('AI Insights error:', error);
         return NextResponse.json(
-            {
-                success: false,
-                error: 'Failed to generate insights',
-                data: {
-                    insight: '📊 ไม่สามารถสร้างสรุปได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง',
-                    stats: null,
-                    generatedAt: new Date().toISOString(),
-                }
-            },
+            { success: false, error: error.message || 'Failed to generate insights' },
             { status: 500 }
         );
     }
-}
-
-// Mock insight generator when no API key
-function generateMockInsight(stats: any, peakHour: [string, number] | undefined): string {
-    const change = stats.today.total - stats.yesterday.total;
-    const changeText = change > 0
-        ? `เพิ่มขึ้น ${change} รายการ`
-        : change < 0
-            ? `ลดลง ${Math.abs(change)} รายการ`
-            : 'เท่ากับเมื่อวาน';
-
-    if (stats.today.total === 0) {
-        return '📭 วันนี้ยังไม่มีการจองเข้ามา รอลูกค้าใหม่กันนะครับ!';
-    }
-
-    return `🎯 วันนี้มีการจอง ${stats.today.total} รายการ ${changeText} คาดว่าจะมีลูกค้า ${stats.today.totalGuests} คน ${peakHour ? `ช่วงเวลา ${peakHour[0]}:00 น. คึกคักที่สุด!` : ''} 💪`;
 }

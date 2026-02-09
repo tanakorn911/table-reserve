@@ -7,6 +7,14 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
     try {
+        // Check if Gemini API key is available
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json(
+                { error: 'Gemini API Key is not configured' },
+                { status: 500 }
+            );
+        }
+
         const supabase = await createServerSupabaseClient();
         const { message, date, time, guests, locale } = await request.json();
 
@@ -15,13 +23,6 @@ export async function POST(request: NextRequest) {
         const languageInstruction = isThai
             ? '(in Thai language)'
             : '(in English language)';
-
-        if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json(
-                { error: 'Gemini API Key is missing on the server.' },
-                { status: 500 }
-            );
-        }
 
         // 1. Fetch ALL tables
         const { data: tables, error: tableError } = await supabase.from('tables').select('*');
@@ -77,8 +78,13 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // 4. Initialize Model
-        const modelInstance = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        // 4. Initialize AI Models
+        // Models to try in order: Flash -> Pro -> Legacy
+        const modelsToTry = [
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-pro'
+        ];
 
         const prompt = `
       Act as a professional restaurant manager named "TableMaster".
@@ -115,37 +121,93 @@ export async function POST(request: NextRequest) {
       }
     `;
 
-        // 5. Call Gemini
-        const result = await modelInstance.generateContent(prompt);
-        const responseText = result.response.text();
+        try {
+            // Helper for delay
+            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-        console.log('Gemini Response:', responseText);
+            // Recursive function to try models with fallback
+            const generateWithFallback = async (modelIndex = 0, retryCount = 0): Promise<string> => {
+                const modelName = modelsToTry[modelIndex];
 
-        // Clean markdown if present (Gemini sometimes adds ```json ... ```)
-        const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedResponse = JSON.parse(cleanedJson);
+                // If we ran out of models, throw error to trigger final table fallback
+                if (!modelName) {
+                    throw new Error('All AI models failed');
+                }
 
-        // Enhance response with table name
-        const recommendedTable = availableTables.find(t => t.id === parsedResponse.recommendedTableId);
-        const finalResponse = {
-            ...parsedResponse,
-            recommendedTableName: recommendedTable?.name || `Table ${parsedResponse.recommendedTableId}`
-        };
+                try {
+                    console.log(`Attempting to generate with model: ${modelName} (Retry: ${retryCount})`);
+                    const modelInstance = genAI.getGenerativeModel({ model: modelName });
+                    const result = await modelInstance.generateContent(prompt);
+                    return result.response.text();
+                } catch (error: any) {
+                    const isRateLimit = error.message?.includes('429') || error.status === 429;
+                    const isQuotaExceeded = error.message?.includes('quota') || error.message?.includes('limit');
 
-        return NextResponse.json(finalResponse);
-    } catch (error: any) {
-        console.error('AI Error:', error);
+                    // If Rate Limit/Quota issue
+                    if (isRateLimit || isQuotaExceeded) {
+                        console.warn(`Model ${modelName} hit rate limit/quota.`);
 
-        // Handle Rate Limiting explicitly
-        if (error.message?.includes('429') || error.status === 429) {
+                        // Retry this model once if it's a rate limit (transient)
+                        if (retryCount < 1) {
+                            await delay(1000);
+                            return generateWithFallback(modelIndex, retryCount + 1);
+                        }
+
+                        // Switch to next model
+                        return generateWithFallback(modelIndex + 1, 0);
+                    }
+
+                    // For other errors, also try next model
+                    console.error(`Model ${modelName} error:`, error.message);
+                    return generateWithFallback(modelIndex + 1, 0);
+                }
+            };
+
+            const responseText = await generateWithFallback();
+
+            console.log('Gemini Response:', responseText);
+
+            // Clean markdown if present (Gemini sometimes adds ```json ... ```)
+            const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsedResponse = JSON.parse(cleanedJson);
+
+            // Enhance response with table name
+            const recommendedTable = availableTables.find(t => t.id === parsedResponse.recommendedTableId);
+            const finalResponse = {
+                ...parsedResponse,
+                recommendedTableName: recommendedTable?.name || `Table ${parsedResponse.recommendedTableId}`
+            };
+
+            return NextResponse.json(finalResponse);
+
+        } catch (error: any) {
+            console.error('AI Error:', error);
+
+            // Fallback Logic: Pick a random available table if AI fails
+            if (availableTables.length > 0) {
+                console.warn('AI failed, using fallback recommendation.');
+                const randomTable = availableTables[Math.floor(Math.random() * availableTables.length)];
+
+                const fallbackReasoning = isThai
+                    ? "ขณะนี้ AI กำลังทำงานหนัก แต่เราขอแนะนำโต๊ะนี้ให้คุณแทนตามจำนวนลูกค้าครับ"
+                    : "AI is currently experiencing high traffic, but we recommend this table based on your party size.";
+
+                return NextResponse.json({
+                    recommendedTableId: randomTable.id,
+                    recommendedTableName: randomTable.name,
+                    reasoning: fallbackReasoning
+                });
+            }
+
             return NextResponse.json(
-                { error: 'AI กำลังทำงานหนัก (Rate Limit) กรุณารอสักครู่แล้วลองใหม่ครับ' },
-                { status: 429 }
+                { error: error.message || 'AI service failed and no tables available for fallback' },
+                { status: 500 }
             );
         }
-
+    } catch (error: any) {
+        console.error('API Error:', error);
         return NextResponse.json(
-            { error: error.message || 'AI service failed' },
+            { error: error.message || 'Internal Server Error' },
             { status: 500 }
         );
     }

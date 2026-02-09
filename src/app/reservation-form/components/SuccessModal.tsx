@@ -44,7 +44,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
     }
   }, [isOpen]);
 
-  // Calendar event handlers
+  // Calendar event handlers - now with locale support
   const handleAddToGoogleCalendar = () => {
     const event = createReservationEvent(
       reservation.bookingCode || reservation.id.slice(0, 8),
@@ -52,7 +52,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
       reservation.date,
       reservation.time,
       parseInt(reservation.guests),
-      reservation.tableName
+      reservation.tableName,
+      'Savory Bistro',
+      '',
+      locale as 'th' | 'en'
     );
     const url = generateGoogleCalendarUrl(event);
     window.open(url, '_blank');
@@ -65,7 +68,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
       reservation.date,
       reservation.time,
       parseInt(reservation.guests),
-      reservation.tableName
+      reservation.tableName,
+      'Savory Bistro',
+      '',
+      locale as 'th' | 'en'
     );
     downloadICSFile(event, `reservation-${reservation.bookingCode || reservation.id.slice(0, 8)}.ics`);
   };
@@ -109,11 +115,12 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="fixed inset-0 z-300 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-300 flex items-center justify-center p-4 overflow-y-auto">
         <div
           className="
             w-full max-w-md bg-card rounded-lg shadow-warm-xl
             animate-in zoom-in-95 duration-250
+            max-h-[90vh] overflow-y-auto my-auto
           "
           role="dialog"
           aria-modal="true"
@@ -231,7 +238,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.5 22h-15A2.5 2.5 0 0 1 2 19.5v-15A2.5 2.5 0 0 1 4.5 2h15A2.5 2.5 0 0 1 22 4.5v15a2.5 2.5 0 0 1-2.5 2.5zM8 7v10h2V7H8zm6 0v10h2V7h-2z" />
                 </svg>
-                <span>Google</span>
+                <span>{t('calendar.google')}</span>
               </button>
               <button
                 onClick={handleAddToAppleCalendar}
@@ -242,7 +249,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                 "
               >
                 <Icon name="CalendarIcon" size={16} />
-                <span>Apple/ICS</span>
+                <span>{t('calendar.apple')}</span>
               </button>
             </div>
 

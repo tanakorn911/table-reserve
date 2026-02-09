@@ -108,7 +108,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
-        <header className={`flex items-center justify-between px-4 md:px-6 py-4 backdrop-blur-sm border-b ${themeClasses.header}`}>
+        <header className={`flex items-center justify-between px-4 md:px-6 h-16 backdrop-blur-sm border-b ${themeClasses.header}`}>
           <div className="flex items-center gap-4">
             <h2 className={`text-base md:text-lg font-bold ${themeClasses.title}`}>{getTitle(pathname)}</h2>
           </div>
@@ -118,19 +118,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </span>
             <AdminThemeToggle size="sm" />
             <LanguageSwitcher className="hidden sm:flex" />
-            <button
-              onClick={async () => {
-                if (window.confirm(adminT('logout.confirm', locale))) {
-                  await supabase.auth.signOut();
-                  router.push('/admin/login');
-                  router.refresh();
-                }
-              }}
-              className="p-2 md:p-2.5 text-red-400 hover:text-white hover:bg-red-500/20 rounded-xl transition-all border border-red-500/20"
-              title={adminT('sidebar.logout', locale)}
-            >
-              <ArrowRightOnRectangleIcon className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
           </div>
         </header>
 
@@ -150,6 +137,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
         <AdminBottomNav />
       </div>
+
+      {/* Logout Button - Bottom Left */}
+      <button
+        onClick={async () => {
+          if (window.confirm(adminT('logout.confirm', locale))) {
+            await supabase.auth.signOut();
+            router.push('/admin/login');
+            router.refresh();
+          }
+        }}
+        className="fixed bottom-6 left-6 p-3 md:p-3.5 text-red-400 hover:text-white hover:bg-red-500/20 rounded-xl transition-all border border-red-500/20 md:hidden z-40"
+        title={adminT('sidebar.logout', locale)}
+      >
+        <ArrowRightOnRectangleIcon className="w-6 h-6" />
+      </button>
     </div>
   );
 }

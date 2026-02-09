@@ -76,7 +76,7 @@ export function useAdminLocale() {
 export const adminT = (key: string, locale: Locale): string => {
     const translations: Record<string, Record<Locale, string>> = {
         // Login page
-        'login.title': { th: 'จองโต๊ะออนไลน์', en: 'Table Reservation' },
+        'login.title': { th: 'ซาโวรี่ บิสโทร', en: 'Savory Bistro' },
         'login.subtitle': { th: 'เข้าสู่ระบบจัดการจองโต๊ะออนไลน์', en: 'Admin Panel Login' },
         'login.email': { th: 'อีเมล', en: 'Email' },
         'login.password': { th: 'รหัสผ่าน', en: 'Password' },
@@ -99,7 +99,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'sidebar.staff': { th: 'Staff', en: 'Staff' },
 
         // Layout/Header
-        'header.dashboard': { th: 'ภาพรวม (Dashboard)', en: 'Dashboard' },
+        'header.dashboard': { th: 'ภาพรวม', en: 'Dashboard' },
         'header.reservations': { th: 'รายการจอง', en: 'Reservations' },
         'header.tables': { th: 'จัดการข้อมูลโต๊ะ', en: 'Table Management' },
         'header.settings': { th: 'ตั้งค่าระบบ', en: 'Settings' },

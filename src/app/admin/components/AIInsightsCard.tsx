@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
+import { useTranslation } from '@/lib/i18n';
 
 interface AIInsightsData {
     insight: string;
@@ -29,6 +30,7 @@ interface AIInsightsCardProps {
 }
 
 export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
+    const { t } = useTranslation(locale);
     const [data, setData] = useState<AIInsightsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch('/api/ai/daily-insights');
+            const response = await fetch(`/api/ai/daily-insights?locale=${locale}`);
             const result = await response.json();
 
             if (result.success && result.data) {
@@ -52,11 +54,11 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                 setError(result.error || 'Failed to fetch insights');
             }
         } catch (err) {
-            setError('ไม่สามารถโหลดข้อมูลได้');
+            setError(locale === 'th' ? 'ไม่สามารถโหลดข้อมูลได้' : 'Failed to load data');
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [locale]);
 
     // Fetch on mount
     useEffect(() => {
@@ -133,8 +135,8 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                         <Icon name="SparklesIcon" size={20} className={themeColors.icon} />
                     </div>
                     <div>
-                        <h3 className={`font-bold ${themeColors.title}`}>AI Insights</h3>
-                        <p className={`text-xs ${themeColors.subtitle}`}>Powered by Gemini</p>
+                        <h3 className={`font-bold ${themeColors.title}`}>{t('admin.ai.title')}</h3>
+                        <p className={`text-xs ${themeColors.subtitle}`}>{t('admin.ai.subtitle')}</p>
                     </div>
                 </div>
                 <button
@@ -176,7 +178,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                                     />
                                 ))}
                             </div>
-                            <span className={`text-sm ${themeColors.loadingText}`}>กำลังวิเคราะห์ข้อมูล...</span>
+                            <span className={`text-sm ${themeColors.loadingText}`}>{t('admin.ai.analyzing')}</span>
                         </motion.div>
                     ) : error ? (
                         <motion.div

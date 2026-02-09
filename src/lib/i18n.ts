@@ -321,6 +321,16 @@ export const translations = {
     'ai.suggested': 'แนะนำสำหรับคุณ',
     'ai.retry': 'ลองใหม่',
     'ai.select': 'เลือกโต๊ะนี้',
+    'ai.chat.tooltip': 'มีคำถาม? แชทกับเราได้เลย!',
+    'ai.chat.title': 'สนทนากับเรา',
+    'ai.chat.subtitle': 'ตอบกลับภายใน 5 นาที',
+    'ai.chat.line': 'LINE Official',
+    'ai.chat.phone': 'โทรหาเรา',
+    'calendar.google': 'ปฏิทิน Google',
+    'calendar.apple': 'ปฏิทิน Apple (ICS)',
+    'admin.ai.title': 'ข้อมูลเชิงลึกจาก AI',
+    'admin.ai.subtitle': 'ขับเคลื่อนโดย Gemini',
+    'admin.ai.analyzing': 'กำลังวิเคราะห์ข้อมูล...',
   },
   en: {
     // Common
@@ -639,6 +649,16 @@ export const translations = {
     'ai.suggested': 'Suggested for You',
     'ai.retry': 'Try Again',
     'ai.select': 'Select This Table',
+    'ai.chat.tooltip': 'Have questions? Chat with us!',
+    'ai.chat.title': 'Chat with us',
+    'ai.chat.subtitle': 'Reply within 5 minutes',
+    'ai.chat.line': 'LINE Official',
+    'ai.chat.phone': 'Call Us',
+    'calendar.google': 'Google Calendar',
+    'calendar.apple': 'Apple Calendar (ICS)',
+    'admin.ai.title': 'AI Insights',
+    'admin.ai.subtitle': 'Powered by Gemini',
+    'admin.ai.analyzing': 'Analyzing data...',
   },
 };
 

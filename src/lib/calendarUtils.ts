@@ -1,6 +1,7 @@
 /**
  * Calendar Utilities
  * Generate URLs/files for adding reservations to calendars
+ * Supports Thai and English languages with 2-hour reminder
  */
 
 interface CalendarEvent {
@@ -9,10 +10,11 @@ interface CalendarEvent {
     location: string;
     startDate: Date;
     endDate: Date;
+    locale?: 'th' | 'en';
 }
 
 /**
- * Generate Google Calendar URL
+ * Generate Google Calendar URL with reminder
  */
 export function generateGoogleCalendarUrl(event: CalendarEvent): string {
     const formatDate = (date: Date): string => {
@@ -32,6 +34,7 @@ export function generateGoogleCalendarUrl(event: CalendarEvent): string {
 
 /**
  * Generate ICS file content for Apple Calendar / Outlook
+ * Includes 2-hour reminder
  */
 export function generateICSContent(event: CalendarEvent): string {
     const formatICSDate = (date: Date): string => {
@@ -59,6 +62,14 @@ export function generateICSContent(event: CalendarEvent): string {
         `DESCRIPTION:${escapeICS(event.description)}`,
         `LOCATION:${escapeICS(event.location)}`,
         'STATUS:CONFIRMED',
+        // 2-hour reminder (120 minutes before)
+        'BEGIN:VALARM',
+        'TRIGGER:-PT2H',
+        'ACTION:DISPLAY',
+        event.locale === 'th'
+            ? 'DESCRIPTION:การจองโต๊ะของคุณจะเริ่มในอีก 2 ชั่วโมง!'
+            : 'DESCRIPTION:Your table reservation starts in 2 hours!',
+        'END:VALARM',
         'END:VEVENT',
         'END:VCALENDAR',
     ].join('\r\n');
@@ -83,6 +94,7 @@ export function downloadICSFile(event: CalendarEvent, filename: string = 'reserv
 
 /**
  * Create calendar event from reservation data
+ * Supports Thai and English locales
  */
 export function createReservationEvent(
     bookingCode: string,
@@ -91,8 +103,9 @@ export function createReservationEvent(
     time: string,
     guests: number,
     tableName?: string,
-    restaurantName: string = 'TableReserve Restaurant',
-    restaurantAddress: string = ''
+    restaurantName: string = 'Savory Bistro',
+    restaurantAddress: string = '',
+    locale: 'th' | 'en' = 'th'
 ): CalendarEvent {
     // Parse date and time (assuming Thailand timezone)
     const [year, month, day] = date.split('-').map(Number);
@@ -104,17 +117,34 @@ export function createReservationEvent(
     // End date is 2 hours after start (typical reservation duration)
     const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
 
-    const title = `🍽️ Table Reservation - ${restaurantName}`;
+    // Locale-based content
+    const isThai = locale === 'th';
 
-    const description = [
-        `Booking Code: ${bookingCode}`,
-        `Guest: ${guestName}`,
-        `Party Size: ${guests} guests`,
-        tableName ? `Table: ${tableName}` : '',
-        '',
-        'Please arrive 10 minutes early.',
-        'Contact the restaurant for any changes.',
-    ].filter(Boolean).join('\n');
+    const title = isThai
+        ? `🍽️ จองโต๊ะ - ${restaurantName}`
+        : `🍽️ Table Reservation - ${restaurantName}`;
+
+    const description = isThai
+        ? [
+            `รหัสการจอง: ${bookingCode}`,
+            `ชื่อลูกค้า: ${guestName}`,
+            `จำนวน: ${guests} ท่าน`,
+            tableName ? `โต๊ะ: ${tableName}` : '',
+            '',
+            'Alarm: 2 Hours before event',
+            '⏰ กรุณามาถึงก่อนเวลานัด 10 นาที',
+            '📞 ติดต่อร้านหากต้องการเปลี่ยนแปลง',
+        ].filter(Boolean).join('\n')
+        : [
+            `Booking Code: ${bookingCode}`,
+            `Guest: ${guestName}`,
+            `Party Size: ${guests} guests`,
+            tableName ? `Table: ${tableName}` : '',
+            '',
+            'Alarm: 2 Hours before event',
+            '⏰ Please arrive 10 minutes early.',
+            '📞 Contact the restaurant for any changes.',
+        ].filter(Boolean).join('\n');
 
     return {
         title,
@@ -122,5 +152,6 @@ export function createReservationEvent(
         location: restaurantAddress || restaurantName,
         startDate,
         endDate,
+        locale,
     };
 }

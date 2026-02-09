@@ -176,24 +176,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleQuickConfirm = async (id: string) => {
-    setConfirming(id);
-    try {
-      const res = await fetch(`/api/reservations/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' }),
-      });
-      if (res.ok) {
-        await fetchDashboardData();
-      }
-    } catch (error) {
-      console.error('Error confirming:', error);
-    } finally {
-      setConfirming(null);
-    }
-  };
-
   const handleExportCSV = () => {
     if (allReservations.length === 0) return;
 

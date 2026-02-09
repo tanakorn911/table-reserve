@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import '../styles/index.css';
 import { NavigationProvider } from '@/contexts/NavigationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import KonamiCode from '@/components/common/KonamiCode';
 import ChatWidget from '@/components/common/ChatWidget';
 import ServiceWorkerRegistration from '@/components/common/ServiceWorkerRegistration';
 
@@ -42,8 +41,8 @@ export default function RootLayout({
         <ThemeProvider>
           <NavigationProvider>
             {children}
-            <KonamiCode discountAmount={50} />
-            <ChatWidget />
+            <ChatWidget
+              lineOAUrl="https://line.me/R/ti/p/@147zaegh" />
             <ServiceWorkerRegistration />
           </NavigationProvider>
         </ThemeProvider>
@@ -51,4 +50,3 @@ export default function RootLayout({
     </html>
   );
 }
-
