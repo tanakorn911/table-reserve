@@ -105,13 +105,7 @@ export async function GET(request: NextRequest) {
 
         // Generate AI insight using Gemini
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-        // Models to try in order
-        const modelsToTry = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'gemini-pro'
-        ];
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         let prompt;
 
@@ -157,46 +151,22 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
             // Helper for delay
             const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-            // Recursive function to try models with retry logic
-            const generateWithFallback = async (modelIndex = 0, retryCount = 0): Promise<string> => {
-                const modelName = modelsToTry[modelIndex];
-
-                // If we ran out of models, throw error to trigger fallback
-                if (!modelName) {
-                    throw new Error('All AI models failed');
-                }
-
+            // Retry logic with backoff
+            const generateWithRetry = async (retries = 3, delayMs = 1000) => {
                 try {
-                    console.log(`Attempting to generate with model: ${modelName} (Retry: ${retryCount})`);
-                    const modelInstance = genAI.getGenerativeModel({ model: modelName });
-                    const result = await modelInstance.generateContent(prompt);
-                    return result.response.text().trim();
+                    return await model.generateContent(prompt);
                 } catch (error: any) {
-                    const isRateLimit = error.message?.includes('429') || error.status === 429;
-                    const isQuotaExceeded = error.message?.includes('quota') || error.message?.includes('limit');
-
-                    // If Rate Limit/Quota issue
-                    if (isRateLimit || isQuotaExceeded) {
-                        console.warn(`Model ${modelName} hit rate limit/quota.`);
-
-                        // If we can still retry this model (up to 1 time for transient errors), do it
-                        // But mostly for rate limits we want to switch models fast if it persists
-                        if (retryCount < 1) {
-                            await delay(1000); // Wait 1s
-                            return generateWithFallback(modelIndex, retryCount + 1);
-                        }
-
-                        // Move to next model
-                        return generateWithFallback(modelIndex + 1, 0);
+                    if (retries > 0 && (error.message?.includes('429') || error.status === 429)) {
+                        console.log(`Rate limit hit, retrying in ${delayMs}ms... (${retries} retries left)`);
+                        await delay(delayMs);
+                        return generateWithRetry(retries - 1, delayMs * 2);
                     }
-
-                    // For other errors, also try next model just in case
-                    console.error(`Model ${modelName} error:`, error.message);
-                    return generateWithFallback(modelIndex + 1, 0);
+                    throw error;
                 }
             };
 
-            const insight = await generateWithFallback();
+            const result = await generateWithRetry();
+            const insight = result.response.text().trim();
 
             // Update cache
             insightsCache = {

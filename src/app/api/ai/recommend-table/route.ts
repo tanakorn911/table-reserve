@@ -78,13 +78,8 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // 4. Initialize AI Models
-        // Models to try in order: Flash -> Pro -> Legacy
-        const modelsToTry = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'gemini-pro'
-        ];
+        // 4. Initialize Model and call AI
+        const modelInstance = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
       Act as a professional restaurant manager named "TableMaster".
@@ -125,45 +120,22 @@ export async function POST(request: NextRequest) {
             // Helper for delay
             const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-            // Recursive function to try models with fallback
-            const generateWithFallback = async (modelIndex = 0, retryCount = 0): Promise<string> => {
-                const modelName = modelsToTry[modelIndex];
-
-                // If we ran out of models, throw error to trigger final table fallback
-                if (!modelName) {
-                    throw new Error('All AI models failed');
-                }
-
+            // Retry logic with backoff
+            const generateWithRetry = async (retries = 3, delayMs = 1000) => {
                 try {
-                    console.log(`Attempting to generate with model: ${modelName} (Retry: ${retryCount})`);
-                    const modelInstance = genAI.getGenerativeModel({ model: modelName });
-                    const result = await modelInstance.generateContent(prompt);
-                    return result.response.text();
+                    return await modelInstance.generateContent(prompt);
                 } catch (error: any) {
-                    const isRateLimit = error.message?.includes('429') || error.status === 429;
-                    const isQuotaExceeded = error.message?.includes('quota') || error.message?.includes('limit');
-
-                    // If Rate Limit/Quota issue
-                    if (isRateLimit || isQuotaExceeded) {
-                        console.warn(`Model ${modelName} hit rate limit/quota.`);
-
-                        // Retry this model once if it's a rate limit (transient)
-                        if (retryCount < 1) {
-                            await delay(1000);
-                            return generateWithFallback(modelIndex, retryCount + 1);
-                        }
-
-                        // Switch to next model
-                        return generateWithFallback(modelIndex + 1, 0);
+                    if (retries > 0 && (error.message?.includes('429') || error.status === 429)) {
+                        console.log(`Rate limit hit, retrying in ${delayMs}ms... (${retries} retries left)`);
+                        await delay(delayMs);
+                        return generateWithRetry(retries - 1, delayMs * 2);
                     }
-
-                    // For other errors, also try next model
-                    console.error(`Model ${modelName} error:`, error.message);
-                    return generateWithFallback(modelIndex + 1, 0);
+                    throw error;
                 }
             };
 
-            const responseText = await generateWithFallback();
+            const result = await generateWithRetry();
+            const responseText = result.response.text();
 
             console.log('Gemini Response:', responseText);
 
