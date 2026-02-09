@@ -8,12 +8,12 @@ import {
   CalendarDaysIcon,
   ArrowRightOnRectangleIcon,
   Cog6ToothIcon,
-  MagnifyingGlassIcon,
   MapIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminLocale, adminT } from './LanguageSwitcher';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -26,6 +26,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const supabase = createClientSupabaseClient();
   const [role, setRole] = useState<'admin' | 'staff'>('staff');
   const locale = useAdminLocale();
+  const { adminTheme } = useAdminTheme();
 
   useEffect(() => {
     const checkRole = async () => {
@@ -71,11 +72,42 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
   const menuItems = allMenuItems.filter((item) => item.roles.includes(role));
 
+  // Theme-aware classes
+  const themeClasses = adminTheme === 'dark'
+    ? {
+      overlay: 'bg-black/70',
+      sidebar: 'bg-gray-800/95 border-yellow-500/20',
+      header: 'bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/20',
+      headerTitle: 'text-yellow-400',
+      headerSubtitle: 'text-yellow-300',
+      closeBtn: 'text-gray-400 hover:text-white',
+      navActive: 'bg-yellow-500/20 text-yellow-400 shadow-lg shadow-yellow-500/10 border-yellow-500/30',
+      navInactive: 'text-gray-200 hover:bg-yellow-500/5 hover:text-white',
+      navIcon: 'text-gray-400 group-hover:text-white',
+      navIconActive: 'text-yellow-400',
+      logoutBorder: 'border-yellow-500/20',
+      logout: 'text-red-400 hover:bg-red-500/10 hover:border-red-500/30',
+    }
+    : {
+      overlay: 'bg-black/50',
+      sidebar: 'bg-white border-gray-200 shadow-xl shadow-gray-200/50',
+      header: 'bg-white border-gray-200',
+      headerTitle: 'text-gray-900',
+      headerSubtitle: 'text-gray-500',
+      closeBtn: 'text-gray-400 hover:text-gray-600',
+      navActive: 'bg-gray-100 text-gray-900 shadow-sm border-gray-200',
+      navInactive: 'text-gray-500 hover:bg-gray-50 hover:text-gray-900',
+      navIcon: 'text-gray-400 group-hover:text-gray-600',
+      navIconActive: 'text-gray-900',
+      logoutBorder: 'border-gray-100',
+      logout: 'text-red-600 hover:bg-red-50 hover:border-red-100',
+    };
+
   return (
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-black/70 z-40 transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 ${themeClasses.overlay} z-40 transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         onClick={onClose}
       ></div>
@@ -83,21 +115,21 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Sidebar */}
       <div
         className={`
-                fixed inset-y-0 left-0 w-64 bg-card/95 backdrop-blur-sm border-r border-primary/20 z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+                fixed inset-y-0 left-0 w-64 ${themeClasses.sidebar} backdrop-blur-sm border-r z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
       >
         {/* Header */}
-        <div className="relative flex items-center justify-between h-16 px-6 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-transparent">
+        <div className={`relative flex items-center justify-between h-16 px-6 border-b ${themeClasses.header}`}>
           <div>
-            <span className="text-lg font-bold text-yellow-400 leading-tight">
+            <span className={`text-lg font-bold ${themeClasses.headerTitle} leading-tight`}>
               {adminT('login.title', locale)}
             </span>
-            <span className="text-yellow-300 text-xs block uppercase tracking-wider font-bold">
+            <span className={`${themeClasses.headerSubtitle} text-xs block uppercase tracking-wider font-bold`}>
               ({adminT(role === 'admin' ? 'sidebar.admin' : 'sidebar.staff', locale)})
             </span>
           </div>
-          <button onClick={onClose} className="md:hidden text-foreground/60 hover:text-foreground transition-colors">
+          <button onClick={onClose} className={`md:hidden ${themeClasses.closeBtn} transition-colors`}>
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -113,13 +145,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 onClick={() => {
                   if (window.innerWidth < 768) onClose();
                 }}
-                className={`group flex items-center px-4 py-3 text-base font-bold rounded-xl transition-all ${isActive
-                  ? 'bg-primary/20 text-yellow-400 shadow-lg shadow-primary/10 border border-primary/30'
-                  : 'text-gray-200 hover:bg-primary/5 hover:text-white border border-transparent'
+                className={`group flex items-center px-4 py-3 text-base font-bold rounded-xl transition-all border ${isActive
+                  ? themeClasses.navActive
+                  : `${themeClasses.navInactive} border-transparent`
                   }`}
               >
                 <item.icon
-                  className={`w-6 h-6 mr-3 transition-colors ${isActive ? 'text-yellow-400' : 'text-gray-400 group-hover:text-white'
+                  className={`w-6 h-6 mr-3 transition-colors ${isActive ? themeClasses.navIconActive : themeClasses.navIcon
                     }`}
                   aria-hidden="true"
                 />
@@ -130,10 +162,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-primary/20">
+        <div className={`p-4 border-t ${themeClasses.logoutBorder}`}>
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm font-black text-red-400 rounded-xl hover:bg-error/10 uppercase tracking-widest transition-all border border-transparent hover:border-error/30"
+            className={`flex items-center w-full px-4 py-3 text-sm font-black rounded-xl uppercase tracking-widest transition-all border border-transparent ${themeClasses.logout}`}
           >
             <ArrowRightOnRectangleIcon className="w-6 h-6 mr-3" />
             {adminT('sidebar.logout', locale)}

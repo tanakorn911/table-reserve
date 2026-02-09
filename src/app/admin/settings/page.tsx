@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import PasswordChangeModal from './PasswordChangeModal';
 
 
@@ -46,6 +47,7 @@ const DAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday
 
 export default function AdminSettingsPage() {
   const locale = useAdminLocale();
+  const { adminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
   const DAYS = locale === 'th' ? DAYS_TH : DAYS_EN;
   const [loading, setLoading] = useState(false);
@@ -480,7 +482,7 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
-      <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('admin.settings.title')}</h1>
+      <h1 className={`text-3xl font-extrabold tracking-tight ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.settings.title')}</h1>
 
       {/* 🔐 Password Change Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

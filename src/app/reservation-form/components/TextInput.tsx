@@ -48,11 +48,11 @@ const TextInput: React.FC<TextInputProps> = ({
       required={required}
       className={`
         w-full px-5 py-3.5 rounded-2xl text-base
-        bg-white/5 backdrop-blur-sm border border-white/10 transition-all duration-300
-        text-white placeholder:text-white/50
-        focus:outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary/10 focus:border-primary/50
+        bg-muted backdrop-blur-sm border border-border transition-all duration-300
+        text-foreground placeholder:text-muted-foreground
+        focus:outline-none focus:bg-muted/80 focus:ring-4 focus:ring-primary/10 focus:border-primary/50
         min-h-[56px]
-        ${error ? 'border-error/50 bg-error/5' : success ? 'border-success/50 bg-success/5' : 'hover:border-white/20 hover:bg-white/10'}
+        ${error ? 'border-error/50 bg-error/5' : success ? 'border-success/50 bg-success/5' : 'hover:border-primary/20 hover:bg-muted/80'}
         disabled:opacity-50 disabled:cursor-not-allowed
         shadow-lg shadow-black/5 hover:shadow-black/10
       `}

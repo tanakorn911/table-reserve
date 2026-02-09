@@ -19,6 +19,7 @@ interface FloorPlanProps {
     width?: number;
     height?: number;
     locale?: string;
+    theme?: 'light' | 'dark';
 }
 
 const FloorPlan: React.FC<FloorPlanProps> = ({
@@ -33,6 +34,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     width = 800,
     height = 600,
     locale: propLocale,
+    theme = 'dark',
 }) => {
     const { locale: contextLocale } = useNavigation();
     // Use prop locale if provided, otherwise context, otherwise default 'th'
@@ -257,16 +259,57 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
         }
     };
 
+    // Theme-aware colors
+    const themeColors = theme === 'dark' ? {
+        zoneTabs: 'border-gray-700',
+        zoneActive: 'bg-primary text-white shadow-lg shadow-primary/20',
+        zoneInactive: 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-600',
+        legend: 'bg-slate-800 border-slate-600 text-slate-200',
+        legendAvailable: 'bg-slate-600 border-slate-400',
+        container: 'bg-[#0F172A] border-slate-700',
+        indoor: 'bg-[#1E293B] border-slate-700',
+        indoorPattern: '#334155',
+        indoorLabel: 'bg-slate-800/80 border-slate-600/30 text-slate-300',
+        outdoor: 'bg-[#0F172A]',
+        outdoorPattern: '#475569',
+        outdoorLabel: 'bg-slate-800/80 border-slate-600/30 text-slate-300',
+        vip: 'bg-[#3D342B] border-[#B48E43]',
+        vipLabel: 'bg-[#2C241B] border-[#B48E43] text-[#F0E6D2]',
+        vipDoor: 'bg-[#B48E43]',
+        entrance: 'bg-[#334155] border-slate-600',
+        entranceText: 'text-slate-500',
+        cashier: 'bg-slate-800 border-slate-600 text-slate-300',
+    } : {
+        zoneTabs: 'border-gray-200',
+        zoneActive: 'bg-amber-600 text-white shadow-lg shadow-amber-600/20',
+        zoneInactive: 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200',
+        legend: 'bg-amber-50 border-amber-200 text-amber-900',
+        legendAvailable: 'bg-amber-100 border-amber-300',
+        container: 'bg-amber-50 border-amber-300',
+        indoor: 'bg-white border-amber-200',
+        indoorPattern: '#FDE68A',
+        indoorLabel: 'bg-amber-100/80 border-amber-300/50 text-amber-800',
+        outdoor: 'bg-green-50',
+        outdoorPattern: '#86EFAC',
+        outdoorLabel: 'bg-green-100/80 border-green-300/50 text-green-800',
+        vip: 'bg-amber-100 border-amber-500',
+        vipLabel: 'bg-amber-200 border-amber-500 text-amber-900',
+        vipDoor: 'bg-amber-500',
+        entrance: 'bg-gray-300 border-gray-400',
+        entranceText: 'text-gray-600',
+        cashier: 'bg-blue-100 border-blue-300 text-blue-800',
+    };
+
     return (
         <div className="w-full flex flex-col">
             {/* Zone Tabs */}
             {zones.length > 0 && (
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 border-b border-gray-200 no-scrollbar">
+                <div className={`flex gap-2 mb-4 overflow-x-auto pb-2 border-b ${themeColors.zoneTabs} no-scrollbar`}>
                     <button
                         onClick={() => setActiveZone('all')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap ${activeZone === 'all'
-                            ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                            : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+                            ? themeColors.zoneActive
+                            : themeColors.zoneInactive
                             }`}
                     >
                         {t('admin.floorPlan.allZones')}
@@ -276,8 +319,8 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                             key={zone}
                             onClick={() => setActiveZone(zone)}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap ${activeZone === zone
-                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+                                ? themeColors.zoneActive
+                                : themeColors.zoneInactive
                                 }`}
                         >
                             {getZoneLabel(zone)}
@@ -287,9 +330,9 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
             )}
 
             {/* Legend - Centered at the top */}
-            <div className="flex flex-wrap gap-6 text-[11px] font-black text-slate-800 justify-center mb-6 bg-slate-100 p-3 rounded-2xl border border-slate-300 shadow-md">
+            <div className={`flex flex-wrap gap-6 text-[11px] font-black justify-center mb-6 p-3 rounded-2xl border shadow-md ${themeColors.legend}`}>
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-slate-200 border border-slate-400 rounded shadow-sm"></div>
+                    <div className={`w-4 h-4 rounded shadow-sm ${themeColors.legendAvailable}`}></div>
                     <span>{t('admin.floorPlan.legend.available')}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -302,10 +345,10 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                 </div>
             </div>
 
-            {/* Map Container - Dark Theme */}
+            {/* Map Container */}
             <div
                 ref={containerRef}
-                className="relative bg-[#0F172A] border-4 border-slate-700 rounded-3xl overflow-hidden shadow-2xl cursor-default group"
+                className={`relative border-4 rounded-3xl overflow-hidden shadow-2xl cursor-default group ${themeColors.container}`}
                 style={{ height: `${height}px`, width: '100%', minWidth: '800px' }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={() => handleMouseUp}
@@ -313,74 +356,74 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
             >
                 {/* Floor Background Layers */}
                 <div className="absolute inset-0 pointer-events-none">
-                    {/* Indoor Zone (Main Floor) - Dark Slate */}
-                    <div className="absolute top-0 left-0 w-[70%] h-full bg-[#1E293B] border-r border-slate-700">
+                    {/* Indoor Zone (Main Floor) */}
+                    <div className={`absolute top-0 left-0 w-[70%] h-full border-r ${themeColors.indoor}`}>
                         <div
                             className="absolute inset-0 opacity-[0.4]"
                             style={{
                                 backgroundImage:
-                                    'repeating-linear-gradient(45deg, transparent, transparent 10px, #334155 10px, #334155 11px)',
+                                    `repeating-linear-gradient(45deg, transparent, transparent 10px, ${themeColors.indoorPattern} 10px, ${themeColors.indoorPattern} 11px)`,
                                 backgroundSize: '20px 20px',
                             }}
                         ></div>
-                        <div className="absolute top-4 left-4 px-3 py-1 bg-slate-800/80 backdrop-blur rounded-lg border border-slate-600/30 text-xs font-bold text-slate-300 tracking-wider uppercase shadow-sm">
+                        <div className={`absolute top-4 left-4 px-3 py-1 backdrop-blur rounded-lg border text-xs font-bold tracking-wider uppercase shadow-sm ${themeColors.indoorLabel}`}>
                             {t('admin.floorPlan.zone.indoor')}
                         </div>
                     </div>
 
-                    {/* Outdoor Zone (Terrace) - Darker Slate */}
-                    <div className="absolute top-0 right-0 w-[30%] h-full bg-[#0F172A]">
+                    {/* Outdoor Zone (Terrace) */}
+                    <div className={`absolute top-0 right-0 w-[30%] h-full ${themeColors.outdoor}`}>
                         <div
                             className="absolute inset-0 opacity-[0.2]"
                             style={{
-                                backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
+                                backgroundImage: `radial-gradient(${themeColors.outdoorPattern} 1px, transparent 1px)`,
                                 backgroundSize: '16px 16px',
                             }}
                         ></div>
-                        <div className="absolute top-4 right-4 px-3 py-1 bg-slate-800/80 backdrop-blur rounded-lg border border-slate-600/30 text-xs font-bold text-slate-300 tracking-wider uppercase shadow-sm">
+                        <div className={`absolute top-4 right-4 px-3 py-1 backdrop-blur rounded-lg border text-xs font-bold tracking-wider uppercase shadow-sm ${themeColors.outdoorLabel}`}>
                             {t('admin.floorPlan.zone.outdoor')}
                         </div>
                     </div>
 
-                    {/* VIP Zone (Private Room) - Deep Gold/Bronze */}
-                    <div className="absolute bottom-6 left-6 w-[38%] h-[48%] bg-[#3D342B] rounded-2xl border-4 border-[#B48E43] shadow-2xl shadow-black/60">
+                    {/* VIP Zone (Private Room) */}
+                    <div className={`absolute bottom-6 left-6 w-[38%] h-[48%] rounded-2xl border-4 shadow-2xl ${themeColors.vip}`}>
                         <div
                             className="absolute inset-0 opacity-[0.1]"
                             style={{
-                                backgroundImage: 'linear-gradient(45deg, #B48E43 1px, transparent 1px)',
+                                backgroundImage: `linear-gradient(45deg, ${theme === 'dark' ? '#B48E43' : '#D97706'} 1px, transparent 1px)`,
                                 backgroundSize: '12px 12px',
                             }}
                         ></div>
                         {/* VIP Door - Right Side Facing Center */}
-                        <div className="absolute -right-px top-1/2 -translate-y-1/2 w-1.5 h-16 bg-[#B48E43] rounded-full shadow-[0_0_15px_rgba(180,142,67,0.6)] z-10">
+                        <div className={`absolute -right-px top-1/2 -translate-y-1/2 w-1.5 h-16 rounded-full shadow-lg z-10 ${themeColors.vipDoor}`}>
                             {/* Door handle */}
                             <div className="absolute top-1/2 left-0.5 w-1.5 h-1.5 bg-white/80 rounded-full -translate-y-1/2 shadow-inner" />
                             {/* Swing Arc */}
-                            <div className="absolute top-0 left-full w-16 h-16 border-t border-r border-[#B48E43]/30 rounded-tr-full pointer-events-none" />
+                            <div className={`absolute top-0 left-full w-16 h-16 border-t border-r rounded-tr-full pointer-events-none ${theme === 'dark' ? 'border-[#B48E43]/30' : 'border-amber-500/30'}`} />
                         </div>
-                        <div className="absolute -top-3 left-4 px-3 py-1 bg-[#2C241B] backdrop-blur rounded-lg border border-[#B48E43] text-xs font-bold text-[#F0E6D2] tracking-wider uppercase shadow-md">
-                            <Icon name="StarIcon" size={10} className="inline mr-1 text-[#B48E43]" />
+                        <div className={`absolute -top-3 left-4 px-3 py-1 backdrop-blur rounded-lg border text-xs font-bold tracking-wider uppercase shadow-md ${themeColors.vipLabel}`}>
+                            <Icon name="StarIcon" size={10} className={`inline mr-1 ${theme === 'dark' ? 'text-[#B48E43]' : 'text-amber-600'}`} />
                             {t('admin.floorPlan.zone.vip')}
                         </div>
                     </div>
 
                     {/* Main Entrance Door */}
                     <div className="absolute top-1/2 right-[30%] -translate-y-1/2 translate-x-1/2 z-0">
-                        <div className="w-2.5 h-20 bg-[#334155] rounded-full shadow-[0_0_20px_rgba(0,0,0,0.5)] relative border-x border-slate-600">
-                            <div className="absolute top-2 -left-1 w-3.5 h-1 bg-[#475569] rounded-full transform -rotate-12" />
-                            <div className="absolute bottom-2 -left-1 w-3.5 h-1 bg-[#475569] rounded-full transform rotate-12" />
+                        <div className={`w-2.5 h-20 rounded-full shadow-lg relative border-x ${themeColors.entrance}`}>
+                            <div className={`absolute top-2 -left-1 w-3.5 h-1 rounded-full transform -rotate-12 ${theme === 'dark' ? 'bg-[#475569]' : 'bg-gray-400'}`} />
+                            <div className={`absolute bottom-2 -left-1 w-3.5 h-1 rounded-full transform rotate-12 ${theme === 'dark' ? 'bg-[#475569]' : 'bg-gray-400'}`} />
                         </div>
-                        <div className="absolute top-1/2 left-full ml-2 -translate-y-1/2 text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                        <div className={`absolute top-1/2 left-full ml-2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${themeColors.entranceText}`}>
                             {t('admin.floorPlan.entrance') || 'Entrance'}
                         </div>
                     </div>
 
-                    {/* NEW: Cashier Area - In front of VIP, aligned bottom */}
-                    <div className="absolute bottom-6 left-[46%] w-32 h-20 bg-slate-800 rounded-[1rem] border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
+                    {/* Cashier Area */}
+                    <div className={`absolute bottom-6 left-[46%] w-32 h-20 rounded-[1rem] border-2 shadow-2xl flex items-center justify-center overflow-hidden ${themeColors.cashier}`}>
                         <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
                         <div className="flex flex-col items-center">
-                            <Icon name="CreditCardIcon" size={20} className="text-blue-400 mb-1" />
-                            <span className="text-[12px] font-black text-slate-300 uppercase tracking-tight text-center px-2">
+                            <Icon name="CreditCardIcon" size={20} className="text-blue-500 mb-1" />
+                            <span className="text-[12px] font-black uppercase tracking-tight text-center px-2">
                                 {t('admin.floorPlan.cashier')}
                             </span>
                         </div>

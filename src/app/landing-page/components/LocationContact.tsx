@@ -31,7 +31,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
           <div className="space-y-6">
-            <div className="bg-background rounded-xl p-6 shadow-warm-sm">
+            <div className="bg-background rounded-xl p-6 shadow-warm-sm border border-border">
               <div className="flex items-start gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 flex-shrink-0">
                   <Icon name="PhoneIcon" size={24} className="text-primary" />
@@ -50,7 +50,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
               </div>
             </div>
 
-            <div className="bg-background rounded-xl p-6 shadow-warm-sm">
+            <div className="bg-background rounded-xl p-6 shadow-warm-sm border border-border">
               <div className="flex items-start gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 flex-shrink-0">
                   <Icon name="EnvelopeIcon" size={24} className="text-primary" />
@@ -69,7 +69,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
               </div>
             </div>
 
-            <div className="bg-background rounded-xl p-6 shadow-warm-sm">
+            <div className="bg-background rounded-xl p-6 shadow-warm-sm border border-border">
               <div className="flex items-start gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 flex-shrink-0">
                   <Icon name="MapPinIcon" size={24} className="text-primary" />

@@ -287,22 +287,22 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className={`
           w-full px-4 pl-12 py-4 rounded-2xl text-base font-bold text-left
-          bg-white/5 border border-white/10 transition-all duration-300
-          focus:outline-none focus:bg-white/10 focus:border-primary/50 focus:shadow-[0_0_20px_rgba(var(--primary),0.2)]
-          min-h-[56px] shadow-lg shadow-black/5 relative overflow-hidden group
+          bg-muted border border-border transition-all duration-300
+          focus:outline-none focus:bg-muted/80 focus:border-primary/50 focus:shadow-md
+          min-h-[56px] shadow-sm relative overflow-hidden group
           ${error ? 'border-error/50 bg-error/5' : success ? 'border-success/50 bg-success/5' : ''}
-          hover:bg-white/10 hover:border-white/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] active:scale-[0.99]
+          hover:bg-muted/80 hover:border-border hover:shadow-md active:scale-[0.99]
         `}
       >
         {/* Glow effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
 
         <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300 group-hover:scale-110">
-          <Icon name="CalendarIcon" size={20} className="text-white/70 group-hover:text-white" />
+          <Icon name="CalendarIcon" size={20} className="text-muted-foreground group-hover:text-foreground" />
         </div>
 
         <span
-          className={`block transition-colors duration-300 ${value ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}
+          className={`block transition-colors duration-300 ${value ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
         >
           {formatDisplayDate(value)}
         </span>
@@ -314,26 +314,26 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
             className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] cursor-pointer"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-[#2D3748] border-2 border-gray-600 rounded-2xl shadow-xl p-4 pointer-events-auto">
+          <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-2xl shadow-xl p-4 pointer-events-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={prevMonth}
                 disabled={!canGoPrevMonth()}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <Icon name="ChevronLeftIcon" size={20} className="text-white" />
+                <Icon name="ChevronLeftIcon" size={20} className="text-foreground" />
               </button>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-foreground">
                 {currentMonths[currentMonth.getMonth()]} {currentYear}
               </h3>
               <button
                 type="button"
                 onClick={nextMonth}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
-                <Icon name="ChevronRightIcon" size={20} className="text-white" />
+                <Icon name="ChevronRightIcon" size={20} className="text-foreground" />
               </button>
             </div>
 
@@ -342,7 +342,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
               {currentDays.map((day, i) => (
                 <div
                   key={day}
-                  className={`text-center text-sm font-medium py-2 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-300' : 'text-gray-300'
+                  className={`text-center text-sm font-medium py-2 ${i === 0 ? 'text-error' : i === 6 ? 'text-primary' : 'text-muted-foreground'
                     }`}
                 >
                   {day}
@@ -364,14 +364,14 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                                                 relative w-full h-full flex flex-col items-center justify-center rounded-lg text-sm font-medium
                                                 transition-all duration-200
                                                 ${isSelected(day)
-                          ? 'bg-primary text-white shadow-md'
+                          ? 'bg-primary text-primary-foreground shadow-md'
                           : isToday(day)
-                            ? 'bg-primary/20 text-white border border-primary hover:bg-primary/30'
+                            ? 'bg-primary/20 text-foreground border border-primary hover:bg-primary/30'
                             : getHoliday(day)
-                              ? 'bg-red-900/30 text-red-400 border border-red-900/50'
+                              ? 'bg-error/20 text-error border border-error/50'
                               : isDateDisabled(day)
-                                ? 'text-gray-400 cursor-not-allowed opacity-50'
-                                : 'text-white hover:bg-white/10'
+                                ? 'text-muted-foreground cursor-not-allowed opacity-50'
+                                : 'text-foreground hover:bg-muted'
                         }
                                             `}
                     >
@@ -386,18 +386,18 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
             </div>
 
             {/* Quick select */}
-            <div className="mt-4 pt-3 border-t border-gray-600 flex gap-2">
+            <div className="mt-4 pt-3 border-t border-border flex gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickSelect(0)}
-                className="flex-1 py-2.5 px-3 rounded-lg text-sm font-bold bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-gray-500"
+                className="flex-1 py-2.5 px-3 rounded-lg text-sm font-bold bg-muted text-foreground hover:bg-muted/80 transition-all active:scale-95 border border-transparent hover:border-border"
               >
                 {locale === 'th' ? 'วันนี้' : 'Today'}
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickSelect(1)}
-                className="flex-1 py-2.5 px-3 rounded-lg text-sm font-bold bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-gray-500"
+                className="flex-1 py-2.5 px-3 rounded-lg text-sm font-bold bg-muted text-foreground hover:bg-muted/80 transition-all active:scale-95 border border-transparent hover:border-border"
               >
                 {locale === 'th' ? 'พรุ่งนี้' : 'Tomorrow'}
               </button>

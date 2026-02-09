@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { useTranslation } from '@/lib/i18n';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import AdminTimeGrid from '../components/AdminTimeGrid';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
 interface EditModalProps {
   table: Table | null;
@@ -19,6 +20,7 @@ interface EditModalProps {
 
 const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalProps) => {
   const [formData, setFormData] = useState<Partial<Table>>({});
+  const { adminTheme } = useAdminTheme();
 
   useEffect(() => {
     if (table) {
@@ -43,51 +45,89 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
     }
   };
 
+  // Theme-aware colors
+  const themeColors = adminTheme === 'dark' ? {
+    backdrop: 'bg-black/60',
+    modal: 'bg-gray-800 border-gray-700',
+    closeBtn: 'hover:bg-gray-700 text-gray-400 hover:text-white',
+    iconBg: 'bg-gray-700 border-gray-600',
+    iconText: 'text-white',
+    title: 'text-white',
+    subtitle: 'text-gray-400',
+    label: 'text-gray-400',
+    input: 'bg-gray-700 border-gray-600 focus:bg-gray-600 focus:border-yellow-500 text-white',
+    shapeActive: 'border-yellow-500 bg-yellow-500 text-gray-900',
+    shapeInactive: 'border-gray-600 bg-gray-700 text-gray-400 hover:border-gray-500',
+    shapeBorderActive: 'border-gray-900',
+    shapeBorderInactive: 'border-gray-500',
+    saveBtn: 'bg-yellow-500 text-gray-900 shadow-yellow-500/20 hover:bg-yellow-400',
+    deleteBtn: 'bg-red-900/30 text-red-400 hover:bg-red-900/50',
+    focusRing: 'focus:ring-yellow-500/10',
+  } : {
+    backdrop: 'bg-black/20',
+    modal: 'bg-white border-gray-200',
+    closeBtn: 'hover:bg-gray-100 text-gray-400 hover:text-gray-900',
+    iconBg: 'bg-gray-100 border-gray-200',
+    iconText: 'text-gray-900',
+    title: 'text-gray-900',
+    subtitle: 'text-gray-500',
+    label: 'text-gray-500',
+    input: 'bg-white border-gray-200 focus:bg-white focus:border-accent text-gray-900',
+    shapeActive: 'border-accent bg-accent text-accent-foreground',
+    shapeInactive: 'border-gray-200 bg-white text-gray-500 hover:border-gray-400',
+    shapeBorderActive: 'border-white',
+    shapeBorderInactive: 'border-gray-400',
+    saveBtn: 'bg-accent text-accent-foreground shadow-sm hover:bg-accent/90',
+    deleteBtn: 'bg-red-50 text-red-600 hover:bg-red-100',
+    focusRing: 'focus:ring-accent/20',
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className={`absolute inset-0 ${themeColors.backdrop} backdrop-blur-sm transition-opacity`}
         onClick={onClose}
       />
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
+      <div className={`${themeColors.modal} rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative z-10 animate-in fade-in zoom-in-95 duration-200 border`}>
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-all"
+          className={`absolute top-6 right-6 p-2 rounded-full ${themeColors.closeBtn} transition-all`}
         >
           <Icon name="XMarkIcon" size={24} />
         </button>
 
         <div className="mb-8 text-center">
-          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-gray-100 shadow-inner">
-            <span className="text-2xl font-black text-gray-900">
+          <div className={`w-16 h-16 ${themeColors.iconBg} rounded-2xl flex items-center justify-center mx-auto mb-4 border shadow-inner`}>
+            <span className={`text-2xl font-black ${themeColors.iconText}`}>
               {formData.name?.replace(/\D/g, '') || '#'}
             </span>
           </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">
+          <h3 className={`text-2xl font-black ${themeColors.title} tracking-tight`}>
             {t('admin.floorPlan.editModal.title')}
           </h3>
-          <p className="text-sm text-gray-500 font-medium">
+          <p className={`text-sm ${themeColors.subtitle} font-medium`}>
             {t('admin.floorPlan.configureSettings')}
           </p>
         </div>
 
+
         <div className="space-y-6">
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider mb-2`}>
               {t('admin.floorPlan.editModal.name')}
             </label>
             <input
               name="name"
               value={formData.name || ''}
               onChange={handleChange}
-              className="w-full px-5 py-3 rounded-xl bg-gray-50 border-2 border-gray-100 focus:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black font-bold text-gray-900 transition-all"
+              className={`w-full px-5 py-3 rounded-xl border-2 focus:outline-none focus:ring-4 ${themeColors.focusRing} font-bold transition-all ${themeColors.input}`}
               placeholder="e.g. T-1"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider`}>
                 {t('admin.floorPlan.editModal.capacity')}
               </label>
               <div className="relative">
@@ -99,7 +139,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                       capacity: Math.max(1, (prev.capacity || 0) - 1),
                     }))
                   }
-                  className="absolute left-1 top-1 w-8 h-full flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-200 rounded-lg transition-colors"
+                  className={`absolute left-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${adminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
                 >
                   -
                 </button>
@@ -109,28 +149,28 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                   value={formData.capacity || 2}
                   onChange={handleChange}
                   min={1}
-                  className="w-full px-10 py-3 rounded-xl bg-gray-50 border-2 border-gray-100 focus:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black font-bold text-gray-900 text-center transition-all appearance-none"
+                  className={`w-full px-10 py-3 rounded-xl border-2 focus:outline-none focus:ring-4 ${themeColors.focusRing} font-bold text-center transition-all appearance-none ${themeColors.input}`}
                 />
                 <button
                   type="button"
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, capacity: (prev.capacity || 0) + 1 }))
                   }
-                  className="absolute right-1 top-1 w-8 h-full flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-200 rounded-lg transition-colors"
+                  className={`absolute right-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${adminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
                 >
                   +
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider`}>
                 {t('admin.floorPlan.editModal.zone')}
               </label>
               <select
                 name="zone"
                 value={formData.zone || 'Indoor'}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-100 focus:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black font-bold text-gray-900 transition-all appearance-none cursor-pointer"
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:ring-4 ${themeColors.focusRing} font-bold transition-all appearance-none cursor-pointer ${themeColors.input}`}
               >
                 <option value="Indoor">{t('admin.floorPlan.zone.indoor')}</option>
                 <option value="Outdoor">{t('admin.floorPlan.zone.outdoor')}</option>
@@ -140,25 +180,25 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider mb-2`}>
               {t('admin.floorPlan.editModal.shape')}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setFormData((prev) => ({ ...prev, shape: 'rectangle' }))}
-                className={`flex items-center justify-center p-3 rounded-xl border-2 transition-all gap-2 ${formData.shape === 'rectangle' ? 'border-black bg-black text-white' : 'border-gray-100 bg-white text-gray-500 hover:border-gray-300'}`}
+                className={`flex items-center justify-center p-3 rounded-xl border-2 transition-all gap-2 ${formData.shape === 'rectangle' ? themeColors.shapeActive : themeColors.shapeInactive}`}
               >
                 <div
-                  className={`w-4 h-3 border-2 rounded-sm ${formData.shape === 'rectangle' ? 'border-white' : 'border-gray-400'}`}
+                  className={`w-4 h-3 border-2 rounded-sm ${formData.shape === 'rectangle' ? themeColors.shapeBorderActive : themeColors.shapeBorderInactive}`}
                 />
                 <span className="text-xs font-bold">{t('admin.floorPlan.shapes.rect')}</span>
               </button>
               <button
                 onClick={() => setFormData((prev) => ({ ...prev, shape: 'circle' }))}
-                className={`flex items-center justify-center p-3 rounded-xl border-2 transition-all gap-2 ${formData.shape === 'circle' ? 'border-black bg-black text-white' : 'border-gray-100 bg-white text-gray-500 hover:border-gray-300'}`}
+                className={`flex items-center justify-center p-3 rounded-xl border-2 transition-all gap-2 ${formData.shape === 'circle' ? themeColors.shapeActive : themeColors.shapeInactive}`}
               >
                 <div
-                  className={`w-4 h-4 border-2 rounded-full ${formData.shape === 'circle' ? 'border-white' : 'border-gray-400'}`}
+                  className={`w-4 h-4 border-2 rounded-full ${formData.shape === 'circle' ? themeColors.shapeBorderActive : themeColors.shapeBorderInactive}`}
                 />
                 <span className="text-xs font-bold">{t('admin.floorPlan.shapes.circle')}</span>
               </button>
@@ -174,14 +214,14 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                 onClose();
               }
             }}
-            className="flex-1 py-4 bg-red-50 text-red-600 rounded-xl font-black hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            className={`flex-1 py-4 rounded-xl font-black transition-colors flex items-center justify-center gap-2 ${themeColors.deleteBtn}`}
           >
             <Icon name="TrashIcon" size={20} />
             {t('admin.floorPlan.editModal.delete')}
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 py-4 bg-[#3b5998] text-white rounded-xl font-black shadow-xl shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className={`flex-1 py-4 rounded-xl font-black shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${themeColors.saveBtn}`}
           >
             <Icon name="CheckIcon" size={20} />
             {t('admin.floorPlan.editModal.update')}
@@ -194,6 +234,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
 
 export default function FloorPlanAdminPage() {
   const locale = useAdminLocale();
+  const { adminTheme } = useAdminTheme();
   const { t } = useTranslation(locale); // Dynamically use current locale
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -384,23 +425,71 @@ export default function FloorPlanAdminPage() {
     }
   };
 
+  // Theme-aware colors for the main page layout
+  const pageTheme = adminTheme === 'dark' ? {
+    bg: 'bg-gray-900',
+    card: 'bg-gray-800 border-gray-700',
+    cardBg: 'bg-gray-900/50',
+    text: 'text-white',
+    textSecondary: 'text-gray-400',
+    border: 'border-gray-700',
+    modeSwitch: 'bg-gray-700',
+    modeActive: 'bg-gray-600 text-yellow-400 shadow-md',
+    modeInactive: 'text-gray-400 hover:text-gray-200',
+    input: 'bg-gray-700 border-gray-600 text-white focus:border-yellow-500',
+    tip: 'bg-blue-900/20 border-blue-900/40 text-blue-200',
+    counter: 'bg-gray-800/90 border-gray-700 text-gray-200',
+    dashedBorder: 'border-gray-600 hover:border-yellow-500 hover:bg-yellow-500/10',
+    dashedText: 'text-gray-400 group-hover:text-yellow-500',
+    dashedIcon: 'border-gray-500 group-hover:border-yellow-500',
+    primaryBtn: 'bg-yellow-500 hover:bg-yellow-400 text-gray-900 shadow-yellow-500/20',
+  } : {
+    bg: 'bg-gray-50',
+    card: 'bg-white border-gray-200',
+    cardBg: 'bg-gray-100/50',
+    text: 'text-gray-900',
+    textSecondary: 'text-gray-500',
+    border: 'border-gray-200',
+    modeSwitch: 'bg-gray-100',
+    modeActive: 'bg-white text-gray-900 shadow-sm border border-gray-200',
+    modeInactive: 'text-gray-500 hover:text-gray-900',
+    input: 'bg-white border-gray-200 text-gray-900 focus:border-gray-400 focus:ring-gray-200',
+    tip: 'bg-blue-50 border-blue-100 text-blue-800',
+    counter: 'bg-white/90 border-gray-200 text-gray-700 shadow-sm',
+    dashedBorder: 'border-gray-300 hover:border-gray-900 hover:bg-gray-50',
+    dashedText: 'text-gray-500 group-hover:text-gray-900',
+    dashedIcon: 'border-gray-300 group-hover:border-gray-900',
+    primaryBtn: 'bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm',
+  };
+
+  // Theme-aware colors for Booking Detail Modal
+  const modalTheme = adminTheme === 'dark' ? {
+    backdrop: 'bg-black/60',
+    modal: 'bg-gray-800 border-gray-700',
+    closeBtn: 'hover:bg-gray-700 text-gray-400 hover:text-white',
+  } : {
+    backdrop: 'bg-black/20',
+    modal: 'bg-white border-gray-200',
+    closeBtn: 'hover:bg-gray-100 text-gray-400 hover:text-gray-900',
+  };
+
   return (
-    <div className="h-full md:h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto overflow-y-auto md:overflow-hidden">
+    <div className={`h-full md:h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto overflow-y-auto md:overflow-hidden ${pageTheme.bg}`}>
       {/* Main Canvas - Moved to TOP on mobile for better visibility */}
-      <div className="flex-1 order-1 md:order-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative group min-h-[500px] md:min-h-0">
+      <div className={`flex-1 order-1 md:order-2 ${pageTheme.card} rounded-2xl shadow-sm border overflow-hidden flex flex-col relative group min-h-[500px] md:min-h-0`}>
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-xl border border-gray-200 text-[13px] font-black text-slate-700 shadow-lg flex items-center gap-2">
-            <Icon name="Square2StackIcon" size={16} className="text-blue-500" />
+          <div className={`${pageTheme.counter} backdrop-blur px-4 py-2 rounded-xl border text-[13px] font-black shadow-lg flex items-center gap-2`}>
+            <Icon name="Square2StackIcon" size={16} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-500'} />
             {t('admin.floorPlan.tableCount').replace('{count}', tables.length.toString())}
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-gray-50/50">
+        <div className={`flex-1 overflow-auto ${pageTheme.cardBg}`}>
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-10 h-10 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
-                <span className="text-sm font-medium text-gray-400">
+                <div className={`w-10 h-10 border-4 border-gray-200 ${adminTheme === 'dark' ? 'border-t-yellow-500' : 'border-t-amber-500'} rounded-full animate-spin`} />
+                <span className={`text-sm font-medium ${pageTheme.textSecondary}`}>
                   {t('admin.floorPlan.loading')}
                 </span>
               </div>
@@ -415,6 +504,7 @@ export default function FloorPlanAdminPage() {
                 onTableEdit={setEditingTable}
                 bookedTables={bookedTables}
                 locale={locale}
+                theme={adminTheme}
                 onTableSelect={(id) => {
                   if (viewMode === 'check') {
                     const booking = bookedTables.find((b) => b.id === id);
@@ -429,21 +519,21 @@ export default function FloorPlanAdminPage() {
 
       {/* Sidebar / Toolbar - Moved to BOTTOM on mobile */}
       <div className="w-full md:w-80 flex flex-col gap-4 order-2 md:order-1">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-6">
+        <div className={`${pageTheme.card} rounded-2xl shadow-sm border p-6 flex flex-col gap-6`}>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+            <h1 className={`text-2xl font-black ${pageTheme.text} tracking-tight`}>
               {t('admin.floorPlan.title')}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">{t('admin.floorPlan.subtitle')}</p>
+            <p className={`text-sm ${pageTheme.textSecondary} mt-1`}>{t('admin.floorPlan.subtitle')}</p>
           </div>
 
           {/* Mode Switcher */}
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner">
+          <div className={`flex ${pageTheme.modeSwitch} p-1.5 rounded-2xl shadow-inner`}>
             <button
               onClick={() => setViewMode('edit')}
               className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'edit'
-                ? 'bg-white text-blue-600 shadow-md'
-                : 'text-slate-500 hover:text-slate-700'
+                ? pageTheme.modeActive
+                : pageTheme.modeInactive
                 }`}
             >
               <Icon name="PencilIcon" size={16} />
@@ -452,8 +542,8 @@ export default function FloorPlanAdminPage() {
             <button
               onClick={() => setViewMode('check')}
               className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'check'
-                ? 'bg-white text-green-600 shadow-md'
-                : 'text-slate-500 hover:text-slate-700'
+                ? adminTheme === 'dark' ? 'bg-gray-600 text-green-400 shadow-md' : 'bg-white text-green-600 shadow-md'
+                : pageTheme.modeInactive
                 }`}
             >
               <Icon name="MagnifyingGlassIcon" size={16} />
@@ -465,18 +555,18 @@ export default function FloorPlanAdminPage() {
           {viewMode === 'check' && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                <label className={`block text-xs font-bold ${pageTheme.textSecondary} uppercase tracking-widest mb-2`}>
                   {t('admin.floorPlan.selectDate')}
                 </label>
                 <input
                   type="date"
                   value={checkDate}
                   onChange={(e) => setCheckDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 font-bold text-gray-900 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                  className={`w-full px-4 py-3 rounded-xl border-2 font-bold focus:outline-none focus:ring-4 transition-all ${pageTheme.input} ${adminTheme === 'dark' ? 'focus:ring-yellow-500/10' : 'focus:ring-amber-500/10'}`}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                <label className={`block text-xs font-bold ${pageTheme.textSecondary} uppercase tracking-widest mb-2`}>
                   {t('checkStatus.label.time')}
                 </label>
                 <AdminTimeGrid
@@ -490,31 +580,31 @@ export default function FloorPlanAdminPage() {
 
           {viewMode === 'edit' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              <div className={`text-xs font-bold ${pageTheme.textSecondary} uppercase tracking-widest`}>
                 {t('admin.floorPlan.addTable')}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => addTable('rectangle')}
-                  className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group"
+                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all group ${pageTheme.dashedBorder}`}
                 >
-                  <div className="w-8 h-6 border-2 border-gray-400 rounded-sm mb-2 group-hover:border-primary transition-colors"></div>
-                  <span className="text-xs font-bold text-gray-600 group-hover:text-primary">
+                  <div className={`w-8 h-6 border-2 rounded-sm mb-2 transition-colors ${pageTheme.dashedIcon}`}></div>
+                  <span className={`text-xs font-bold ${pageTheme.dashedText}`}>
                     {t('admin.floorPlan.shapes.rect')}
                   </span>
-                  <span className="text-[10px] text-gray-400 mt-1">
+                  <span className={`text-[10px] ${pageTheme.textSecondary} mt-1`}>
                     ({t('admin.floorPlan.zone.indoor')})
                   </span>
                 </button>
                 <button
                   onClick={() => addTable('circle')}
-                  className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group"
+                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all group ${pageTheme.dashedBorder}`}
                 >
-                  <div className="w-8 h-8 border-2 border-gray-400 rounded-full mb-2 group-hover:border-primary transition-colors"></div>
-                  <span className="text-xs font-bold text-gray-600 group-hover:text-primary">
+                  <div className={`w-8 h-8 border-2 rounded-full mb-2 transition-colors ${pageTheme.dashedIcon}`}></div>
+                  <span className={`text-xs font-bold ${pageTheme.dashedText}`}>
                     {t('admin.floorPlan.shapes.circle')}
                   </span>
-                  <span className="text-[10px] text-gray-400 mt-1">
+                  <span className={`text-[10px] ${pageTheme.textSecondary} mt-1`}>
                     ({t('admin.floorPlan.zone.outdoor')})
                   </span>
                 </button>
@@ -522,13 +612,13 @@ export default function FloorPlanAdminPage() {
             </div>
           )}
 
-          <div className="pt-4 border-t border-gray-100">
+          <div className={`pt-4 border-t ${pageTheme.border}`}>
             <div className="flex flex-col gap-2">
               <button
                 id="save-btn"
                 onClick={handleSaveLayout}
                 disabled={saveStatus !== 'idle'}
-                className={`w-full py-3 text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 shadow-green-500/30' : 'bg-primary hover:bg-primary/90 shadow-primary/30'}`}
+                className={`w-full py-3 text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 shadow-green-500/30' : pageTheme.primaryBtn}`}
               >
                 {saveStatus === 'saving' ? (
                   <>
@@ -552,12 +642,12 @@ export default function FloorPlanAdminPage() {
         </div>
 
         {/* Tip Card - Smaller or Hidden on Mobile if needed */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hidden md:block">
-          <h3 className="font-black text-slate-900 text-base mb-3 flex items-center gap-2">
-            <Icon name="InformationCircleIcon" size={20} className="text-blue-600" />
+        <div className={`${pageTheme.card} rounded-2xl p-6 shadow-sm border hidden md:block`}>
+          <h3 className={`font-black ${pageTheme.text} text-base mb-3 flex items-center gap-2`}>
+            <Icon name="InformationCircleIcon" size={20} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
             {t('admin.floorPlan.tips')}
           </h3>
-          <ul className="text-sm text-slate-700 space-y-3 list-disc list-inside font-bold leading-relaxed">
+          <ul className={`text-sm ${pageTheme.textSecondary} space-y-3 list-disc list-inside font-bold leading-relaxed`}>
             <li>{t('admin.floorPlan.tip1')}</li>
             <li>{t('admin.floorPlan.tip2')}</li>
             <li>{t('admin.floorPlan.tip3')}</li>
@@ -579,32 +669,45 @@ export default function FloorPlanAdminPage() {
       {selectedBooking && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            className={`absolute inset-0 ${modalTheme.backdrop} backdrop-blur-sm transition-opacity`}
             onClick={() => setSelectedBooking(null)}
           />
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative z-10 animate-in fade-in zoom-in-95 duration-200">
+          <div className={`${modalTheme.modal} rounded-2xl shadow-2xl w-full max-w-sm p-6 relative z-10 animate-in fade-in zoom-in-95 duration-200 border`}>
             <button
               onClick={() => setSelectedBooking(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-900"
+              className={`absolute top-4 right-4 ${modalTheme.closeBtn}`}
             >
               <Icon name="XMarkIcon" size={24} />
             </button>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3 text-green-600">
+              <div className={`w-12 h-12 ${adminTheme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-50 text-green-600'} rounded-full flex items-center justify-center mx-auto mb-3`}>
                 <Icon name="CalendarIcon" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">{t('admin.floorPlan.bookingDetails')}</h3>
-              <p className="text-sm text-gray-500">{t('admin.reservations.table.table')} {selectedBooking.id}</p>
+              <h3 className={`text-xl font-bold ${pageTheme.text}`}>{t('admin.floorPlan.bookingDetails')}</h3>
+              <p className={`text-sm ${pageTheme.textSecondary}`}>{t('admin.reservations.table.table')} {selectedBooking.id}</p>
             </div>
             <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-xl space-y-3">
+              <div className={`${pageTheme.cardBg} p-4 rounded-xl space-y-3 border ${pageTheme.border}`}>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('form.time')}</span>
-                  <span className="font-bold text-gray-900">{selectedBooking.time} {locale === 'th' ? 'น.' : ''}</span>
+                  <span className={pageTheme.textSecondary}>{t('form.name')}</span>
+                  <span className={`font-bold ${pageTheme.text}`}>{selectedBooking.guestName}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('admin.floorPlan.nextAvailable')}</span>
-                  <span className="font-bold text-green-600">
+                  <span className={pageTheme.textSecondary}>{t('form.phone')}</span>
+                  <span className={`font-bold ${pageTheme.text}`}>{selectedBooking.guestPhone}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className={pageTheme.textSecondary}>{t('form.guests')}</span>
+                  <span className={`font-bold ${pageTheme.text}`}>{selectedBooking.partySize} {t('common.people')}</span>
+                </div>
+                <div className={`pt-2 border-t ${adminTheme === 'dark' ? 'border-gray-700' : 'border-gray-200/50'}`}></div>
+                <div className="flex justify-between text-sm">
+                  <span className={pageTheme.textSecondary}>{t('form.time')}</span>
+                  <span className={`font-bold ${pageTheme.text}`}>{selectedBooking.time} {locale === 'th' ? 'น.' : ''}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className={pageTheme.textSecondary}>{t('admin.floorPlan.nextAvailable')}</span>
+                  <span className={`font-bold ${adminTheme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                     {(() => {
                       const [h, m] = selectedBooking.time.split(':').map(Number);
                       const endH = h + 2;
@@ -612,24 +715,12 @@ export default function FloorPlanAdminPage() {
                     })()}
                   </span>
                 </div>
-                <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
-                  <span className="text-gray-500">{t('form.name')}</span>
-                  <span className="font-bold text-gray-900">{selectedBooking.guestName}</span>
-                </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('form.phone')}</span>
-                  <span className="font-bold text-gray-900">{selectedBooking.guestPhone}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('form.guests')}</span>
-                  <span className="font-bold text-gray-900">{selectedBooking.partySize} {t('admin.reservations.guests')}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('admin.reservations.table.status')}</span>
+                  <span className={pageTheme.textSecondary}>{t('admin.reservations.table.status')}</span>
                   <span
                     className={`font-bold px-2 py-0.5 rounded text-xs ${selectedBooking.status === 'confirmed'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
+                      ? 'bg-green-100/10 text-green-500 border border-green-500/20'
+                      : 'bg-yellow-100/10 text-yellow-500 border border-yellow-500/20'
                       }`}
                   >
                     {selectedBooking.status}

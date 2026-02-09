@@ -1,42 +1,55 @@
 # Environment files (contains secrets)
 .env
-.env.local
-.env.*.local
+*.pem
 
 # Node modules
 node_modules/
-package-lock.json
+# package-lock.json # Keep package-lock.json committed for consistent installs
 
 # Next.js build output
 .next/
 out/
-
-# Production build
 build/
+dist/
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # OS-specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
 # Vercel deployment
 .vercel/
 
-# Optional: if using TypeScript
+# TypeScript
 *.tsbuildinfo
+next-env.d.ts
 
-# Optional: if using testing tools
+# Testing
 coverage/
 jest-test-results.json
 
-# Optional: if using IDEs
+# IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+*.swn
+.project
+.settings/
+.classpath
 
 # Optional: if using TurboRepo or monorepo
 turbo/
+

@@ -158,22 +158,22 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         disabled={!selectedDate}
         className={`
           w-full px-4 pl-12 py-4 rounded-2xl text-base font-bold text-left
-          bg-white/5 border border-white/10 transition-all duration-300
-          focus:outline-none focus:bg-white/10 focus:border-primary/50 focus:shadow-[0_0_20px_rgba(var(--primary),0.2)]
+          bg-muted border border-border transition-all duration-300
+          focus:outline-none focus:bg-muted/80 focus:border-primary/50 focus:shadow-[0_0_20px_rgba(var(--primary),0.2)]
           min-h-[56px] shadow-lg shadow-black/5 relative overflow-hidden group
           ${error ? 'border-error/50 bg-error/5' : success ? 'border-success/50 bg-success/5' : ''}
-          ${selectedDate ? 'hover:bg-white/10 hover:border-white/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] cursor-pointer active:scale-[0.99]' : 'opacity-40 cursor-not-allowed grayscale'}
+          ${selectedDate ? 'hover:bg-muted/80 hover:border-primary/20 cursor-pointer active:scale-[0.99]' : 'opacity-40 cursor-not-allowed grayscale'}
         `}
       >
         {/* Glow effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
 
         <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300 group-hover:scale-110">
-          <Icon name="ClockIcon" size={20} className="text-white/70 group-hover:text-white" />
+          <Icon name="ClockIcon" size={20} className="text-muted-foreground group-hover:text-foreground" />
         </div>
 
         <span
-          className={`block transition-colors duration-300 ${value ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}
+          className={`block transition-colors duration-300 ${value ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}
         >
           {!selectedDate
             ? locale === 'th'

@@ -7,6 +7,14 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
     try {
+        // Check if Gemini API key is available
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json(
+                { error: 'Gemini API Key is not configured' },
+                { status: 500 }
+            );
+        }
+
         const supabase = await createServerSupabaseClient();
         const { message, date, time, guests, locale } = await request.json();
 
@@ -15,13 +23,6 @@ export async function POST(request: NextRequest) {
         const languageInstruction = isThai
             ? '(in Thai language)'
             : '(in English language)';
-
-        if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json(
-                { error: 'Gemini API Key is missing on the server.' },
-                { status: 500 }
-            );
-        }
 
         // 1. Fetch ALL tables
         const { data: tables, error: tableError } = await supabase.from('tables').select('*');
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // 4. Initialize Model
+        // 4. Initialize Model and call AI
         const modelInstance = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
         const prompt = `
@@ -115,37 +116,70 @@ export async function POST(request: NextRequest) {
       }
     `;
 
-        // 5. Call Gemini
-        const result = await modelInstance.generateContent(prompt);
-        const responseText = result.response.text();
+        try {
+            // Helper for delay
+            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-        console.log('Gemini Response:', responseText);
+            // Retry logic with backoff
+            const generateWithRetry = async (retries = 3, delayMs = 1000) => {
+                try {
+                    return await modelInstance.generateContent(prompt);
+                } catch (error: any) {
+                    if (retries > 0 && (error.message?.includes('429') || error.status === 429)) {
+                        console.log(`Rate limit hit, retrying in ${delayMs}ms... (${retries} retries left)`);
+                        await delay(delayMs);
+                        return generateWithRetry(retries - 1, delayMs * 2);
+                    }
+                    throw error;
+                }
+            };
 
-        // Clean markdown if present (Gemini sometimes adds ```json ... ```)
-        const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedResponse = JSON.parse(cleanedJson);
+            const result = await generateWithRetry();
+            const responseText = result.response.text();
 
-        // Enhance response with table name
-        const recommendedTable = availableTables.find(t => t.id === parsedResponse.recommendedTableId);
-        const finalResponse = {
-            ...parsedResponse,
-            recommendedTableName: recommendedTable?.name || `Table ${parsedResponse.recommendedTableId}`
-        };
+            console.log('Gemini Response:', responseText);
 
-        return NextResponse.json(finalResponse);
-    } catch (error: any) {
-        console.error('AI Error:', error);
+            // Clean markdown if present (Gemini sometimes adds ```json ... ```)
+            const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsedResponse = JSON.parse(cleanedJson);
 
-        // Handle Rate Limiting explicitly
-        if (error.message?.includes('429') || error.status === 429) {
+            // Enhance response with table name
+            const recommendedTable = availableTables.find(t => t.id === parsedResponse.recommendedTableId);
+            const finalResponse = {
+                ...parsedResponse,
+                recommendedTableName: recommendedTable?.name || `Table ${parsedResponse.recommendedTableId}`
+            };
+
+            return NextResponse.json(finalResponse);
+
+        } catch (error: any) {
+            console.error('AI Error:', error);
+
+            // Fallback Logic: Pick a random available table if AI fails
+            if (availableTables.length > 0) {
+                console.warn('AI failed, using fallback recommendation.');
+                const randomTable = availableTables[Math.floor(Math.random() * availableTables.length)];
+
+                const fallbackReasoning = isThai
+                    ? "ขณะนี้ AI กำลังทำงานหนัก แต่เราขอแนะนำโต๊ะนี้ให้คุณแทนตามจำนวนลูกค้าครับ"
+                    : "AI is currently experiencing high traffic, but we recommend this table based on your party size.";
+
+                return NextResponse.json({
+                    recommendedTableId: randomTable.id,
+                    recommendedTableName: randomTable.name,
+                    reasoning: fallbackReasoning
+                });
+            }
+
             return NextResponse.json(
-                { error: 'AI กำลังทำงานหนัก (Rate Limit) กรุณารอสักครู่แล้วลองใหม่ครับ' },
-                { status: 429 }
+                { error: error.message || 'AI service failed and no tables available for fallback' },
+                { status: 500 }
             );
         }
-
+    } catch (error: any) {
+        console.error('API Error:', error);
         return NextResponse.json(
-            { error: error.message || 'AI service failed' },
+            { error: error.message || 'Internal Server Error' },
             { status: 500 }
         );
     }

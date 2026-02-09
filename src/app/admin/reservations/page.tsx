@@ -15,10 +15,12 @@ import {
 import ReservationModal from './components/ReservationModal';
 import { BookingSlip } from './components/BookingSlip';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { useTranslation } from '@/lib/i18n';
 
 export default function AdminReservationsPage() {
   const locale = useAdminLocale();
+  const { adminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
   const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,7 +216,7 @@ export default function AdminReservationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-        <h1 className="text-2xl font-bold text-white">{t('admin.reservations.title')}</h1>
+        <h1 className={`text-2xl font-bold ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.reservations.title')}</h1>
 
         {/* Action Bar */}
         <div className="flex items-center space-x-2">
