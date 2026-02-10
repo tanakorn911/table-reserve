@@ -79,10 +79,16 @@
    LINE_TARGET_ID=...             # Admin User/Group ID for alerts
    RESEND_API_KEY=...             # Email Service
 
-4. **Setup Database**
-   - รัน SQL Script ใน Supabase เพื่อสร้างตาราง
-   - หรือใช้ `npx prisma db push` เพื่อซิงค์โครงสร้างฐานข้อมูลล่าสุด
+   # --- 5. Database Connection ---
+   # Connect to Supabase via Transaction Pooler
+   DATABASE_URL="postgres://postgres.[YOUR-PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
 
+   # Connect to Supabase directly (Session Mode)
+   DIRECT_URL="postgres://postgres.[YOUR-PROJECT-REF]:[PASSWORD]@aws-0-[REGION].supabase.com:5432/postgres"
+
+4. **Setup Database**
+   - รันคำสั่ง `npx prisma db push` เพื่อสร้างตารางและซิงค์ข้อมูล
+   
 5. **รันโปรเจค**
 
    **แบบ Production (Docker):**
