@@ -10,16 +10,17 @@ datasource db {
 
 model Table {
   id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(50)
-  capacity    Int
-  x           Float    @default(0)
-  y           Float    @default(0)
-  zone        String?
-  shape       String?  @default("rectangle") // "rectangle" or "circle"
-  width       Float?
-  height      Float?
+  name        String   @db.VarChar(255)
   description String?
+  capacity    Int      @default(4)
   created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  x           Float?   @default(0)
+  y           Float?   @default(0)
+  width       Float?   @default(80)
+  height      Float?   @default(60)
+  shape       String?  @default("rectangle")
+  zone        String?  @default("Indoor")
 
   reservations Reservation[]
 
@@ -27,38 +28,73 @@ model Table {
 }
 
 model Reservation {
-  id               String  @id @default(uuid())
-  booking_code     String? @unique
-  guest_name       String
-  guest_phone      String
-  guest_email      String?
+  id               String    @id @default(uuid()) @db.Uuid
+  guest_name       String    @db.VarChar(255)
+  guest_phone      String    @db.VarChar(50)
+  guest_email      String?   @db.VarChar(255)
   party_size       Int
-  reservation_date String // Format: YYYY-MM-DD
-  reservation_time String // Format: HH:mm
-  status           String  @default("pending") // pending, confirmed, cancelled
+  reservation_date DateTime  @db.Date
+  reservation_time DateTime  @db.Time(6) // Or String if strictly sticking to string, but SQL is time
+  table_number     Int?
   special_requests String?
+  status           String?   @default("pending") @db.VarChar(20)
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  booking_code     String?   @unique
   admin_notes      String?
   payment_slip_url String?
+  reminder_sent    Boolean?  @default(false)
 
-  table_number Int?
-  table        Table? @relation(fields: [table_number], references: [id])
-
+  table    Table?    @relation(fields: [table_number], references: [id])
   feedback Feedback?
-
-  created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@map("reservations")
 }
 
+model Settings {
+  key         String   @id @db.VarChar(255)
+  value       Json
+  description String?
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@map("settings")
+}
+
+model Profiles {
+  id         String    @id @db.Uuid
+  email      String?
+  full_name  String?
+  role       String?   @default("staff")
+  updated_at DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  position   String?
+  staff_id   String?
+
+  @@map("profiles")
+}
+
+model Holidays {
+  id           String    @id @default(uuid()) @db.Uuid
+  holiday_date DateTime  @unique @db.Date
+  description  String?
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@map("holidays")
+}
+
 model Feedback {
-  id             Int         @id @default(autoincrement())
-  reservation_id String      @unique
-  reservation    Reservation @relation(fields: [reservation_id], references: [id])
+  id             String    @id @default(uuid()) @db.Uuid
+  reservation_id String    @unique @db.Uuid
+  rating         Int
+  comment        String?
+  customer_name  String?   @db.VarChar(255)
+  customer_phone String?   @db.VarChar(20)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
 
-  rating  Int     @default(5)
-  comment String?
+  reservation Reservation @relation(fields: [reservation_id], references: [id], onDelete: Cascade)
 
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-
+  @@index([reservation_id], map: "idx_feedback_reservation_id")
+  @@index([rating], map: "idx_feedback_rating")
+  @@index([created_at(sort: Desc)], map: "idx_feedback_created_at")
   @@map("feedback")
 }

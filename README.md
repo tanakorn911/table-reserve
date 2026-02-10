@@ -79,10 +79,6 @@
    LINE_TARGET_ID=...             # Admin User/Group ID for alerts
    RESEND_API_KEY=...             # Email Service
 
-   # --- 5. Analytics (Optional) ---
-   NEXT_PUBLIC_GA_MEASUREMENT_ID=... # Google Analytics 4
-   ```
-
 4. **Setup Database**
    - รัน SQL Script ใน Supabase เพื่อสร้างตาราง
    - หรือใช้ `npx prisma db push` เพื่อซิงค์โครงสร้างฐานข้อมูลล่าสุด
