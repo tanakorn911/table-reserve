@@ -10,6 +10,7 @@ export interface Reservation {
   reservation_time: string;
   table_number?: number | null;
   special_requests?: string | null;
+  admin_notes?: string | null;
   payment_slip_url?: string | null;
   status: ReservationStatus;
   created_at: string;
@@ -25,6 +26,7 @@ export interface CreateReservationInput {
   reservation_time: string;
   table_number?: number;
   special_requests?: string;
+  admin_notes?: string;
   payment_slip_url?: string;
 }
 
@@ -37,6 +39,7 @@ export interface UpdateReservationInput {
   reservation_time?: string;
   table_number?: number;
   special_requests?: string;
+  admin_notes?: string;
   payment_slip_url?: string;
   status?: ReservationStatus;
 }

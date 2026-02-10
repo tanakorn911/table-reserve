@@ -117,7 +117,23 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               {roleName || adminT('header.role.checking', locale)}
             </span>
             <AdminThemeToggle size="sm" />
-            <LanguageSwitcher className="hidden sm:flex" />
+            <LanguageSwitcher />
+            <button
+              onClick={async () => {
+                if (window.confirm(adminT('logout.confirm', locale))) {
+                  await supabase.auth.signOut();
+                  router.push('/admin/login');
+                  router.refresh();
+                }
+              }}
+              className={`md:hidden p-2 rounded-lg transition-all border ${adminTheme === 'dark'
+                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'
+                : 'bg-red-50 text-red-500 hover:bg-red-100 border-red-200'
+                }`}
+              title={adminT('sidebar.logout', locale)}
+            >
+              <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            </button>
           </div>
         </header>
 
@@ -138,20 +154,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <AdminBottomNav />
       </div>
 
-      {/* Logout Button - Bottom Left */}
-      <button
-        onClick={async () => {
-          if (window.confirm(adminT('logout.confirm', locale))) {
-            await supabase.auth.signOut();
-            router.push('/admin/login');
-            router.refresh();
-          }
-        }}
-        className="fixed bottom-6 left-6 p-3 md:p-3.5 text-red-400 hover:text-white hover:bg-red-500/20 rounded-xl transition-all border border-red-500/20 md:hidden z-40"
-        title={adminT('sidebar.logout', locale)}
-      >
-        <ArrowRightOnRectangleIcon className="w-6 h-6" />
-      </button>
+
     </div>
   );
 }

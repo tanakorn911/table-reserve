@@ -9,55 +9,87 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
   ({ reservation }, ref) => {
     if (!reservation) return null;
 
+    // Format Date/Time helper
+    const formatDate = (dateString: string) => {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    };
+
     return (
-      <div ref={ref} className="p-8 bg-white text-black w-[80mm] mx-auto hidden print:block">
-        <div className="text-center border-b-2 border-dashed border-gray-400 pb-4 mb-4">
-          <h1 className="text-xl font-bold">BOOKING X</h1>
-          <p className="text-sm">ใบยืนยันการจอง / Booking Slip</p>
+      <div ref={ref} className="p-4 bg-white text-black w-[80mm] mx-auto hidden print:block font-mono">
+        {/* Header */}
+        <div className="text-center border-b-2 border-dashed border-black pb-4 mb-4">
+          <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Savory Bistro</h1>
+          <p className="text-xs text-gray-600">123 Delicious Street, Food City</p>
+          <p className="text-xs text-gray-600">Tel: 02-123-4567</p>
+          <div className="mt-4 border-t border-black pt-2">
+            <h2 className="text-lg font-bold">RESERVATION SLIP</h2>
+            <p className="text-xs text-gray-500">ใบบันทึกการจอง</p>
+          </div>
         </div>
 
-        <div className="space-y-2 text-sm mb-4">
-          <div className="flex justify-between">
-            <span className="font-bold">รหัสจอง:</span>
-            <span className="font-mono font-bold text-lg">
-              {reservation.booking_code || `#${reservation.id.slice(0, 8)}`}
+        {/* Booking Details */}
+        <div className="space-y-3 text-sm mb-4 border-b-2 border-dashed border-black pb-4">
+          <div className="flex justify-between items-baseline">
+            <span className="font-bold text-gray-800">Booking Ref:</span>
+            <span className="font-bold text-lg">
+              {reservation.booking_code || reservation.id?.slice(0, 8).toUpperCase() || '-'}
             </span>
           </div>
-          <div className="flex justify-between">
-            <span className="font-bold">วันที่:</span>
-            <span>{reservation.reservation_date}</span>
+
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <div>
+              <p className="text-xs text-gray-500">Date/วันที่</p>
+              <p className="font-bold">{formatDate(reservation.reservation_date)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Time/เวลา</p>
+              <p className="font-bold text-lg">{reservation.reservation_time?.slice(0, 5)}</p>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="font-bold">เวลา:</span>
-            <span>{reservation.reservation_time}</span>
+
+          <div className="flex justify-between items-center bg-gray-100 p-2 rounded">
+            <span className="font-bold">Table / โต๊ะ:</span>
+            <span className="font-bold text-xl">{reservation.table_number ? `T-${reservation.table_number}` : '-'}</span>
           </div>
+
           <div className="flex justify-between">
-            <span className="font-bold">โต๊ะ:</span>
-            <span>{reservation.table_number ? `T-${reservation.table_number}` : '-'}</span>
+            <span className="text-gray-600">Guests / จำนวน:</span>
+            <span className="font-bold">{reservation.party_size} ท่าน</span>
           </div>
+
           <div className="flex justify-between">
-            <span className="font-bold">จำนวน:</span>
-            <span>{reservation.party_size} ท่าน</span>
+            <span className="text-gray-600">Status / สถานะ:</span>
+            <span className="font-bold uppercase">{reservation.status}</span>
           </div>
         </div>
 
-        <div className="border-t border-b border-gray-200 py-2 mb-4">
-          <p className="font-bold">ชื่อลูกค้า:</p>
-          <p className="text-lg">{reservation.guest_name}</p>
-          <p className="text-sm text-gray-600">{reservation.guest_phone}</p>
+        {/* Customer Info */}
+        <div className="mb-4 border-b-2 border-dashed border-black pb-4">
+          <p className="font-bold text-xs text-gray-500 mb-1">CUSTOMER INFO / ข้อมูลลูกค้า</p>
+          <p className="text-lg font-bold mb-1">{reservation.guest_name}</p>
+          <p className="text-sm">{reservation.guest_phone}</p>
         </div>
 
+        {/* Special Request */}
         {reservation.special_requests && (
-          <div className="mb-4">
-            <p className="font-bold text-xs">Note:</p>
-            <p className="text-sm">{reservation.special_requests}</p>
+          <div className="mb-4 border-b-2 border-dashed border-black pb-4">
+            <p className="font-bold text-xs text-gray-500 mb-1">NOTE / หมายเหตุ</p>
+            <p className="text-sm italic">"{reservation.special_requests}"</p>
           </div>
         )}
 
-        <div className="text-center text-xs text-gray-500 mt-6 pt-2 border-t border-dashed border-gray-400">
-          <p>กรุณาแสดงใบนี้ต่อพนักงาน</p>
-          <p>ขอบคุณที่ใช้บริการครับ</p>
-          <p className="mt-2">{new Date().toLocaleString('th-TH')}</p>
+        {/* Footer */}
+        <div className="text-center text-[10px] text-gray-500 mt-4 space-y-1">
+          <p>Please present this slip to the reception.</p>
+          <p>กรุณาแสดงใบนี้ต่อพนักงานต้อนรับ</p>
+          <p className="mt-4 font-bold">Thank you / ขอบคุณครับ</p>
+          <p className="pt-2">{new Date().toLocaleString('th-TH')}</p>
         </div>
       </div>
     );

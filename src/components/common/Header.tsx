@@ -70,8 +70,8 @@ const Header = () => {
                   flex items-center gap-2 px-6 py-3 rounded-md text-base font-medium
                   transition-smooth min-h-[44px]
                   ${isActiveRoute(item.path)
-                    ? 'bg-primary text-primary-foreground shadow-warm-sm'
-                    : 'text-foreground hover:bg-muted hover:scale-[0.97] active:scale-[0.97]'
+                    ? 'bg-primary text-primary-foreground shadow-warm-sm border border-primary'
+                    : 'text-foreground hover:bg-muted hover:scale-[0.97] active:scale-[0.97] border border-border'
                   }
                 `}
               >
@@ -86,7 +86,7 @@ const Header = () => {
                 flex items-center gap-2 px-8 py-3 ml-4 rounded-md text-base font-medium
                 transition-smooth min-h-[44px]
                 ${currentRoute.startsWith('/reservation-form')
-                  ? 'bg-primary text-primary-foreground shadow-warm-sm'
+                  ? 'bg-primary text-primary-foreground shadow-warm-sm border border-primary'
                   : 'text-foreground hover:bg-muted hover:scale-[0.97] active:scale-[0.97] border border-border'
                 }
               `}

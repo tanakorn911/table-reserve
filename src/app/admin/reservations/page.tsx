@@ -297,20 +297,21 @@ export default function AdminReservationsPage() {
         </div>
 
         <select
-          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900"
+          className="w-full md:w-auto px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%222%22%20stroke%3D%22%236b7280%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_0.75rem_center] bg-no-repeat"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
         >
-          <option value="all">สถานะทั้งหมด</option>
-          <option value="pending">รอยืนยัน</option>
-          <option value="confirmed">ยืนยันแล้ว</option>
-          <option value="cancelled">ยกเลิก</option>
-          <option value="completed">เสร็จสิ้น</option>
+          <option value="all">{t('admin.reservations.filter.all')}</option>
+          <option value="pending">{t('admin.reservations.filter.pending')}</option>
+          <option value="confirmed">{t('admin.reservations.filter.confirmed')}</option>
+          <option value="cancelled">{t('admin.reservations.filter.cancelled')}</option>
+          <option value="completed">{t('admin.reservations.filter.completed')}</option>
         </select>
 
         <input
           type="date"
-          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900"
+          lang={locale}
+          className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900"
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value)}
         />
@@ -324,43 +325,43 @@ export default function AdminReservationsPage() {
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
                   {t('admin.reservations.table.datetime')}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
                   {t('admin.reservations.table.guest')}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
                   {t('admin.reservations.table.table')}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
                   {t('admin.reservations.table.notes')}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
-                >
-                  {t('admin.reservations.table.status')}
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
                   {t('admin.reservations.table.slip')}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider"
+                >
+                  {t('admin.reservations.table.status')}
+                </th>
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-right text-sm font-bold text-gray-700 uppercase tracking-wider"
                 >
                   {t('admin.reservations.table.actions')}
                 </th>
@@ -385,37 +386,37 @@ export default function AdminReservationsPage() {
               ) : (
                 filteredReservations.map((reservation) => (
                   <tr key={reservation.id} className="hover:bg-blue-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100">
                             {reservation.booking_code || `#${reservation.id.slice(0, 8)}`}
                           </span>
-                          <span className="text-base font-semibold text-gray-900">
+                          <span className="text-sm font-semibold text-gray-900">
                             {reservation.reservation_date}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-600 flex items-center mt-1">
-                          <ClockIcon className="w-4 h-4 mr-1" />
+                        <span className="text-xs text-gray-600 flex items-center mt-0.5">
+                          <ClockIcon className="w-3 h-3 mr-1" />
                           {reservation.reservation_time}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-base font-semibold text-gray-900">
+                    <td className="px-3 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-gray-900">
                         {reservation.guest_name}
                       </div>
-                      <div className="text-sm text-gray-600">{reservation.guest_phone}</div>
-                      <div className="text-sm font-medium text-gray-500 mt-1">
+                      <div className="text-xs text-gray-600">{reservation.guest_phone}</div>
+                      <div className="text-xs font-medium text-gray-500 mt-0.5">
                         {locale === 'th' ? 'จำนวน' : 'Guests:'} {reservation.party_size} {t('admin.reservations.guests')}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                    <td className="px-3 py-4 whitespace-nowrap">
+                      <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
                         {reservation.table_name || reservation.table_number || '-'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 max-w-[200px]">
+                    <td className="px-3 py-4 max-w-[150px]">
                       <p
                         className="text-xs text-gray-500 italic truncate"
                         title={reservation.admin_notes || ''}
@@ -423,16 +424,16 @@ export default function AdminReservationsPage() {
                         {reservation.admin_notes || '-'}
                       </p>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-4 whitespace-nowrap">
                       {reservation.payment_slip_url ? (
                         <a
                           href={reservation.payment_slip_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+                          className="inline-flex items-center px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 transition-colors"
                         >
                           <svg
-                            className="w-4 h-4 mr-1"
+                            className="w-3 h-3 mr-1"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -444,15 +445,15 @@ export default function AdminReservationsPage() {
                               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             ></path>
                           </svg>
-                          <span className="text-xs font-bold">{t('admin.reservations.viewSlip')}</span>
+                          <span className="text-[10px] font-bold">{t('admin.reservations.viewSlip')}</span>
                         </a>
                       ) : (
-                        <span className="text-xs text-gray-400 italic">{t('admin.reservations.noSlip')}</span>
+                        <span className="text-[10px] text-gray-400 italic">{t('admin.reservations.noSlip')}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-4 whitespace-nowrap">
                       <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(reservation.status)}`}
+                        className={`px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold rounded-full border ${getStatusColor(reservation.status)}`}
                       >
                         {reservation.status === 'pending'
                           ? t('admin.reservations.filter.pending')
@@ -465,8 +466,8 @@ export default function AdminReservationsPage() {
                                 : reservation.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
+                    <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-1">
                         <button
                           onClick={() => setPrintReservation(reservation)}
                           className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors"

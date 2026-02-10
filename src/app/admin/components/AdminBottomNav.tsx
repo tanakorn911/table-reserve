@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
     HomeIcon,
     CalendarDaysIcon,
     Cog6ToothIcon,
     MapIcon,
+    ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminLocale, adminT } from './LanguageSwitcher';
@@ -15,10 +16,19 @@ import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
 export default function AdminBottomNav() {
     const pathname = usePathname();
+    const router = useRouter();
     const supabase = createClientSupabaseClient();
     const [role, setRole] = useState<'admin' | 'staff'>('staff');
     const locale = useAdminLocale();
     const { adminTheme } = useAdminTheme();
+
+    const handleLogout = async () => {
+        if (window.confirm(adminT('logout.confirm', locale))) {
+            await supabase.auth.signOut();
+            router.push('/admin/login');
+            router.refresh();
+        }
+    };
 
     useEffect(() => {
         const checkRole = async () => {

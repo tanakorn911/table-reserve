@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Initialize Model and call AI
-        const modelInstance = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        const modelInstance = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
         const prompt = `
       Act as a professional restaurant manager named "TableMaster".

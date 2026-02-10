@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useNavigation } from '@/contexts/NavigationContext';
 import Icon from '@/components/ui/AppIcon';
 import { useTranslation } from '@/lib/i18n';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 interface NavigationItem {
   label: string;
@@ -85,9 +86,9 @@ const MobileMenu = () => {
 
       <div
         className="
-          fixed top-20 left-0 right-0 bottom-0 z-200 bg-card
+          fixed top-[80px] left-0 right-0 bottom-0 z-200 bg-card
           md:hidden overflow-y-auto transition-smooth
-          animate-in slide-in-from-top-4 duration-250 border-t border-border
+          animate-in slide-in-from-top-4 duration-250
         "
       >
         <nav className="flex flex-col p-6 gap-2">
@@ -113,10 +114,16 @@ const MobileMenu = () => {
             </Link>
           ))}
 
-
+          {/* Theme Toggle for Mobile */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <div className="flex items-center justify-between px-2 mb-2">
+              <p className="text-sm font-medium text-muted-foreground">{locale === 'th' ? 'โหมดสี' : 'Theme'}</p>
+              <ThemeToggle size="sm" />
+            </div>
+          </div>
 
           {/* Language Switcher for Mobile */}
-          <div className="mt-8 pt-6 border-t border-border">
+          <div className="mt-4 pt-6 border-t border-border">
             <p className="text-sm font-medium text-muted-foreground mb-4 px-2">Language / ภาษา</p>
             <div className="flex gap-4">
               <button
