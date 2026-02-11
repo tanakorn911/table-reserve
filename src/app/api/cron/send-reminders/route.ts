@@ -71,7 +71,7 @@ export async function GET() {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            from: 'TableReserve <noreply@tablereserve.com>',
+                            from: 'Savory Bistro <noreply@tablereserve.com>',
                             to: reservation.guest_email,
                             subject: `🍽️ อีก 2 ชั่วโมงถึงเวลาจองโต๊ะแล้ว! - ${reservation.booking_code}`,
                             html: generateCustomerReminderEmail(reservation),
@@ -100,7 +100,7 @@ export async function GET() {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            from: 'TableReserve <noreply@tablereserve.com>',
+                            from: 'Savory Bistro <noreply@tablereserve.com>',
                             to: adminEmail,
                             subject: `📋 ลูกค้ากำลังจะมาในอีก 2 ชม. - ${reservation.guest_name}`,
                             html: generateAdminNotificationEmail(reservation),
@@ -206,7 +206,7 @@ function generateCustomerReminderEmail(reservation: any): string {
       <p style="color: #666;">กรุณามาถึงก่อนเวลานัดหมาย 10 นาที</p>
     </div>
     <div class="footer">
-      TableReserve - ระบบจองโต๊ะออนไลน์
+      Savory Bistro - ระบบจองโต๊ะออนไลน์
     </div>
   </div>
 </body>

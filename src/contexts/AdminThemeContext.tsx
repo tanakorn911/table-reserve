@@ -12,7 +12,7 @@ interface AdminThemeContextType {
 
 const AdminThemeContext = createContext<AdminThemeContextType | undefined>(undefined);
 
-const ADMIN_STORAGE_KEY = 'tablereserve_admin_theme';
+const ADMIN_STORAGE_KEY = 'savory_bistro_admin_theme';
 
 export function AdminThemeProvider({ children }: { children: React.ReactNode }) {
     const [adminTheme, setAdminThemeState] = useState<AdminTheme>('dark');

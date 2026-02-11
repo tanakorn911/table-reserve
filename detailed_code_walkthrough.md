@@ -155,7 +155,7 @@ export const NavigationProvider = ({ children }) => {
 // ระบบแปลภาษาแบบ Custom
 export const translations = {
     th: { 'app.title': 'จองโต๊ะออนไลน์', ... },
-    en: { 'app.title': 'TableReserve', ... }
+    en: { 'app.title': 'Savory Bistro', ... }
 };
 
 export const useTranslation = (locale = 'th') => {

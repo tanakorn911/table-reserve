@@ -45,12 +45,12 @@ export function generateICSContent(event: CalendarEvent): string {
         return text.replace(/[,;\\]/g, (match) => `\\${match}`).replace(/\n/g, '\\n');
     };
 
-    const uid = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@tablereserve`;
+    const uid = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@savorybistro`;
 
     return [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//TableReserve//Reservation//EN',
+        'PRODID:-//Savory Bistro//Reservation//EN',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         'BEGIN:VEVENT',

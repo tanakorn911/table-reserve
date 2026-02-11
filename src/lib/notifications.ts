@@ -98,7 +98,7 @@ export async function sendEmailConfirmation(to: string, reservation: any, locale
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'TableReserve <onboarding@resend.dev>',
+        from: 'Savory Bistro <onboarding@resend.dev>',
         to: [to],
         subject: subject,
         html: htmlContent,

@@ -20,14 +20,14 @@ export default function AdminLoginPage() {
 
   // Initialize theme from storage
   useEffect(() => {
-    const stored = localStorage.getItem('tablereserve_admin_theme') as LoginTheme | null;
+    const stored = localStorage.getItem('savory_bistro_admin_theme') as LoginTheme | null;
     if (stored) setTheme(stored);
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('tablereserve_admin_theme', newTheme);
+    localStorage.setItem('savory_bistro_admin_theme', newTheme);
   };
 
   const handleLogin = async (e: React.FormEvent) => {

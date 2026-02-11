@@ -89,7 +89,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
               width="100%"
               height="100%"
               loading="lazy"
-              title="TableReserve Restaurant Location"
+              title="Savory Bistro Restaurant Location"
               referrerPolicy="no-referrer-when-downgrade"
               src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d700!2d${contact.mapLng}!3d${contact.mapLat}!2m3!1f0!2f45!3f0!3m2!1i1024!2i768!4f35!3m3!1m2!1s0x311878b9c6a9c8c7%3A0x7c8e03bf86ca13c0!2z4Lih4Lir4Liy4Lin4Li04LiX4Lii4Liy4Lil4Lix4Lii4Lie4Liw4LmA4Lii4Liy!5e1!3m2!1sth!2sth!4v1`}
               className="border-0"

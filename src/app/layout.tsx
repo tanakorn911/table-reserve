@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'Savory Bistro',
-  description: 'Premium Online Table Reservation System',
+  description: 'Savory Bistro - Premium Online Table Reservation System',
   manifest: '/manifest.json',
   icons: {
     icon: '/logo.png',

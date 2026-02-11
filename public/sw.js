@@ -1,9 +1,9 @@
 /**
- * Service Worker for TableReserve PWA
+ * Service Worker for Savory Bistro PWA
  * Provides offline caching and improved performance
  */
 
-const CACHE_NAME = 'tablereserve-v1';
+const CACHE_NAME = 'savory-bistro-v1';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -110,7 +110,7 @@ self.addEventListener('push', (event) => {
         };
 
         event.waitUntil(
-            self.registration.showNotification(data.title || 'TableReserve', options)
+            self.registration.showNotification(data.title || 'Savory Bistro', options)
         );
     }
 });
