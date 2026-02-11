@@ -458,7 +458,7 @@ const ReservationWizard = () => {
                                             value={formData.guests}
                                             onChange={handleChange}
                                             min={1}
-                                            max={50}
+                                            max={10}
                                             name="guests"
                                             id="guests"
                                         />

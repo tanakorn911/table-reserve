@@ -551,7 +551,7 @@ const ReservationFormInteractive = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     min={1}
-                    max={50}
+                    max={10}
                     error={touched.guests && !!errors.guests}
                     success={touched.guests && !errors.guests && formData.guests !== ''}
                   />
