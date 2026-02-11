@@ -539,7 +539,12 @@ const ReservationFormInteractive = () => {
 
                 {/* 4. Guests */}
                 <FormField
-                  label={t('form.guests')}
+                  label={
+                    <span className="flex items-center gap-2">
+                      {t('form.guests')}
+                      <span className="text-error font-normal text-xs">{t('form.guests.limit')}</span>
+                    </span>
+                  }
                   required
                   error={touched.guests ? errors.guests : undefined}
                   success={touched.guests && !errors.guests && formData.guests !== ''}

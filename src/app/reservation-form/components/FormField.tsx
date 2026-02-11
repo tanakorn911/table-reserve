@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigation } from '@/contexts/NavigationContext';
 
 interface FormFieldProps {
-  label: string; // ข้อความ Label
+  label: React.ReactNode; // ข้อความ Label
   required?: boolean; // จำเป็นต้องกรอกหรือไม่
   error?: string; // ข้อความ Error (ถ้ามี)
   success?: boolean; // สถานะถูกต้อง (Success)
