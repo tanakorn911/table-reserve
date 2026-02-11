@@ -542,7 +542,7 @@ const ReservationFormInteractive = () => {
                   label={
                     <span className="flex items-center gap-2">
                       {t('form.guests')}
-                      <span className="text-error font-normal text-xs">{t('form.guests.limit')}</span>
+                      <span className="text-error font-normal text-base">{t('form.guests.limit')}</span>
                     </span>
                   }
                   required

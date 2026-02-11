@@ -457,7 +457,7 @@ const ReservationWizard = () => {
                                     <div className="space-y-2">
                                         <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground flex items-center gap-2">
                                             {t('form.guests')}
-                                            <span className="text-error font-normal text-[10px] lowercase">{t('form.guests.limit')}</span>
+                                            <span className="text-error font-medium md:text-sm text-xs lowercase">{t('form.guests.limit')}</span>
                                         </label>
                                         <GuestNumberInput
                                             value={formData.guests}
