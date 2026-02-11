@@ -252,6 +252,10 @@ const ReservationWizard = () => {
                 alert(t('validation.fillAll'));
                 return;
             }
+            if (parseInt(formData.guests) > 10) {
+                alert(t('validation.guests.invalid'));
+                return;
+            }
             setStep(2);
         } else if (step === 2) {
             // ตรวจสอบว่าเลือกโต๊ะแล้วหรือยังสำหรับขั้นตอนที่ 2

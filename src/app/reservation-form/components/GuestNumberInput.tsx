@@ -39,7 +39,6 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
   const handleIncrement = () => {
     const currentValue = parseInt(value) || 0;
     if (currentValue < max) {
-      // สร้าง Event ปลอมเพื่อส่งกลับไปให้ onChange
       const syntheticEvent = {
         target: { name, value: String(currentValue + 1) },
       } as React.ChangeEvent<HTMLInputElement>;
@@ -55,6 +54,28 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
         target: { name, value: String(currentValue - 1) },
       } as React.ChangeEvent<HTMLInputElement>;
       onChange(syntheticEvent);
+    }
+  };
+
+  // จัดการเมื่อมีการพิมพ์เลขเอง
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === '') {
+      onChange(e);
+      return;
+    }
+
+    const numVal = parseInt(val);
+    if (!isNaN(numVal)) {
+      if (numVal > max) {
+        const syntheticEvent = {
+          ...e,
+          target: { ...e.target, name, value: String(max) },
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(syntheticEvent);
+      } else {
+        onChange(e);
+      }
     }
   };
 
@@ -83,7 +104,7 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
           name={name}
           type="number"
           value={value}
-          onChange={onChange}
+          onChange={handleInputChange}
           onBlur={onBlur}
           min={min}
           max={max}

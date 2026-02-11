@@ -239,6 +239,7 @@ const ReservationFormInteractive = () => {
 
       case 'guests':
         if (!value) return t('validation.guests.required');
+        if (parseInt(value) > 10) return t('validation.guests.invalid'); // Added explicit check
         return undefined;
 
       case 'date':
