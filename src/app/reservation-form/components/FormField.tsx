@@ -2,14 +2,20 @@ import React from 'react';
 import { useNavigation } from '@/contexts/NavigationContext';
 
 interface FormFieldProps {
-  label: string;
-  required?: boolean;
-  error?: string;
-  success?: boolean;
-  children: React.ReactNode;
-  htmlFor?: string;
+  label: string; // ข้อความ Label
+  required?: boolean; // จำเป็นต้องกรอกหรือไม่
+  error?: string; // ข้อความ Error (ถ้ามี)
+  success?: boolean; // สถานะถูกต้อง (Success)
+  children: React.ReactNode; // Input Element (เช่น <input>, <select>)
+  htmlFor?: string; // ID ของ Input (สำหรับ Accessibility)
 }
 
+/**
+ * FormField Component
+ * Wrapper component สำหรับฟอร์ม
+ * - แสดง Label, Error Message, Success Message
+ * - จัด Layout Standard สำหรับทุก Input
+ */
 const FormField: React.FC<FormFieldProps> = ({
   label,
   required = false,
@@ -22,6 +28,7 @@ const FormField: React.FC<FormFieldProps> = ({
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Label พร้อมเครื่องหมายดอกจัน (*) ถ้า required */}
       <label
         htmlFor={htmlFor}
         className="text-base font-medium text-foreground flex items-center gap-1"
@@ -29,13 +36,19 @@ const FormField: React.FC<FormFieldProps> = ({
         {label}
         {required && <span className="text-error">*</span>}
       </label>
+
+      {/* Input Element */}
       {children}
+
+      {/* แสดง Error Message */}
       {error && (
         <p className="text-sm text-error flex items-start gap-1.5">
           <span className="mt-0.5">⚠</span>
           <span>{error}</span>
         </p>
       )}
+
+      {/* แสดง Success Message (ถ้าไม่มี Error และสถานะ Success เป็น true) */}
       {success && !error && (
         <p className="text-sm text-success flex items-center gap-1.5">
           <span>✓</span>

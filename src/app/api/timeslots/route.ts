@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // In-memory store for time slot holds (in production, use Redis or database)
+// ใช้ตัวแปร Global เพื่อเก็บสถานะการ Hold ชั่วคราว (ใน Production ควรใช้ Redis)
 // Key: `${date}-${time}`, Value: { heldBy: string, heldAt: number }
 const timeSlotHolds = new Map<string, { heldBy: string; heldAt: number }>();
 
@@ -10,9 +11,11 @@ const confirmedBookings = new Set<string>();
 
 // Hold duration in milliseconds (30 seconds)
 // When user refreshes the page, the hold expires after 30 seconds
+// ระยะเวลา Hold ที่นั่ง (30 วินาที)
 const HOLD_DURATION = 30 * 1000;
 
 // Default Opening hours per day (fallback)
+// เวลาเปิด-ปิด Default (กรณีไม่ได้ตั้งค่าใน DB)
 const DEFAULT_OPENING_HOURS: { [key: number]: { open: string; close: string } } = {
   0: { open: '10:00', close: '21:00' }, // Sunday
   1: { open: '11:00', close: '22:00' }, // Monday
@@ -20,10 +23,12 @@ const DEFAULT_OPENING_HOURS: { [key: number]: { open: string; close: string } } 
   3: { open: '11:00', close: '22:00' }, // Wednesday
   4: { open: '11:00', close: '23:00' }, // Thursday
   // 🛡️ Friday Holiday (Permanent)
+  // วันศุกร์ปิดถาวร
   6: { open: '10:00', close: '23:00' }, // Saturday
 };
 
 // Helper to get business hours
+// ฟังก์ชันดึงเวลาเปิด-ปิดร้านจาก DB
 async function getBusinessHours(supabase: any) {
   try {
     const { data, error } = await supabase
@@ -41,6 +46,7 @@ async function getBusinessHours(supabase: any) {
 }
 
 // Clean up expired holds
+// ล้างการ Hold ที่หมดเวลา
 function cleanupExpiredHolds() {
   const now = Date.now();
   for (const [key, hold] of timeSlotHolds.entries()) {
@@ -51,9 +57,11 @@ function cleanupExpiredHolds() {
 }
 
 // Total number of tables available (fallback)
+// จำนวนโต๊ะทั้งหมด (Fallback)
 const TOTAL_TABLES = 5;
 
 // Generate time slots for a specific date
+// สร้างรายการเวลาที่จองได้
 function generateTimeSlots(
   date: string,
   reservations: any[],
@@ -65,6 +73,7 @@ function generateTimeSlots(
   const dayOfWeek = dateObj.getDay();
 
   // 🛡️ PERMANENT FRIDAY HOLIDAY: Always closed on Fridays
+  // ปิดวันศุกร์
   if (dayOfWeek === 5) return [];
 
   const hours =
@@ -80,6 +89,7 @@ function generateTimeSlots(
   const [closeHour, closeMin] = hours.close.split(':').map(Number);
 
   // 105-minute block = 90 min dining + 15 min buffer
+  // ระยะเวลา 1 บล็อกการจอง (105 นาที)
   const DURATION_MINUTES = 105;
 
   let currentMinutes = openHour * 60 + openMin;
@@ -107,12 +117,14 @@ function generateTimeSlots(
     const timeValue = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 
     // Skip if in the past
+    // ข้ามเวลาที่ผ่านไปแล้ว
     if (date === todayStr && currentMinutes < currentTotalMinutes) {
       currentMinutes += 30; // Skip by interval
       continue;
     }
 
     // --- Calculate Occupancy for this slot ---
+    // --- คำนวณจำนวนโต๊ะที่ถูกจองแล้ว ---
     // 1. Check Reservations from DB
     const bookedTableIds = new Set<number>();
     let unnamedBookings = 0;
@@ -123,6 +135,7 @@ function generateTimeSlots(
       const dbMinutes = dbH * 60 + dbM;
 
       // Overlap check: |TimeA - TimeB| < 105 mins
+      // ตรวจสอบการซ้อนทับของเวลา
       if (Math.abs(dbMinutes - currentMinutes) < DURATION_MINUTES) {
         if (r.table_number) {
           bookedTableIds.add(r.table_number);
@@ -135,6 +148,7 @@ function generateTimeSlots(
     const bookedCount = bookedTableIds.size + unnamedBookings;
 
     // 2. Check Holds in Memory
+    // ตรวจสอบการ Hold ชั่วคราว
     let heldCount = 0;
     let heldByCurrentUser = false;
 
@@ -155,6 +169,7 @@ function generateTimeSlots(
     }
 
     // --- Determine Status ---
+    // กำหนดสถานะ (ว่าง / เต็ม / กำลังถูกเลือก)
     let status: 'available' | 'booked' | 'held' = 'available';
 
     if (bookedCount >= totalTables) {
@@ -176,6 +191,7 @@ function generateTimeSlots(
 }
 
 // GET /api/timeslots?date=YYYY-MM-DD
+// GET: ดึงข้อมูลเวลาที่ว่างของวันที่ระบุ
 export async function GET(request: NextRequest) {
   try {
     cleanupExpiredHolds();
@@ -209,6 +225,7 @@ export async function GET(request: NextRequest) {
       .in('status', ['confirmed', 'pending']);
 
     // 4. Generate Slots
+    // สร้าง Slots พร้อมสถานะ
     const slots = generateTimeSlots(
       date,
       reservations || [],
@@ -225,6 +242,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/timeslots - Hold or release a time slot
+// POST: จองสิทธิ์ชั่วคราว (Hold) หรือปล่อยสิทธิ์ (Release)
 export async function POST(request: NextRequest) {
   try {
     cleanupExpiredHolds();
@@ -246,6 +264,7 @@ export async function POST(request: NextRequest) {
       const totalTables = count !== null && count > 0 ? count : TOTAL_TABLES;
 
       // 2. Check DB Reservations for this time slot (90+15 min overlap)
+      // ตรวจสอบว่าเต็มแล้วหรือยัง
       const [reqH, reqM] = time.split(':').map(Number);
       const reqMinutes = reqH * 60 + reqM;
       const DURATION = 105;
@@ -302,6 +321,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 4. Create hold
+      // บันทึกการ Hold
       timeSlotHolds.set(slotKey, { heldBy: sessionId, heldAt: Date.now() });
       return NextResponse.json({ success: true });
     } else if (action === 'release') {

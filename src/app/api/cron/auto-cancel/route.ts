@@ -8,15 +8,18 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  * Auto-Cancel Expired Reservations
  * This endpoint should be called by a cron job every 30 minutes
  * It cancels pending reservations that are older than 30 minutes
+ * API สำหรับยกเลิกการจองที่ค้างสถานะ Pending เกิน 30 นาที (ทำงานผ่าน Cron Job)
  */
 export async function GET() {
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Calculate cutoff time (30 minutes ago)
+        // คำนวณเวลาตัดรอบ (30 นาทีที่แล้ว)
         const cutoffTime = new Date(Date.now() - 30 * 60 * 1000);
 
         // Find pending reservations older than 30 minutes
+        // ค้นหาการจองที่สถานะ 'pending' และสร้างมานานกว่า 30 นาที
         const { data: expiredReservations, error: fetchError } = await supabase
             .from('reservations')
             .select('id, guest_name, booking_code, created_at')
@@ -36,6 +39,7 @@ export async function GET() {
         }
 
         // Cancel each expired reservation
+        // ไล่ยกเลิกการจองที่หมดอายุทีละรายการ
         const cancelledIds: string[] = [];
         for (const reservation of expiredReservations) {
             const { error: updateError } = await supabase

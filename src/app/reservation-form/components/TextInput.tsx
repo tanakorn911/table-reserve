@@ -1,22 +1,29 @@
 import FormField from './FormField';
 
 interface TextInputProps {
-  id: string;
-  name: string;
-  type?: 'text' | 'tel' | 'email';
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  error?: boolean | string; // Allow string for error message
-  success?: boolean;
-  maxLength?: number;
-  pattern?: string;
-  label?: string;
-  required?: boolean;
+  id: string; // ID ของ Input
+  name: string; // ชื่อ Field
+  type?: 'text' | 'tel' | 'email'; // ประเภท Input
+  value: string; // ค่าปัจจุบัน
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // ฟังก์ชันเปลี่ยนค่า
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void; // ฟังก์ชันเมื่อหลุดโฟกัส
+  placeholder?: string; // ข้อความ Placeholder
+  disabled?: boolean; // ปิดการใช้งาน
+  error?: boolean | string; // รองรับทั้ง boolean (มี error แต่ไม่บอกข้อความ) และ string (ระบุข้อความ error)
+  success?: boolean; // แสดงสถานะสำเร็จ
+  maxLength?: number; // จำนวนตัวอักษรสูงสุด
+  pattern?: string; // Regex Pattern
+  label?: string; // ถ้ามี label จะถูกห่อด้วย FormField
+  required?: boolean; // จำเป็นต้องกรอก?
 }
 
+/**
+ * TextInput Component
+ * ช่องกรอกข้อความแบบบรรทัดเดียวมาตรฐาน
+ * - รองรับประเภท Text, Tel, Email
+ * - รองรับ Error/Success States
+ * - รองรับ Dark Mode และ Styling มาตรฐาน
+ */
 const TextInput: React.FC<TextInputProps> = ({
   id,
   name,
@@ -59,6 +66,7 @@ const TextInput: React.FC<TextInputProps> = ({
     />
   );
 
+  // ถ้ามี Label ให้ห่อด้วย FormField
   if (label) {
     return (
       <FormField

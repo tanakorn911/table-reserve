@@ -9,12 +9,14 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  * Sends reminder emails 2 hours before reservation
  * Also notifies admin about upcoming reservations
  * This endpoint should be called by a cron job every 30 minutes
+ * API สำหรับส่งอีเมลแจ้งเตือนล่วงหน้า 2 ชั่วโมง (ทำงานผ่าน Cron Job)
  */
 export async function GET() {
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Calculate time window (reservations happening in 2-2.5 hours)
+        // คำนวณช่วงเวลาที่จะค้นหา (การจองที่จะเกิดขึ้นในอีก 2-2.5 ชั่วโมงข้างหน้า)
         const now = new Date();
         const thailandOffset = 7 * 60;
         const localOffset = now.getTimezoneOffset();
@@ -25,10 +27,12 @@ export async function GET() {
         const currentMinute = thailandTime.getMinutes();
 
         // Target: Reservations in 2 hours from now
+        // เป้าหมาย: การจองในอีก 2 ชั่วโมงข้างหน้า
         const targetHour = currentHour + 2;
         const targetTime = `${String(targetHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
 
         // Find confirmed reservations that are about to happen
+        // ค้นหาการจองสถานะ 'confirmed' ที่กำลังจะถึงเวลา
         const { data: upcomingReservations, error: fetchError } = await supabase
             .from('reservations')
             .select('*')
@@ -50,6 +54,7 @@ export async function GET() {
         }
 
         // Check if Resend API key is available
+        // ตรวจสอบว่ามี API Key ของ Resend หรือไม่
         const resendApiKey = process.env.RESEND_API_KEY;
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@tablereserve.com';
 
@@ -57,11 +62,13 @@ export async function GET() {
 
         for (const reservation of upcomingReservations) {
             // Check if already reminded (using special_requests field as marker)
+            // ตรวจสอบว่าเคยแจ้งเตือนไปแล้วหรือยัง
             if (reservation.reminder_sent) {
                 continue;
             }
 
             // If customer has email, send reminder
+            // ถ้าลูกค้ามีอีเมล ให้ส่งอีเมลแจ้งเตือน
             if (resendApiKey && reservation.guest_email) {
                 try {
                     const response = await fetch('https://api.resend.com/emails', {
@@ -91,6 +98,7 @@ export async function GET() {
             }
 
             // Send admin notification
+            // ส่งอีเมลแจ้งเตือนผู้ดูแลระบบ
             if (resendApiKey && adminEmail) {
                 try {
                     const response = await fetch('https://api.resend.com/emails', {
@@ -120,6 +128,7 @@ export async function GET() {
             }
 
             // Mark as reminded
+            // บันทึกสถานะว่าแจ้งเตือนแล้ว
             await supabase
                 .from('reservations')
                 .update({ reminder_sent: true })
@@ -127,6 +136,7 @@ export async function GET() {
         }
 
         // Also use LINE Notify if available
+        // ส่งแจ้งเตือนผ่าน LINE Notify (ถ้าตั้งค่าไว้)
         const lineToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
         const lineTargetId = process.env.LINE_TARGET_ID;
 

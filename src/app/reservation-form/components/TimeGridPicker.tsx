@@ -1,29 +1,34 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 
 interface TimeSlot {
-  time: string;
-  label: string;
-  status: 'available' | 'booked' | 'held';
+  time: string; // เวลา เช่น "18:00"
+  label: string; // ข้อความแสดงผล
+  status: 'available' | 'booked' | 'held'; // สถานะของช่วงเวลา
 }
 
 interface TimeGridPickerProps {
-  id: string;
-  name: string;
-  value: string;
-  selectedDate: string;
-  onChange: (value: string) => void;
-  onBlur?: () => void;
-  error?: boolean;
-  success?: boolean;
+  id: string; // ID ของ Component
+  name: string; // ชื่อ Field
+  value: string; // ค่าเวลาที่เลือก
+  selectedDate: string; // วันที่ที่เลือก (YYYY-MM-DD)
+  onChange: (value: string) => void; // ฟังก์ชันเปลี่ยนค่า
+  onBlur?: () => void; // ฟังก์ชันเมื่อหลุดโฟกัส
+  error?: boolean; // สถานะ Error
+  success?: boolean; // สถานะ Success
 }
 
-
-
+/**
+ * TimeGridPicker Component
+ * ตัวเลือกเวลาแบบ Grid
+ * - แสดงช่วงเวลาทั้งหมดที่มีให้เลือกตามวันที่
+ * - อัปเดตสถานะ Real-time (Auto Refresh)
+ * - แสดงสถานะว่าง/จองแล้ว
+ */
 const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
   id,
   name,
@@ -36,15 +41,15 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
 }) => {
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
-  const [isOpen, setIsOpen] = useState(false);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // สถานะเปิด/ปิด Popover
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]); // รายการช่วงเวลา
+  const [loading, setLoading] = useState(false); // สถานะกำลังโหลด
 
-  // Fetch time slots from API
+  // ฟังก์ชันดึงข้อมูลช่วงเวลาจาก API
   const fetchTimeSlots = useCallback(async (isInitialLoad = false) => {
     if (!selectedDate) return;
 
-    // Only show loading spinner on initial load, not background refreshes
+    // แสดง Loading เฉพาะตอนโหลดครั้งแรก (ไม่แสดงตอน Auto Refresh)
     if (isInitialLoad) {
       setLoading(true);
     }
@@ -56,20 +61,20 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
       const data = await response.json();
 
       if (data.slots) {
-        // Smart comparison: detect status changes (e.g., available → held)
+        // อัปเดต State แบบฉลาด: เช็คว่ามีอะไรเปลี่ยนไปไหมก่อนอัปเดตเพื่อลดการ Re-render
         setTimeSlots(prev => {
-          // Check if lengths differ
+          // ถ้าจำนวนไม่เท่ากัน อัปเดตเลย
           if (prev.length !== data.slots.length) {
             return data.slots;
           }
 
-          // Check if any slot status changed
+          // ตรวจสอบสถานะของแต่ละ Slot
           const hasStatusChange = prev.some((prevSlot, idx) => {
             const newSlot = data.slots[idx];
             return newSlot && (prevSlot.status !== newSlot.status || prevSlot.time !== newSlot.time);
           });
 
-          // Only update if something actually changed
+          // อัปเดตเฉพาะเมื่อมีการเปลี่ยนแปลง
           return hasStatusChange ? data.slots : prev;
         });
       }
@@ -82,12 +87,12 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
     }
   }, [selectedDate]);
 
-  // Fetch on mount and when date changes
+  // Effect: โหลดข้อมูลเมื่อวันที่เปลี่ยน
   useEffect(() => {
-    fetchTimeSlots(true); // Initial load with loading spinner
+    fetchTimeSlots(true); // Initial load
   }, [fetchTimeSlots]);
 
-  // Refresh slots periodically when picker is open (background updates without loading spinner)
+  // Effect: Auto Refresh ทุก 3 วินาที เมื่อเปิด Popover
   useEffect(() => {
     if (!isOpen) return;
 
@@ -95,17 +100,14 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
     return () => clearInterval(interval);
   }, [isOpen, fetchTimeSlots]);
 
-
-
-  // Handle time selection
+  // ฟังก์ชันเลือกเวลา
   const handleSelect = (e: React.MouseEvent, time: string) => {
     e.preventDefault();
     onChange(time);
     setIsOpen(false);
   };
 
-  // ... (keep effect)
-
+  // ฟังก์ชันจัดรูปแบบเวลาสำหรับแสดงผล
   const formatDisplayTime = (time: string) => {
     if (!time) return locale === 'th' ? 'เลือกเวลา' : 'Select Time';
 
@@ -113,7 +115,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
       return `${time} น.`;
     }
 
-    // AM/PM Format
+    // แปลงเป็น 12-hour format สำหรับภาษาอังกฤษ
     try {
       const [hours, minutes] = time.split(':');
       const hour = parseInt(hours, 10);
@@ -125,6 +127,7 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
     }
   };
 
+  // ฟังก์ชันเลือกสีปุ่มตามสถานะ
   const getStatusColor = (status: string, isSelected: boolean) => {
     if (isSelected) return 'bg-primary text-primary-foreground shadow-warm-sm';
     switch (status) {
@@ -135,24 +138,17 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'booked':
-        return locale === 'th' ? ' (จองแล้ว)' : ' (Booked)';
-      default:
-        return '';
-    }
-  };
-
   return (
     <div className="relative">
       <input type="hidden" id={id} name={name} value={value} />
+
+      {/* Search/Select Button Trigger */}
       <button
         type="button"
         onClick={() => {
           if (selectedDate) {
             setIsOpen(!isOpen);
-            if (!isOpen) fetchTimeSlots(true); // Show spinner when manually opening
+            if (!isOpen) fetchTimeSlots(true); // โหลดข้อมูลทันทีที่เปิด
           }
         }}
         disabled={!selectedDate}
@@ -183,12 +179,16 @@ const TimeGridPicker: React.FC<TimeGridPickerProps> = ({
         </span>
       </button>
 
+      {/* Popover เลือกเวลา */}
       {isOpen && selectedDate && (
         <>
+          {/* Backdrop */}
           <div
             className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] cursor-pointer"
             onClick={() => setIsOpen(false)}
           />
+
+          {/* Picker Content */}
           <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-2xl shadow-warm-lg p-4 max-h-[350px] overflow-y-auto pointer-events-auto">
             <div className="flex items-center justify-between mb-3 sticky top-0 bg-card/90 backdrop-blur-sm pb-2 z-10">
               <h4 className="text-sm font-semibold text-foreground">

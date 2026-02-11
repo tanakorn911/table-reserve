@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -28,6 +28,7 @@ import {
   Cell,
 } from 'recharts';
 
+// โครงสร้างข้อมูลการจอง
 interface Reservation {
   id: string;
   guest_name: string;
@@ -41,26 +42,37 @@ interface Reservation {
   created_at: string;
 }
 
+/**
+ * DashboardPage Component
+ * 
+ * หน้าแดชบอร์ดหลักสำหรับ Admin
+ * - แสดงภาพรวมสถิติการจองวันนี้ (มาแล้ว, รอยืนยัน, ยกเลิก)
+ * - กราฟแท่งแสดงช่วงเวลาที่ลูกค้าหนาแน่น (Peak Occupancy)
+ * - รายการจองล่าสุดที่กำลังจะมาถึง (Who's Next?)
+ * - AI Insights วิเคราะห์ภาพรวมประจำวัน
+ */
 export default function DashboardPage() {
   const locale = useAdminLocale();
   const { adminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
 
+  // State เก็บสถิติต่างๆ
   const [stats, setStats] = useState({
     todayTotal: 0,
     todayPending: 0,
     todayConfirmed: 0,
-    todayPax: 0,
+    todayPax: 0, // จำนวนลูกค้า (คน)
     bookedTables: 0,
     totalTables: 0,
   });
-  const [recentReservations, setRecentReservations] = useState<Reservation[]>([]);
-  const [allReservations, setAllReservations] = useState<Reservation[]>([]);
-  const [hourlyPaxData, setHourlyPaxData] = useState<any[]>([]);
+  const [recentReservations, setRecentReservations] = useState<Reservation[]>([]); // รายการจองที่จะมาถึงเร็วๆนี้
+  const [allReservations, setAllReservations] = useState<Reservation[]>([]); // รายการจองทั้งหมดของวันนี้ (สำหรับ Export/Clear)
+  const [hourlyPaxData, setHourlyPaxData] = useState<any[]>([]); // ข้อมูลกราฟ
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
 
+  // Effect: โหลดข้อมูลครั้งแรก และตั้งเวลา Auto-refresh ทุก 30 วินาที
   useEffect(() => {
     fetchDashboardData();
 
@@ -72,32 +84,34 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // ฟังก์ชันดึงข้อมูล Dashboard ทั้งหมด
   const fetchDashboardData = async () => {
     try {
-      // Get today's date in Thailand time (UTC+7)
+      // คำนวณวันที่ปัจจุบัน (ตามเวลาไทย UTC+7)
       const now = new Date();
       const thailandTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
       const todayStr = thailandTime.toISOString().split('T')[0];
 
-      // Fetch ALL reservations (today and future)
+      // ดึงข้อมูลการจองทั้งหมด
       const allRes = await fetch('/api/reservations');
       const { data: allData } = await allRes.json();
 
-      // Filter for today ONLY for stats
+      // กรองเฉพาะการจองของ "วันนี้" เพื่อมาแสดงสถิติ
       const todayData = (allData || []).filter((r: Reservation) =>
         r.reservation_date === todayStr
       );
 
-      // Filter for upcoming (Today + Future) for "Who's Next" list
+      // กรองการจองที่ "ยังไม่ผ่านไป" (วันนี้และอนาคต) เพื่อแสดงรายการที่จะมาถึง
       const upcomingData = (allData || []).filter((r: Reservation) =>
         r.reservation_date >= todayStr
       );
 
-      // Fetch tables count
+      // ดึงข้อมูลโต๊ะทั้งหมดเพื่อนับจำนวนโต๊ะ
       const tablesRes = await fetch('/api/tables');
       const { data: tablesData } = await tablesRes.json();
 
-      if (todayData) { // Check against todayData for stats
+      if (todayData) {
+        // คำนวณตัวเลขสถิติวันนี้
         const total = todayData.length;
         const pending = todayData.filter((r: Reservation) => r.status === 'pending').length;
         const confirmed = todayData.filter((r: Reservation) => r.status === 'confirmed').length;
@@ -105,7 +119,7 @@ export default function DashboardPage() {
           .filter((r: Reservation) => r.status === 'confirmed')
           .reduce((sum: number, r: Reservation) => sum + (r.party_size || 0), 0);
 
-        // Count tables booked TODAY
+        // นับจำนวนโต๊ะที่ถูกจองวันนี้ (ไม่ซ้ำ)
         const bookedTables = new Set(
           todayData
             .filter((r: Reservation) => r.status !== 'cancelled' && r.table_number)
@@ -121,8 +135,7 @@ export default function DashboardPage() {
           totalTables: tablesData?.length || 0,
         });
 
-
-
+        // เรียงลำดับการจองวันนี้ตามเวลา
         const sortedToday = [...todayData]
           .sort((a: Reservation, b: Reservation) =>
             new Date(a.reservation_date + 'T' + a.reservation_time).getTime() - new Date(b.reservation_date + 'T' + b.reservation_time).getTime()
@@ -130,19 +143,15 @@ export default function DashboardPage() {
 
         setAllReservations(sortedToday);
 
-        // For "Who's Next", usually we want to see upcoming bookings even if today is empty?
-        // But the previous logic used `upcomingData`. 
-        // Let's stick to `upcomingData` for `setRecentReservations` to show context, 
-        // BUT `setAllReservations` (used for Export/Clear) must be TODAY ONLY.
-
+        // เรียงลำดับรายการที่จะมาถึง (Upcoming)
         const sortedUpcoming = [...upcomingData]
           .sort((a: Reservation, b: Reservation) =>
             new Date(a.reservation_date + 'T' + a.reservation_time).getTime() - new Date(b.reservation_date + 'T' + b.reservation_time).getTime()
           );
 
-        setRecentReservations(sortedUpcoming.slice(0, 5));
+        setRecentReservations(sortedUpcoming.slice(0, 5)); // เอาแค่ 5 รายการแรก
 
-        // Calculate Peak Occupancy Forecast (Today only)
+        // คำนวณข้อมูลกราฟความหนาแน่นรายชั่วโมง (เฉพาะวันนี้)
         const hoursMap = new Map<string, number>();
         todayData
           .filter((r: Reservation) => r.status !== 'cancelled')
@@ -157,6 +166,7 @@ export default function DashboardPage() {
 
         setHourlyPaxData(hourlyData);
       } else {
+        // กรณีไม่มีข้อมูล
         setStats({
           todayTotal: 0,
           todayPending: 0,
@@ -176,6 +186,7 @@ export default function DashboardPage() {
     }
   };
 
+  // ฟังก์ชัน Export ข้อมูลเป็น CSV
   const handleExportCSV = () => {
     if (allReservations.length === 0) return;
 
@@ -205,6 +216,7 @@ export default function DashboardPage() {
     URL.revokeObjectURL(url);
   };
 
+  // ฟังก์ชันลบข้อมูลการจองทั้งหมดของวันนี้ (สำหรับทดสอบหรือเริ่มวันใหม่)
   const handleClearDay = async () => {
     const todayStr = new Date().toISOString().split('T')[0];
     const confirmMsg = locale === 'th'
@@ -215,7 +227,7 @@ export default function DashboardPage() {
 
     setClearing(true);
     try {
-      // Delete all reservations for today
+      // วนลบทีละรายการ (TODO: ควรทำ API สำหรับ Bulk Delete)
       for (const r of allReservations) {
         await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' });
       }
@@ -237,7 +249,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* ส่วนหัวแสดงวันที่และปุ่มจัดการ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className={`text-2xl font-bold ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.dashboard.title')}</h1>
@@ -251,7 +263,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: Export CSV & Clear Data */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportCSV}
@@ -272,9 +284,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Cards แสดงสถิติรวม */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Today's Bookings */}
+        {/* Today's Bookings: ยอดจองรวม */}
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -285,7 +297,7 @@ export default function DashboardPage() {
           <p className="text-3xl font-black text-gray-900 mt-1">{stats.todayTotal}</p>
         </div>
 
-        {/* Pending */}
+        {/* Pending: รอยืนยัน */}
         <div className={`bg-white rounded-xl p-5 border ${stats.todayPending > 0 ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between mb-3">
             <div className={`p-2 rounded-lg ${stats.todayPending > 0 ? 'bg-yellow-100' : 'bg-gray-100'}`}>
@@ -301,7 +313,7 @@ export default function DashboardPage() {
           <p className={`text-3xl font-black mt-1 ${stats.todayPending > 0 ? 'text-yellow-700' : 'text-gray-900'}`}>{stats.todayPending}</p>
         </div>
 
-        {/* Expected Guests */}
+        {/* Expected Guests: จำนวนคน */}
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-purple-50 rounded-lg">
@@ -313,7 +325,7 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 mt-1">{locale === 'th' ? 'คน (ยืนยันแล้ว)' : 'guests (confirmed)'}</p>
         </div>
 
-        {/* Tables Booked */}
+        {/* Tables Booked: โต๊ะที่จอง */}
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-green-50 rounded-lg">
@@ -326,12 +338,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* AI Insights Card */}
+      {/* AI Insights Card: วิเคราะห์ข้อมูลด้วย AI */}
       <AIInsightsCard locale={locale} />
 
-      {/* Operational Insights */}
+      {/* Operational Insights: กราฟและลำดับการจอง */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Peak Occupancy Forecast (PRIORITY) */}
+        {/* Peak Occupancy Forecast: กราฟแท่งแสดงลูกค้าตามช่วงเวลา */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -340,7 +352,6 @@ export default function DashboardPage() {
                 {locale === 'th' ? 'จำนวนลูกค้าคาดการณ์ในแต่ละช่วงเวลา' : 'Forecasted guests for today'}
               </p>
             </div>
-            {/* Legend or extra info can go here */}
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
               <span className="text-[10px] font-bold text-gray-500 uppercase">{locale === 'th' ? 'จำนวนลูกค้า (Pax)' : 'Guests'}</span>
@@ -382,6 +393,7 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* สรุปสถานะโต๊ะทั้งหมด */}
           <div className="mt-6 pt-5 border-t border-gray-100">
             <div className="grid grid-cols-1 gap-4">
               <div>
@@ -406,7 +418,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Today's Arrival Timeline (SECONDARY) */}
+        {/* Who's Next?: รายการจองที่จะถึง */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col h-full">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -435,7 +447,7 @@ export default function DashboardPage() {
                   resTime.setHours(h, m, 0);
                   const isComingSoon = r.reservation_date === new Date().toISOString().split('T')[0] &&
                     resTime.getTime() > now.getTime() &&
-                    (resTime.getTime() - now.getTime()) < 3600000;
+                    (resTime.getTime() - now.getTime()) < 3600000; // น้อยกว่า 1 ชม.
 
                   return (
                     <div key={r.id} className="relative pl-5">

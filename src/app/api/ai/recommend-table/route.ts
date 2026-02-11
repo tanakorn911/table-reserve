@@ -3,11 +3,13 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
+// เริ่มต้นใช้งาน Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
     try {
         // Check if Gemini API key is available
+        // ตรวจสอบว่ามี API Key ของ Gemini หรือไม่
         if (!process.env.GEMINI_API_KEY) {
             return NextResponse.json(
                 { error: 'Gemini API Key is not configured' },
@@ -19,12 +21,14 @@ export async function POST(request: NextRequest) {
         const { message, date, time, guests, locale } = await request.json();
 
         // Check language preference
+        // ตรวจสอบภาษาที่ผู้ใช้เลือกมา
         const isThai = locale === 'th';
         const languageInstruction = isThai
             ? '(in Thai language)'
             : '(in English language)';
 
         // 1. Fetch ALL tables
+        // 1. ดึงข้อมูลโต๊ะทั้งหมดจากฐานข้อมูล
         const { data: tables, error: tableError } = await supabase.from('tables').select('*');
 
         if (tableError) {
@@ -33,6 +37,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. Fetch Reservations for the requested date to find occupied tables
+        // 2. ดึงข้อมูลการจองในวันที่ระบุ เพื่อหาว่าโต๊ะไหนไม่ว่างบ้าง
         const { data: reservations, error: reservationError } = await supabase
             .from('reservations')
             .select('table_number, reservation_time, status')
@@ -45,9 +50,12 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Filter available tables
+        // 3. กรองหาโต๊ะที่ว่างและมีความจุเพียงพอ
         const availableTables = tables.filter((table) => {
+            // Check capacity (ตรวจสอบความจุ)
             if (table.capacity < guests) return false;
 
+            // Check overlap (ตรวจสอบเวลาชนกัน)
             const isBooked = reservations.some((r) => {
                 if (r.table_number !== table.id) return false;
 
@@ -60,10 +68,11 @@ export async function POST(request: NextRequest) {
                     const selectedMin = parseInt(time.substring(3, 5));
                     const selectedTotalMins = selectedHour * 60 + selectedMin;
 
-                    const slotDuration = 120; // 2 hours
+                    const slotDuration = 120; // 2 hours (ระยะเวลาจองต่อครั้ง 2 ชั่วโมง)
                     const bookingEnd = bookingTotalMins + slotDuration;
                     const selectedEnd = selectedTotalMins + slotDuration;
 
+                    // ตรวจสอบว่าช่วงเวลาซ้อนทับกันหรือไม่
                     return selectedTotalMins < bookingEnd && selectedEnd > bookingTotalMins;
                 } catch (e) { return true; }
             });
@@ -79,6 +88,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Initialize Model and call AI
+        // 4. เรียกใช้ AI เพื่อเลือกโต๊ะที่เหมาะสมที่สุดจากรายการที่ว่าง
         const modelInstance = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         const prompt = `
@@ -121,6 +131,7 @@ export async function POST(request: NextRequest) {
             const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
             // Retry logic with backoff
+            // ระบบ Retry เมื่อเกิด Error 429 (Rate Limit)
             const generateWithRetry = async (retries = 3, delayMs = 1000) => {
                 try {
                     return await modelInstance.generateContent(prompt);
@@ -140,10 +151,12 @@ export async function POST(request: NextRequest) {
             console.log('Gemini Response:', responseText);
 
             // Clean markdown if present (Gemini sometimes adds ```json ... ```)
+            // ล้าง markdown block ออกเพื่อให้ได้ JSON ที่ถูกต้อง
             const cleanedJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsedResponse = JSON.parse(cleanedJson);
 
             // Enhance response with table name
+            // เพิ่มชื่อโต๊ะเข้าไปในผลลัพธ์
             const recommendedTable = availableTables.find(t => t.id === parsedResponse.recommendedTableId);
             const finalResponse = {
                 ...parsedResponse,
@@ -156,6 +169,7 @@ export async function POST(request: NextRequest) {
             console.error('AI Error:', error);
 
             // Fallback Logic: Pick a random available table if AI fails
+            // กรณี AI มีปัญหา ให้สุ่มเลือกโต๊ะจากรายการที่ว่างแทน
             if (availableTables.length > 0) {
                 console.warn('AI failed, using fallback recommendation.');
                 const randomTable = availableTables[Math.floor(Math.random() * availableTables.length)];

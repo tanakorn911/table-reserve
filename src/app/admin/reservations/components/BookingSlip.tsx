@@ -5,11 +5,14 @@ interface BookingSlipProps {
   ref: any;
 }
 
+// BookingSlip Component
+// คอมโพเนนต์สำหรับแสดงใบจอง (ใช้สำหรับการพิมพ์)
 export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
   ({ reservation }, ref) => {
     if (!reservation) return null;
 
     // Format Date/Time helper
+    // ฟังก์ชันช่วยจัดรูปแบบวันที่และเวลา
     const formatDate = (dateString: string) => {
       if (!dateString) return '-';
       const date = new Date(dateString);
@@ -23,6 +26,7 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
     return (
       <div ref={ref} className="p-4 bg-white text-black w-[80mm] mx-auto hidden print:block font-mono">
         {/* Header */}
+        {/* ส่วนหัวใบจอง (ชื่อร้าน, ที่อยู่) */}
         <div className="text-center border-b-2 border-dashed border-black pb-4 mb-4">
           <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Savory Bistro</h1>
           <p className="text-xs text-gray-600">123 Delicious Street, Food City</p>
@@ -34,6 +38,7 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
         </div>
 
         {/* Booking Details */}
+        {/* รายละเอียดการจอง (รหัส, วันที่, เวลา, โต๊ะ, จำนวนคน) */}
         <div className="space-y-3 text-sm mb-4 border-b-2 border-dashed border-black pb-4">
           <div className="flex justify-between items-baseline">
             <span className="font-bold text-gray-800">Booking Ref:</span>
@@ -70,6 +75,7 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
         </div>
 
         {/* Customer Info */}
+        {/* ข้อมูลลูกค้า (ชื่อ, เบอร์โทร) */}
         <div className="mb-4 border-b-2 border-dashed border-black pb-4">
           <p className="font-bold text-xs text-gray-500 mb-1">CUSTOMER INFO / ข้อมูลลูกค้า</p>
           <p className="text-lg font-bold mb-1">{reservation.guest_name}</p>
@@ -77,6 +83,7 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
         </div>
 
         {/* Special Request */}
+        {/* คำขอพิเศษ */}
         {reservation.special_requests && (
           <div className="mb-4 border-b-2 border-dashed border-black pb-4">
             <p className="font-bold text-xs text-gray-500 mb-1">NOTE / หมายเหตุ</p>
@@ -85,6 +92,7 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
         )}
 
         {/* Footer */}
+        {/* ส่วนท้าย (คำขอบคุณ, เวลาที่พิมพ์) */}
         <div className="text-center text-[10px] text-gray-500 mt-4 space-y-1">
           <p>Please present this slip to the reception.</p>
           <p>กรุณาแสดงใบนี้ต่อพนักงานต้อนรับ</p>

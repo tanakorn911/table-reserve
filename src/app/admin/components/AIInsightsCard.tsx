@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,38 +6,50 @@ import Icon from '@/components/ui/AppIcon';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { useTranslation } from '@/lib/i18n';
 
+// โครงสร้างข้อมูลที่ได้จาก API AI Insights
 interface AIInsightsData {
-    insight: string;
+    insight: string; // ข้อความวิเคราะห์จาก AI
     stats: {
         today: {
-            total: number;
-            confirmed: number;
-            pending: number;
-            cancelled: number;
-            totalGuests: number;
+            total: number;      // ยอดจองวันนี้
+            confirmed: number;  // ยืนยันแล้ว
+            pending: number;    // รอยืนยัน
+            cancelled: number;  // ยกเลิก
+            totalGuests: number; // จำนวนแขกทั้งหมด
         };
         yesterday: {
-            total: number;
+            total: number;      // ยอดจองเมื่อวาน (เปรียบเทียบ)
             confirmed: number;
             totalGuests: number;
         };
     } | null;
-    generatedAt: string;
+    generatedAt: string; // เวลาที่ข้อมูลถูกสร้าง
 }
 
+// Proptypes
 interface AIInsightsCardProps {
-    locale?: 'th' | 'en';
+    locale?: 'th' | 'en'; // ภาษาที่ต้องการแสดงผล
 }
 
+/**
+ * AIInsightsCard Component
+ * 
+ * การ์ดแสดงผลการวิเคราะห์ข้อมูลด้วย AI (AI-Powered Insights)
+ * - แสดงข้อความสรุปสถานการณ์ร้านประจำวัน
+ * - เปรียบเทียบยอดจองกับเมื่อวาน
+ * - มี Typing Animation เพื่อให้รู้สึกเหมือน AI กำลังคุยด้วย
+ * - รองรับ Theme (Light/Dark)
+ */
 export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
     const { t } = useTranslation(locale);
     const [data, setData] = useState<AIInsightsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [displayedText, setDisplayedText] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
+    const [displayedText, setDisplayedText] = useState(''); // ข้อความสำหรับ Typing Effect
+    const [isTyping, setIsTyping] = useState(false); // สถานะกำลังพิมพ์
     const { adminTheme } = useAdminTheme();
 
+    // ฟังก์ชันดึงข้อมูล Insights จาก API
     const fetchInsights = useCallback(async () => {
         setIsLoading(true);
         setError(null);
@@ -47,7 +59,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
 
             if (result.success && result.data) {
                 setData(result.data);
-                // Start typing animation
+                // เริ่ม Animation การพิมพ์
                 setIsTyping(true);
                 setDisplayedText('');
             } else {
@@ -60,12 +72,12 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
         }
     }, [locale]);
 
-    // Fetch on mount
+    // เรียกดึงข้อมูลเมื่อ Component Mount
     useEffect(() => {
         fetchInsights();
     }, [fetchInsights]);
 
-    // Typing animation
+    // Typing Animation Logic
     useEffect(() => {
         if (isTyping && data?.insight) {
             const text = data.insight;
@@ -79,19 +91,20 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                     setIsTyping(false);
                     clearInterval(timer);
                 }
-            }, 20); // 20ms per character
+            }, 20); // ความเร็วในการพิมพ์ (20ms ต่อตัวอักษร)
 
             return () => clearInterval(timer);
         }
     }, [isTyping, data?.insight]);
 
+    // คำนวณเปอร์เซ็นต์การเปลี่ยนแปลงเทียบกับเมื่อวาน
     const changePercent = data?.stats
         ? ((data.stats.today.total - data.stats.yesterday.total) / Math.max(data.stats.yesterday.total, 1) * 100).toFixed(0)
         : '0';
 
-    const isPositive = parseInt(changePercent) >= 0;
+    const isPositive = parseInt(changePercent) >= 0; // แนวโน้มบวกหรือลบ
 
-    // Theme-aware colors
+    // กำหนดสีตาม Theme (Dark/Light)
     const themeColors = adminTheme === 'dark' ? {
         container: 'bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/20 shadow-purple-500/5',
         iconBg: 'bg-purple-500/20',
@@ -128,7 +141,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
             animate={{ opacity: 1, y: 0 }}
             className={`rounded-2xl p-6 border shadow-lg ${themeColors.container}`}
         >
-            {/* Header */}
+            {/* Header: หัวข้อการ์ดและปุ่ม Refresh */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${themeColors.iconBg}`}>
@@ -153,10 +166,11 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                 </button>
             </div>
 
-            {/* Content */}
+            {/* Content Area */}
             <div className="min-h-[80px]">
                 <AnimatePresence mode="wait">
                     {isLoading ? (
+                        // Loading State: จุด 3 จุดเด้งดึ๋ง
                         <motion.div
                             key="loading"
                             initial={{ opacity: 0 }}
@@ -181,6 +195,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                             <span className={`text-sm ${themeColors.loadingText}`}>{t('admin.ai.analyzing')}</span>
                         </motion.div>
                     ) : error ? (
+                        // Error State
                         <motion.div
                             key="error"
                             initial={{ opacity: 0 }}
@@ -191,12 +206,14 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                             {error}
                         </motion.div>
                     ) : (
+                        // Success State: แสดงผลข้อความและสถิติ
                         <motion.div
                             key="content"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                         >
+                            {/* ข้อความวิเคราะห์ (พิมพ์ทีละตัว) */}
                             <p className={`text-sm leading-relaxed ${themeColors.content}`}>
                                 {displayedText}
                                 {isTyping && (
@@ -208,7 +225,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
                                 )}
                             </p>
 
-                            {/* Stats comparison */}
+                            {/* สถิติเปรียบเทียบกับเมื่อวาน (Stats Comparison) */}
                             {data?.stats && (
                                 <div className={`mt-4 flex items-center gap-4 pt-4 border-t ${themeColors.border}`}>
                                     <div className="flex items-center gap-2">

@@ -6,6 +6,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Simple in-memory cache
+// แคชแบบง่ายในหน่วยความจำเพื่อลดการเรียก API ซ้ำซ้อน
 interface CacheEntry {
     insight: string;
     stats: any;
@@ -15,11 +16,12 @@ interface CacheEntry {
 }
 
 let insightsCache: CacheEntry | null = null;
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes (ระยะเวลาแคช 15 นาที)
 
 export async function GET(request: NextRequest) {
     try {
         // Check if Gemini API key is available
+        // ตรวจสอบว่ามี API Key ของ Gemini หรือไม่
         if (!process.env.GEMINI_API_KEY) {
             return NextResponse.json(
                 { success: false, error: 'Gemini API Key is not configured' },
@@ -28,11 +30,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Get date and locale from query params
+        // ดึงวันที่และภาษาจาก query parameters
         const { searchParams } = new URL(request.url);
         const dateParam = searchParams.get('date');
         const locale = searchParams.get('locale') || 'th';
 
         // Calculate Thailand time
+        // คำนวณเวลาประเทศไทย
         const now = new Date();
         const thailandOffset = 7 * 60;
         const localOffset = now.getTimezoneOffset();
@@ -42,6 +46,7 @@ export async function GET(request: NextRequest) {
         const yesterday = new Date(thailandTime.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         // Check cache
+        // ตรวจสอบแคชก่อน ถ้ามีและยังไม่หมดอายุ ให้ใช้ข้อมูลจากแคช
         if (
             insightsCache &&
             insightsCache.date === today &&
@@ -59,9 +64,11 @@ export async function GET(request: NextRequest) {
         }
 
         // Initialize Supabase
+        // เริ่มต้นการเชื่อมต่อ Supabase
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Fetch today's reservations
+        // ดึงข้อมูลการจองของวันนี้
         const { data: todayReservations, error: todayError } = await supabase
             .from('reservations')
             .select('*')
@@ -70,6 +77,7 @@ export async function GET(request: NextRequest) {
         if (todayError) throw todayError;
 
         // Fetch yesterday's reservations for comparison
+        // ดึงข้อมูลการจองของเมื่อวานเพื่อเปรียบเทียบ
         const { data: yesterdayReservations, error: yesterdayError } = await supabase
             .from('reservations')
             .select('*')
@@ -78,6 +86,7 @@ export async function GET(request: NextRequest) {
         if (yesterdayError) throw yesterdayError;
 
         // Calculate statistics
+        // คำนวณสถิติต่างๆ
         const stats = {
             today: {
                 total: todayReservations?.length || 0,
@@ -94,6 +103,7 @@ export async function GET(request: NextRequest) {
         };
 
         // Calculate peak hours
+        // คำนวณช่วงเวลาที่มีลูกค้ามากที่สุด
         const hourCounts: Record<number, number> = {};
         todayReservations?.forEach(r => {
             if (r.reservation_time) {
@@ -104,6 +114,7 @@ export async function GET(request: NextRequest) {
         const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
 
         // Generate AI insight using Gemini
+        // สร้างบทวิเคราะห์ด้วย AI (Gemini)
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         let prompt;
@@ -151,6 +162,7 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
             const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
             // Retry logic with backoff
+            // ระบบลองใหม่เมื่อเกิดข้อผิดพลาด (Retry Logic) พร้อมเพิ่มเวลาหน่วง
             const generateWithRetry = async (retries = 3, delayMs = 1000) => {
                 try {
                     return await model.generateContent(prompt);
@@ -168,6 +180,7 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
             const insight = result.response.text().trim();
 
             // Update cache
+            // อัปเดตแคชด้วยข้อมูลใหม่
             insightsCache = {
                 insight,
                 stats,
@@ -187,6 +200,7 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
 
         } catch (error: any) {
             // Handle Rate Limit gracefully by returning stats without AI text
+            // กรณี AI มีปัญหา (เช่น Rate Limit) ให้ส่งคืนสถิติโดยไม่มีข้อความ AI
             if (error.message?.includes('429') || error.status === 429) {
                 console.warn('Gemini Rate Limit hit after retries. Returning fallback stats.');
                 const fallbackInsight = locale === 'en'

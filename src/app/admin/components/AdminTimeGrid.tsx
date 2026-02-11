@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -6,18 +6,28 @@ import { useTranslation } from '@/lib/i18n';
 import { useAdminLocale } from './LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
+// โครงสร้างข้อมูล Time Slot
 interface TimeSlot {
-  time: string;
+  time: string; // เวลา (เช่น 10:00)
   label: string;
-  status: 'available' | 'booked' | 'held';
+  status: 'available' | 'booked' | 'held'; // สถานะ: ว่าง, จองแล้ว, ติดจองชั่วคราว
 }
 
+// Proptypes
 interface AdminTimeGridProps {
-  selectedDate: string;
-  value: string;
-  onChange: (time: string) => void;
+  selectedDate: string; // วันที่ที่เลือก
+  value: string; // ค่าเวลาที่เลือกปัจจุบัน
+  onChange: (time: string) => void; // ฟังก์ชัน callback เมื่อเลือกเวลา
 }
 
+/**
+ * AdminTimeGrid Component
+ * 
+ * ตารางเลือกเวลาจองสำหรับหน้า Admin (เช่น ตอนสร้าง Booking ใหม่)
+ * - แสดงรายการเวลาที่มีทั้งหมดในวันนั้น
+ * - แสดงสถานะของแต่ละ Slot (ว่าง/เต็ม)
+ * - รองรับ Theme (Light/Dark)
+ */
 const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onChange }) => {
   const locale = useAdminLocale();
   const { t } = useTranslation(locale);
@@ -25,7 +35,7 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Theme configuration
+  // Theme configuration for colors
   const themeColors = adminTheme === 'dark' ? {
     loading: 'text-gray-400',
     tips: 'text-gray-400 bg-gray-800/50',
@@ -46,6 +56,7 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
     }
   };
 
+  // ดึงข้อมูล TimeSlots เมื่อวันที่เปลี่ยน
   useEffect(() => {
     const fetchSlots = async () => {
       if (!selectedDate) return;
@@ -76,6 +87,7 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
             const isSelected = value === slot.time;
             let activityClass = themeColors.slot.default;
 
+            // กำหนดสีปุ่มตามสถานะ
             if (isSelected) {
               activityClass = themeColors.slot.selected;
             } else if (slot.status === 'booked') {
@@ -92,6 +104,8 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
                   py-2 px-1 rounded-lg text-xs font-bold border transition-all
                   ${activityClass}
                 `}
+              // TODO: อาจจะ disable ปุ่มถ้าเต็ม แต่ใน Admin อาจจะยอมให้ overbook ได้? 
+              // ปัจจุบันยอมให้กดได้หมดเพื่อให้ Admin จัดการได้เต็มที่
               >
                 {slot.time}
               </button>

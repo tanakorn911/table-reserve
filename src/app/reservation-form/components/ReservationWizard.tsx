@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component เพื่อให้สามารถใช้ Hooks และ Interactive Features ได้
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ import TimeGridPicker from './TimeGridPicker';
 import TextArea from './TextArea';
 import FloorPlan from '@/components/floor-plan/FloorPlan';
 import TableListView from './TableListView';
-import SubmitButton from './SubmitButton';
+import SubmitButton from './SubmitButton'; // Note: SubmitButton อาจไม่ได้ถูกใช้โดยตรงใน Footer แต่ import ไว้
 import SuccessModal from './SuccessModal';
 import AIRecommendationModal from './AIRecommendationModal';
 import Icon from '@/components/ui/AppIcon';
@@ -23,6 +23,7 @@ import { createClientSupabaseClient } from '@/lib/supabase/client';
 import generatePayload from 'promptpay-qr';
 import { QRCodeCanvas } from 'qrcode.react';
 
+// โครงสร้างข้อมูลฟอร์ม
 interface FormData {
     fullName: string;
     phone: string;
@@ -35,6 +36,7 @@ interface FormData {
     paymentSlipUrl?: string;
 }
 
+// โครงสร้างข้อมูล Error ของฟอร์ม
 interface FormErrors {
     fullName?: string;
     phone?: string;
@@ -45,6 +47,7 @@ interface FormErrors {
     tableId?: string;
 }
 
+// รายละเอียดการจองที่สำเร็จ
 interface ReservationDetails {
     id: string;
     bookingCode?: string;
@@ -57,12 +60,24 @@ interface ReservationDetails {
     specialRequests: string;
 }
 
+/**
+ * ReservationWizard Component
+ * ฟอร์มการจองแบบหลายขั้นตอน (Multi-step Wizard)
+ * ประกอบด้วย 3 ขั้นตอน:
+ * 1. เลือกวัน เวลา และจำนวนคน (Schedule)
+ * 2. เลือกโต๊ะ (Table Selection)
+ * 3. กรอกข้อมูลและชำระเงิน (Confirmation & Payment)
+ */
 const ReservationWizard = () => {
     const router = useRouter();
-    const { locale } = useNavigation();
-    const { resolvedTheme } = useTheme();
-    const { t } = useTranslation(locale);
+    const { locale } = useNavigation(); // ดึง locale ปัจจุบัน
+    const { resolvedTheme } = useTheme(); // ดึง Theme ปัจจุบัน (light/dark)
+    const { t } = useTranslation(locale); // Hook สำหรับแปลภาษา
+
+    // State สำหรับจัดการขั้นตอนปัจจุบัน (1, 2, 3)
     const [step, setStep] = useState(1);
+
+    // State เก็บข้อมูลฟอร์มทั้งหมด
     const [formData, setFormData] = useState<FormData>({
         fullName: '',
         phone: '',
@@ -73,27 +88,29 @@ const ReservationWizard = () => {
         tableId: undefined,
         specialRequests: '',
     });
-    const [errors, setErrors] = useState<FormErrors>({});
-    const [isLoading, setIsLoading] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [reservationDetails, setReservationDetails] = useState<ReservationDetails | null>(null);
-    const [minDate, setMinDate] = useState('');
-    const [slipFile, setSlipFile] = useState<File | null>(null);
-    const [uploading, setUploading] = useState(false);
-    const [tables, setTables] = useState<Table[]>([]);
-    const [bookedTables, setBookedTables] = useState<{ id: number; time: string }[]>([]); // Changed state
-    const [previewSlipUrl, setPreviewSlipUrl] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-    const [showAIModal, setShowAIModal] = useState(false);
 
+    // State เก็บ Error ของฟอร์ม (ยังไม่ได้ใช้ validate แบบละเอียดใน code เดิม แต่เตรียมไว้)
+    const [errors, setErrors] = useState<FormErrors>({});
+
+    const [isLoading, setIsLoading] = useState(false); // สถานะกำลังโหลด/ส่งข้อมูล
+    const [showSuccess, setShowSuccess] = useState(false); // แสดง Modal สำเร็จ
+    const [reservationDetails, setReservationDetails] = useState<ReservationDetails | null>(null); // ข้อมูลการจองที่สำเร็จ
+    const [minDate, setMinDate] = useState(''); // วันที่ต่ำสุดที่เลือกได้ (วันนี้)
+    const [slipFile, setSlipFile] = useState<File | null>(null); // ไฟล์สลิปโอนเงิน
+    const [uploading, setUploading] = useState(false); // สถานะกำลังอัปโหลดไฟล์
+    const [tables, setTables] = useState<Table[]>([]); // ข้อมูลโต๊ะทั้งหมด
+    const [bookedTables, setBookedTables] = useState<{ id: number; time: string }[]>([]); // รายการโต๊ะที่ถูกจองแล้ว
+    const [previewSlipUrl, setPreviewSlipUrl] = useState<string | null>(null); // URL พรีวิวรูปสลิป
+    const [viewMode, setViewMode] = useState<'map' | 'list'>('map'); // โหมดแสดงผลโต๊ะ (แผนที่/รายการ)
+    const [showAIModal, setShowAIModal] = useState(false); // แสดง Modal AI แนะนำโต๊ะ
+
+    // Effect: เลื่อนหน้าจอไปบนสุดเมื่อโหลด component (Reset Scroll)
     useEffect(() => {
-        // Force scroll to top when landing on this page
-        // Use timeout to ensure it runs after any automatic scroll restoration
         const timer = setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'instant' });
         }, 10);
 
-        // Simple client-side check to default to list on mobile
+        // ตรวจสอบขนาดหน้าจอเพื่อปรับ viewMode อัตโนมัติ (มือถือ -> List, Desktop -> Map)
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setViewMode('list');
         } else {
@@ -105,26 +122,26 @@ const ReservationWizard = () => {
 
     const supabase = useMemo(() => createClientSupabaseClient(), []);
 
-    // Initial Date Setup
+    // Effect: ตั้งค่าวันที่เริ่มต้น (minDate) เป็นวันปัจจุบันตามเวลาประเทศไทย
     useEffect(() => {
         const today = new Date();
-        const thailandOffset = 7 * 60;
+        const thailandOffset = 7 * 60; // UTC+7
         const localOffset = today.getTimezoneOffset();
         const thailandTime = new Date(today.getTime() + (thailandOffset + localOffset) * 60000);
         const year = thailandTime.getFullYear();
         const month = String(thailandTime.getMonth() + 1).padStart(2, '0');
         const day = String(thailandTime.getDate()).padStart(2, '0');
         setMinDate(`${year}-${month}-${day}`);
-        // Removed auto-set date to force user selection as requested
     }, []);
 
-    // Fetch Tables
+    // Effect: ดึงข้อมูลโต๊ะทั้งหมดจาก API
     useEffect(() => {
         const fetchTables = async () => {
             try {
                 const response = await fetch('/api/tables');
                 const result = await response.json();
                 if (result.data) {
+                    // จัดรูปแบบข้อมูลโต๊ะและเพิ่มค่า default สำหรับ Layout
                     const tablesWithLayout = result.data.map((t: any) => ({
                         ...t,
                         x: t.x ?? 0,
@@ -143,7 +160,7 @@ const ReservationWizard = () => {
         fetchTables();
     }, []);
 
-    // Fetch Availability
+    // ฟังก์ชันดึงข้อมูลโต๊ะที่ถูกจองตามวันและเวลาที่เลือก
     const fetchBookedTables = useCallback(async () => {
         if (!formData.date) {
             setBookedTables([]);
@@ -157,11 +174,12 @@ const ReservationWizard = () => {
             if (result.data) {
                 const booked = result.data
                     .filter((r: any) => {
-                        // 1. Status Check
+                        // 1. ตรวจสอบสถานะการจอง (เฉพาะ confirmed หรือ pending)
                         if (r.status !== 'confirmed' && r.status !== 'pending') return false;
                         if (r.table_number === null) return false;
 
-                        // 2. Time Overlap Check (Assuming 2 Hour Slots)
+                        // 2. ตรวจสอบช่วงเวลาที่ทับซ้อน (Overlap Check)
+                        // สมมติระยะเวลาทานอาหาร 2 ชั่วโมง (120 นาที)
                         if (formData.time) {
                             try {
                                 const bookingHour = parseInt(r.reservation_time.substring(0, 2));
@@ -177,14 +195,14 @@ const ReservationWizard = () => {
                                 const bookingEnd = bookingTotalMins + slotDuration;
                                 const selectedEnd = selectedTotalMins + slotDuration;
 
-                                // Overlap if: starts before other ends range
+                                // ช่วงเวลาทับซ้อนกันเมื่อ: เริ่มก่อนจบ และ จบหลังเริ่ม
                                 return selectedTotalMins < bookingEnd && selectedEnd > bookingTotalMins;
                             } catch (e) {
-                                return true; // Fallback to blocked if time parse fails
+                                return true; // ถ้าแปลงเวลาไม่ได้ ให้ถือว่าจองไว้ก่อนเพื่อความปลอดภัย
                             }
                         }
 
-                        return true; // If no time selected yet, maybe show all? Or usually shouldn't happen as Step 1 requires time.
+                        return true; // ถ้ายังไม่เลือกเวลา
                     })
                     .map((r: any) => ({
                         id: Number(r.table_number),
@@ -196,8 +214,9 @@ const ReservationWizard = () => {
         } catch (error) {
             console.error('Failed to fetch booked tables:', error);
         }
-    }, [formData.date]);
+    }, [formData.date, formData.time]); // Dependency: date และ time เปลี่ยนต้องเช็คใหม่
 
+    // Effect: โหลดข้อมูลการจองเมื่ออยู่ในขั้นตอนที่ 2 (เลือกโต๊ะ) และ Poll ทุก 10 วินาที
     useEffect(() => {
         if (step === 2) {
             fetchBookedTables();
@@ -206,17 +225,18 @@ const ReservationWizard = () => {
         }
     }, [step, fetchBookedTables]);
 
-    // File Preview
+    // Effect: สร้าง URL สำหรับ Preview รูปสลิป
     useEffect(() => {
         if (slipFile) {
             const url = URL.createObjectURL(slipFile);
             setPreviewSlipUrl(url);
-            return () => URL.revokeObjectURL(url);
+            return () => URL.revokeObjectURL(url); // Cleanup URL เพื่อป้องกัน Memory Leak
         } else {
             setPreviewSlipUrl(null);
         }
     }, [slipFile]);
 
+    // จัดการการเปลี่ยนแปลงข้อมูลใน Input
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
@@ -224,14 +244,17 @@ const ReservationWizard = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    // ฟังก์ชันไปขั้นตอนถัดไป
     const nextStep = () => {
         if (step === 1) {
+            // ตรวจสอบว่ากรอกข้อมูลครบถ้วนสำหรับขั้นตอนที่ 1
             if (!formData.guests || !formData.date || !formData.time) {
                 alert(t('validation.fillAll'));
                 return;
             }
             setStep(2);
         } else if (step === 2) {
+            // ตรวจสอบว่าเลือกโต๊ะแล้วหรือยังสำหรับขั้นตอนที่ 2
             if (!formData.tableId) {
                 alert(t('validation.table.required'));
                 return;
@@ -240,9 +263,12 @@ const ReservationWizard = () => {
         }
     };
 
+    // ฟังก์ชันย้อนกลับขั้นตอน
     const prevStep = () => setStep((s) => Math.max(1, s - 1));
 
+    // ฟังก์ชันส่งข้อมูลการจอง (Submit)
     const handleSubmit = async () => {
+        // ตรวจสอบข้อมูลจำเป็น
         if (!formData.fullName || !formData.phone || !slipFile) {
             alert(t('validation.attachSlip'));
             return;
@@ -252,6 +278,7 @@ const ReservationWizard = () => {
 
         try {
             let payment_slip_url = '';
+            // อัปโหลดสลิป
             if (slipFile) {
                 setUploading(true);
                 const fileName = `${Date.now()}_${slipFile.name}`;
@@ -267,6 +294,7 @@ const ReservationWizard = () => {
                 payment_slip_url = publicUrl;
             }
 
+            // ส่งข้อมูลไปยัง API
             const response = await fetch('/api/reservations', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -280,6 +308,7 @@ const ReservationWizard = () => {
                     table_number: formData.tableId,
                     special_requests: formData.specialRequests,
                     payment_slip_url: payment_slip_url,
+                    locale: locale, // ส่งภาษาไปด้วยเผื่อใช้ใน Backend
                 }),
             });
 
@@ -287,6 +316,7 @@ const ReservationWizard = () => {
 
             if (!response.ok) throw new Error(result.error);
 
+            // บันทึกรายละเอียดการจองเพื่อแสดงผล
             setReservationDetails({
                 id: result.data.id,
                 bookingCode: result.data.booking_code,
@@ -308,6 +338,7 @@ const ReservationWizard = () => {
         }
     };
 
+    // Animation Variants สำหรับขั้นตอนต่างๆ
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: {
@@ -328,11 +359,10 @@ const ReservationWizard = () => {
 
     return (
         <div className="min-h-screen bg-background pt-24 md:pt-32 pb-10 md:pb-20 relative text-foreground overflow-x-hidden">
-            {/* Ambient Background Glows */}
+            {/* Background Effects (แสง Ambient และ Pattern) */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none mix-blend-screen opacity-40" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none mix-blend-screen opacity-40" />
 
-            {/* Pattern Overlay */}
             <div
                 className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
                 style={{
@@ -342,14 +372,12 @@ const ReservationWizard = () => {
             />
 
             <div className="container mx-auto px-2 md:px-4 max-w-7xl relative z-10">
-                {/* Stepper */}
+                {/* Stepper (ตัวแสดงขั้นตอน) */}
                 <div className="mb-4 md:mb-12">
                     <div className="flex justify-between relative px-1 md:px-4 max-w-2xl mx-auto">
-                        {/* Connecting Line Container */}
+                        {/* Connecting Line (เส้นเชื่อม) */}
                         <div className="absolute top-6 left-0 w-full -translate-y-1/2 px-8 md:px-10 pointer-events-none z-0">
                             <div className="relative w-full h-1 bg-muted rounded-full">
-                                {' '}
-                                {/* Darker track */}
                                 <div
                                     className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-in-out"
                                     style={{ width: `${((step - 1) / 2) * 100}%` }}
@@ -357,6 +385,7 @@ const ReservationWizard = () => {
                             </div>
                         </div>
 
+                        {/* Steps Icons */}
                         {[1, 2, 3].map((s) => {
                             const isActive = step >= s;
                             const isCurrent = step === s;
@@ -396,8 +425,11 @@ const ReservationWizard = () => {
                     </div>
                 </div>
 
+                {/* Wizard Content Container */}
                 <div className="bg-card/80 backdrop-blur-md rounded-3xl shadow-2xl overflow-visible outline-none ring-0 border border-border">
                     <AnimatePresence mode="wait">
+
+                        {/* Step 1: Select Schedule (วัน เวลา จำนวนคน) */}
                         {step === 1 && (
                             <motion.div
                                 key="step1"
@@ -417,7 +449,7 @@ const ReservationWizard = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 auto-rows-min">
-                                    {/* 1. Guest Number (Mobile: 1, Desktop: Top-Left) */}
+                                    {/* จำนวนแขก */}
                                     <div className="space-y-2">
                                         <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground">
                                             {t('form.guests')}
@@ -432,21 +464,21 @@ const ReservationWizard = () => {
                                         />
                                     </div>
 
-                                    {/* 2. Date Selection (Mobile: 2, Desktop: Right-Column Spanning) */}
+                                    {/* เลือกวันที่ */}
                                     <div className="space-y-2 md:col-start-2 md:row-start-1 md:row-span-2">
                                         <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground">
                                             {t('form.date')}
                                         </label>
                                         <CalendarPicker
                                             value={formData.date}
-                                            onChange={(d) => setFormData((p) => ({ ...p, date: d, time: '' }))}
+                                            onChange={(d) => setFormData((p) => ({ ...p, date: d, time: '' }))} // Reset เวลาเมื่อเปลี่ยนวันที่
                                             minDate={minDate}
                                             id="date"
                                             name="date"
                                         />
                                     </div>
 
-                                    {/* 3. Time Selection (Mobile: 3, Desktop: Bottom-Left) */}
+                                    {/* เลือกเวลา */}
                                     <div className="space-y-2 md:col-start-1 md:row-start-2">
                                         <label className="text-xs md:text-sm font-bold uppercase tracking-wide text-foreground">
                                             {t('form.time')}
@@ -463,6 +495,7 @@ const ReservationWizard = () => {
                             </motion.div>
                         )}
 
+                        {/* Step 2: Select Table (เลือกโต๊ะ) */}
                         {step === 2 && (
                             <motion.div
                                 key="step2"
@@ -483,8 +516,9 @@ const ReservationWizard = () => {
                                         </p>
                                     </div>
 
-                                    {/* View Toggle */}
+                                    {/* ปุ่มเลือกโหมด (AI, List, Map) */}
                                     <div className="flex gap-2 w-full md:w-auto flex-col md:flex-row">
+                                        {/* ปุ่ม AI Recommendation */}
                                         <button
                                             onClick={() => setShowAIModal(true)}
                                             className="px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-muted border border-border hover:bg-muted/80 text-foreground"
@@ -493,6 +527,7 @@ const ReservationWizard = () => {
                                             {t('wizard.ai.magic')}
                                         </button>
 
+                                        {/* Toggle Map/List */}
                                         <div className="flex bg-muted p-1 rounded-2xl border border-border">
                                             <button
                                                 onClick={() => setViewMode('list')}
@@ -516,7 +551,7 @@ const ReservationWizard = () => {
                                     </div>
                                 </div>
 
-                                {/* Map/List View */}
+                                {/* พื้นที่แสดงผลโต๊ะ (Map หรือ List) */}
                                 <div className="relative mt-2">
                                     {viewMode === 'map' ? (
                                         <>
@@ -555,6 +590,7 @@ const ReservationWizard = () => {
                             </motion.div>
                         )}
 
+                        {/* Step 3: Information & Payment (กรอกข้อมูลและชำระเงิน) */}
                         {step === 3 && (
                             <motion.div
                                 key="step3"
@@ -578,6 +614,7 @@ const ReservationWizard = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    {/* ฟอร์มข้อมูลส่วนตัว */}
                                     <div className="lg:col-span-2 space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <TextInput
@@ -617,6 +654,7 @@ const ReservationWizard = () => {
                                         />
                                     </div>
 
+                                    {/* ส่วนชำระเงิน (QR Code & Upload) */}
                                     <div className="lg:col-span-1">
                                         <div className="bg-muted/20 backdrop-blur-md rounded-3xl p-4 md:p-6 border border-border h-full flex flex-col shadow-xl">
                                             <h3 className="font-bold uppercase tracking-widest text-xs mb-6 text-muted-foreground border-b border-border pb-4">
@@ -645,6 +683,7 @@ const ReservationWizard = () => {
                                                 </div>
                                             </div>
 
+                                            {/* ปุ่ม Upload Slip */}
                                             <div className="relative group">
                                                 <input
                                                     type="file"
@@ -699,7 +738,8 @@ const ReservationWizard = () => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    {/* Footer Navigation */}
+
+                    {/* Footer Navigation (ปุ่มย้อนกลับ / ถัดไป) */}
                     <div className="mt-4 md:mt-8 pt-4 md:pt-6 pb-6 md:pb-8 border-t border-border px-4 md:px-12 flex flex-col gap-4 relative">
                         <div className="flex items-center justify-between w-full gap-3">
                             {/* Back Button */}
@@ -716,17 +756,17 @@ const ReservationWizard = () => {
                                 )}
                             </div>
 
-                            {/* 1. Selected Table Info (Step 2 Only) - In the Middle */}
+                            {/* 1. Selected Table Info (Step 2 Only) - แสดงตรงกลาง */}
                             {step === 2 && (
                                 <div className="flex-1 flex justify-center">
                                     <div
                                         className={`
-                      flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl transition-all duration-300 w-auto justify-center
-                      ${formData.tableId
+                       flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl transition-all duration-300 w-auto justify-center
+                       ${formData.tableId
                                                 ? 'bg-primary border border-primary/20 text-primary-foreground shadow-lg'
                                                 : 'bg-muted border border-border text-muted-foreground'
                                             }
-                    `}
+                     `}
                                     >
                                         {formData.tableId ? (
                                             <>
@@ -755,12 +795,12 @@ const ReservationWizard = () => {
                                         type="button"
                                         disabled={step === 2 && !formData.tableId}
                                         className={`
-                      w-full md:w-auto px-4 md:px-6 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all
-                      ${step === 2 && !formData.tableId
+                       w-full md:w-auto px-4 md:px-6 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all
+                       ${step === 2 && !formData.tableId
                                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                                                 : 'bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-95'
                                             }
-                    `}
+                     `}
                                     >
                                         <span className="whitespace-nowrap">
                                             {step === 1 ? t('wizard.table') : t('wizard.continue')}

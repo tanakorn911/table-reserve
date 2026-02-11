@@ -1,49 +1,58 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client Component
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { useNavigation } from '@/contexts/NavigationContext';
-import Icon from '@/components/ui/AppIcon';
-import { useTranslation } from '@/lib/i18n';
-import ThemeToggle from '@/components/common/ThemeToggle';
+import { useNavigation } from '@/contexts/NavigationContext'; // Context สำหรับจัดการสถานะ Navigation
+import Icon from '@/components/ui/AppIcon'; // Components ไอคอน
+import { useTranslation } from '@/lib/i18n'; // Hook แปลภาษา
+import ThemeToggle from '@/components/common/ThemeToggle'; // ปุ่มสลับธีม
 
+// อินเทอร์เฟซสำหรับรายการเมนู
 interface NavigationItem {
-  label: string;
-  path: string;
-  icon: string;
-  staffOnly?: boolean;
+  label: string; // ชื่อเมนู
+  path: string; // เส้นทาง URL
+  icon: string; // ชื่อไอคอน
+  staffOnly?: boolean; // สิทธิ์การเข้าถึง (เฉพาะพนักงาน/Admin)
 }
 
+/**
+ * MobileMenu Component - เมนูนำทางสำหรับหน้าจอขนาดเล็ก (Mobile)
+ * แสดงเป็น Overlay เมื่อกดปุ่ม Hamburger menu ใน Header
+ */
 const MobileMenu = () => {
+  // ดึง state และ function จาก NavigationContext
   const { currentRoute, isMobileMenuOpen, setIsMobileMenuOpen, isStaffUser, locale, setLocale } =
     useNavigation();
   const { t } = useTranslation(locale);
 
+  // กำหนดรายการเมนูสำหรับ Mobile (อาจต่างจาก Desktop เล็กน้อย)
   const navigationItems: NavigationItem[] = [
     {
-      label: t('nav.home'),
+      label: t('nav.home'), // หน้าแรก
       path: '/landing-page',
       icon: 'HomeIcon',
       staffOnly: false,
     },
     {
-      label: t('nav.reserve'),
+      label: t('nav.reserve'), // หน้าจอง
       path: '/reservation-form',
       icon: 'CalendarIcon',
       staffOnly: false,
     },
     {
-      label: t('admin.reservations'),
+      label: t('admin.reservations'), // หน้าแดชบอร์ด
       path: '/admin/dashboard',
       icon: 'ClipboardDocumentListIcon',
-      staffOnly: true,
+      staffOnly: true, // เฉพาะ Admin/Staff
     },
   ];
 
+  // กรองเมนูตามสิทธิ์ผู้ใช้
   const filteredNavItems = navigationItems.filter(
     (item) => !item.staffOnly || (item.staffOnly && isStaffUser)
   );
 
+  // ตรวจสอบ Route ปัจจุบันเพื่อ Highlight
   const isActiveRoute = (path: string) => {
     if (path === '/landing-page') {
       return currentRoute === path || currentRoute === '/';
@@ -51,6 +60,10 @@ const MobileMenu = () => {
     return currentRoute.startsWith(path);
   };
 
+  /**
+   * Effect จัดการ Scroll ของ Body
+   * ป้องกันการเลื่อนหน้าจอหลักเมื่อ Mobile Menu เปิดอยู่ (Overflow Hidden)
+   */
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -58,11 +71,16 @@ const MobileMenu = () => {
       document.body.style.overflow = 'unset';
     }
 
+    // Cleanup function: คืนค่า overflow เมื่อ component unmount หรือเมนูปิด
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isMobileMenuOpen]);
 
+  /**
+   * Effect จัดการปุ่ม Esc
+   * ปิดเมนูเมื่อกดปุ่ม Esc
+   */
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isMobileMenuOpen) {
@@ -74,16 +92,19 @@ const MobileMenu = () => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
+  // ถ้าเมนูปิดอยู่ ไม่ต้อง Render อะไรเลย
   if (!isMobileMenuOpen) return null;
 
   return (
     <>
+      {/* Overlay พื้นหลังสีดำจางๆ - คลิกเพื่อปิดเมนู */}
       <div
         className="fixed inset-0 z-200 bg-background/80 backdrop-blur-sm md:hidden transition-smooth"
         onClick={() => setIsMobileMenuOpen(false)}
         aria-hidden="true"
       />
 
+      {/* ตัวเมนู Slide ลงมาจากด้านบน (ใต้ Header) */}
       <div
         className="
           fixed top-[80px] left-0 right-0 bottom-0 z-200 bg-card
@@ -92,11 +113,12 @@ const MobileMenu = () => {
         "
       >
         <nav className="flex flex-col p-6 gap-2">
+          {/* วนลูปแสดงเมนู */}
           {filteredNavItems.map((item, index) => (
             <Link
               key={item.path}
               href={item.path}
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={() => setIsMobileMenuOpen(false)} // ปิดเมนูเมื่อคลิกลิงก์
               className={`
                 flex items-center gap-3 px-6 py-4 rounded-md text-base font-medium
                 transition-smooth min-h-[44px]
@@ -105,6 +127,7 @@ const MobileMenu = () => {
                   : 'text-foreground hover:bg-muted active:scale-[0.97]'
                 }
               `}
+              // เพิ่ม Delay animation ให้แต่ละเมนูค่อยๆ ปรากฏทีละรายการ
               style={{
                 animationDelay: `${index * 150}ms`,
               }}
@@ -114,7 +137,7 @@ const MobileMenu = () => {
             </Link>
           ))}
 
-          {/* Theme Toggle for Mobile */}
+          {/* ส่วนสลับ Theme สำหรับ Mobile */}
           <div className="mt-6 pt-6 border-t border-border">
             <div className="flex items-center justify-between px-2 mb-2">
               <p className="text-sm font-medium text-muted-foreground">{locale === 'th' ? 'โหมดสี' : 'Theme'}</p>
@@ -122,7 +145,7 @@ const MobileMenu = () => {
             </div>
           </div>
 
-          {/* Language Switcher for Mobile */}
+          {/* ส่วนเปลี่ยนภาษา สำหรับ Mobile */}
           <div className="mt-4 pt-6 border-t border-border">
             <p className="text-sm font-medium text-muted-foreground mb-4 px-2">Language / ภาษา</p>
             <div className="flex gap-4">

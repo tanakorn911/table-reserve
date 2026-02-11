@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,15 +6,22 @@ import Icon from '@/components/ui/AppIcon';
 import { useTranslation, Locale } from '@/lib/i18n';
 
 interface AIRecommendationModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSelectTable: (tableId: number) => void;
-    date: string;
-    time: string;
-    guests: number;
-    locale: Locale;
+    isOpen: boolean; // สถานะการเปิด Modal
+    onClose: () => void; // ฟังก์ชันปิด Modal
+    onSelectTable: (tableId: number) => void; // ฟังก์ชันเมื่อผู้ใช้เลือกโต๊ะที่แนะนำ
+    date: string; // วันที่จอง
+    time: string; // เวลาที่จอง
+    guests: number; // จำนวนแขก
+    locale: Locale; // ภาษาปัจจุบัน
 }
 
+/**
+ * AIRecommendationModal Component
+ * Modal สำหรับขอคำแนะนำโต๊ะจาก AI (Gemini)
+ * - ให้ผู้ใช้พิมพ์ความต้องการ (เช่น "ขอโต๊ะที่เงียบๆ", "วิวสวน")
+ * - ส่งข้อมูลไปยัง API (/api/ai/recommend-table)
+ * - แสดงผลลัพธ์และปุ่มเลือกโต๊ะ
+ */
 const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
     isOpen,
     onClose,
@@ -25,21 +32,24 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
     locale,
 }) => {
     const { t } = useTranslation(locale);
-    const [query, setQuery] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [query, setQuery] = useState(''); // ข้อความที่ผู้ใช้พิมพ์
+    const [isLoading, setIsLoading] = useState(false); // สถานะกำลังโหลด
+    // ผลลัพธ์จาก AI (ID โต๊ะ, ชื่อโต๊ะ, เหตุผล)
     const [result, setResult] = useState<{ recommendedTableId: number; recommendedTableName?: string; reasoning: string } | null>(
         null
     );
-    const [error, setError] = useState('');
+    const [error, setError] = useState(''); // ข้อความ Error (ถ้ามี)
 
+    // ฟังก์ชันส่งคำถามไปยัง AI
     const handleAskAI = async () => {
-        if (!query.trim()) return;
+        if (!query.trim()) return; // ถ้าไม่พิมพ์อะไรเลย ให้ข้ามไป
 
         setIsLoading(true);
         setError('');
         setResult(null);
 
         try {
+            // เรียก API AI Recommendation
             const response = await fetch('/api/ai/recommend-table', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -58,7 +68,7 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                 throw new Error(data.error || t('common.error'));
             }
 
-            setResult(data);
+            setResult(data); // บันทึกผลลัพธ์
         } catch (err: any) {
             console.error(err);
             setError(err.message || t('common.error'));
@@ -67,10 +77,11 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
         }
     };
 
+    // ฟังก์ชันเลือกโต๊ะตามที่ AI แนะนำ
     const handleSelect = () => {
         if (result) {
             onSelectTable(result.recommendedTableId);
-            onClose();
+            onClose(); // ปิด Modal หลังจากเลือกแล้ว
         }
     };
 
@@ -78,7 +89,7 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
+                    {/* Backdrop (พื้นหลังสีดำ) */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -91,10 +102,10 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()} // ป้องกันคลิก Modal แล้วปิด
                             className="bg-[#1E1E2E] border border-white/10 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative"
                         >
-                            {/* Header */}
+                            {/* Header ส่วนหัว Modal */}
                             <div className="p-6 border-b border-white/10 bg-white/5 flex justify-between items-center relative overflow-hidden">
                                 <div className="relative z-10 flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/20">
@@ -113,8 +124,9 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                                 </button>
                             </div>
 
-                            {/* Body */}
+                            {/* Body เนื้อหา Modal */}
                             <div className="p-6 space-y-6">
+                                {/* ถ้ายังไม่มีผลลัพธ์ ให้แสดงช่องกรอกข้อความ */}
                                 {!result ? (
                                     <div className="space-y-4">
                                         <div className="space-y-2">
@@ -156,6 +168,7 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                                         </button>
                                     </div>
                                 ) : (
+                                    // ถ้ามีผลลัพธ์แล้ว ให้แสดงโต๊ะที่แนะนำ
                                     <div className="space-y-6">
                                         <div className="bg-primary/10 border border-primary/20 rounded-2xl p-5 relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-3 opacity-10">
@@ -178,12 +191,14 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                                         </div>
 
                                         <div className="flex gap-3">
+                                            {/* ปุ่มลองใหม่ */}
                                             <button
                                                 onClick={() => setResult(null)}
                                                 className="flex-1 py-3.5 rounded-xl border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-colors"
                                             >
                                                 {t('ai.retry')}
                                             </button>
+                                            {/* ปุ่มเลือกโต๊ะนี้ */}
                                             <button
                                                 onClick={handleSelect}
                                                 className="flex-1 py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -195,6 +210,7 @@ const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({
                                     </div>
                                 )}
 
+                                {/* แสดง Error Message */}
                                 {error && (
                                     <div className="bg-red-500/10 border border-red-500/20 text-red-200 text-xs p-3 rounded-xl flex items-center gap-2">
                                         <Icon name="ExclamationTriangleIcon" size={16} />

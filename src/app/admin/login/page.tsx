@@ -6,9 +6,11 @@ import { createClientSupabaseClient } from '@/lib/supabase/client';
 import LanguageSwitcher, { useAdminLocale, adminT } from '../components/LanguageSwitcher';
 
 // Login page has its own theme state since it's outside the AdminThemeProvider
+// หน้า Login มี state ของ theme แยกต่างหาก เนื่องจากอยู่นอก AdminThemeProvider
 type LoginTheme = 'light' | 'dark';
 
 export default function AdminLoginPage() {
+  // State สำหรับเก็บข้อมูลการเข้าสู่ระบบ
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,33 +21,39 @@ export default function AdminLoginPage() {
   const locale = useAdminLocale();
 
   // Initialize theme from storage
+  // ดึงค่า theme ที่บันทึกไว้ใน localStorage มาใช้งาน
   useEffect(() => {
     const stored = localStorage.getItem('savory_bistro_admin_theme') as LoginTheme | null;
     if (stored) setTheme(stored);
   }, []);
 
+  // ฟังก์ชันสลับ Theme (Light/Dark)
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('savory_bistro_admin_theme', newTheme);
   };
 
+  // ฟังก์ชันจัดการการเข้าสู่ระบบ
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      // เรียกใช้ Supabase Auth เพื่อตรวจสอบอีเมลและรหัสผ่าน
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        // แสดงข้อความผิดพลาดถ้า Login ไม่สำเร็จ
         setError(adminT('login.error.invalid', locale));
         setLoading(false);
       } else {
         // success - keep loading true while redirecting
+        // Login สำเร็จ ให้คงสถานะ loading ไว้ระหว่างเปลี่ยนหน้าไปยัง Dashboard
         router.push('/admin/dashboard');
         router.refresh();
       }
@@ -57,6 +65,7 @@ export default function AdminLoginPage() {
   };
 
   // Theme-aware colors
+  // กำหนดสีต่างๆ ตาม Theme ที่เลือก
   const themeColors = theme === 'dark' ? {
     bg: 'bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-800',
     card: 'bg-gray-800/80 border-yellow-500/20',
@@ -89,6 +98,7 @@ export default function AdminLoginPage() {
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNEREFGMzciIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDEzNGg1MHYxSAzNnptMC0zMGg1MHYxSDM2em0wLTMwaDUwdjFIMzZ6bTAtMzBoNTB2MUgzNnptMC0zMGg1MHYxSDM2em0wLTMwaDUwdjFIMzZ6TTYgMjRoNTB2MUg2em0wLTMwaDUwdjFINnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
 
       {/* Top right controls */}
+      {/* ปุ่มควบคุมมุมขวาบน (Theme Toggle และ Language Switcher) */}
       <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
         {/* Theme Toggle */}
         <button
@@ -120,6 +130,7 @@ export default function AdminLoginPage() {
       </div>
 
       {/* Loading Overlay */}
+      {/* หน้าจอ Loading ระหว่างรอการ Login */}
       {loading && (
         <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center ${themeColors.loading} backdrop-blur-sm transition-all duration-300`}>
           <div className={`w-12 h-12 border-4 ${themeColors.loadingSpinner} rounded-full animate-spin mb-4`}></div>
@@ -127,6 +138,8 @@ export default function AdminLoginPage() {
         </div>
       )}
 
+      {/* Login Card */}
+      {/* การ์ด Login */}
       <div className={`relative w-full max-w-md p-8 space-y-8 backdrop-blur-sm rounded-2xl shadow-2xl border ${themeColors.card}`}>
         <div className="relative">
           <div className="text-center space-y-2">
@@ -210,3 +223,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+

@@ -1,22 +1,29 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client Component
 
 import React from 'react';
+// นำเข้าไอคอนจาก HeroIcons (ทั้งแบบเส้น Outline และแบบทึบ Solid)
 import * as HeroIcons from '@heroicons/react/24/outline';
 import * as HeroIconsSolid from '@heroicons/react/24/solid';
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 
+// ประเภทของไอคอน: outline (เส้น) หรือ solid (ทึบ)
 type IconVariant = 'outline' | 'solid';
 
+// อินเทอร์เฟซสำหรับ Props ของ Icon
 interface IconProps {
-  name: string;
-  variant?: IconVariant;
-  size?: number;
-  className?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  [key: string]: unknown;
+  name: string; // ชื่อไอคอน (ต้องตรงกับชื่อใน HeroIcons หรือ Brand Icons)
+  variant?: IconVariant; // รูปแบบไอคอน
+  size?: number; // ขนาด (กว้าง/สูง เป็น px)
+  className?: string; // Class CSS เพิ่มเติม
+  onClick?: () => void; // ฟังก์ชันเมื่อคลิก
+  disabled?: boolean; // สถานะปิดการใช้งาน
+  [key: string]: unknown; // Props อื่นๆ
 }
 
+/**
+ * Component สำหรับแสดงไอคอน
+ * รองรับทั้ง HeroIcons และ Brand Icons (Facebook, Instagram, Line)
+ */
 function Icon({
   name,
   variant = 'outline',
@@ -26,7 +33,9 @@ function Icon({
   disabled = false,
   ...props
 }: IconProps) {
-  // Handle Brand Icons
+  // --- ส่วนจัดการ Brand Icons (ไอคอนแบรนด์ต่างๆ ที่ไม่มีใน HeroIcons) ---
+
+  // 1. Facebook Icon
   if (name === 'Facebook') {
     return (
       <svg
@@ -34,10 +43,11 @@ function Icon({
         height={size}
         viewBox="0 0 24 24"
         fill="none"
-        stroke="currentColor"
+        stroke="currentColor" // ใช้สีตาม Text Color ปัจจุบัน
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        // กำหนด Class ตามสถานะ (disabled หรือ clickable)
         className={`${disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer hover:opacity-80' : ''} ${className}`}
         onClick={disabled ? undefined : onClick}
         {...props}
@@ -47,6 +57,7 @@ function Icon({
     );
   }
 
+  // 2. Instagram Icon
   if (name === 'Instagram') {
     return (
       <svg
@@ -69,6 +80,7 @@ function Icon({
     );
   }
 
+  // 3. Line Icon
   if (name === 'Line') {
     return (
       <svg
@@ -91,7 +103,11 @@ function Icon({
   }
 
 
+  // --- ส่วนจัดการ HeroIcons ---
+
+  // เลือกชุดไอคอนตาม variant (Solid หรือ Outline)
   const iconSet = variant === 'solid' ? HeroIconsSolid : HeroIcons;
+  // ดึง Component ไอคอนตามชื่อ
   const IconComponent = iconSet[name as keyof typeof iconSet] as React.ComponentType<{
     width?: number;
     height?: number;
@@ -99,6 +115,7 @@ function Icon({
     onClick?: React.MouseEventHandler;
   }>;
 
+  // หากหาไอคอนไม่เจอ ให้แสดงเครื่องหมายคำถามแทน (Fallback)
   if (!IconComponent) {
     return (
       <QuestionMarkCircleIcon
@@ -111,6 +128,7 @@ function Icon({
     );
   }
 
+  // แสดงผลไอคอน HeroIcons ที่ถูกต้อง
   return (
     <IconComponent
       width={size}

@@ -15,6 +15,7 @@ export const viewport: Viewport = {
   ],
 };
 
+// Metadata ของเว็บไซต์ (SEO)
 export const metadata: Metadata = {
   title: 'Savory Bistro',
   description: 'Savory Bistro - Premium Online Table Reservation System',
@@ -30,6 +31,8 @@ export const metadata: Metadata = {
   },
 };
 
+// RootLayout: Layout หลักของทั้งเว็บไซต์
+// ครอบคลุมทุกหน้าใน Application
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,8 +44,10 @@ export default function RootLayout({
         <ThemeProvider>
           <NavigationProvider>
             {children}
+            {/* Widget แชทไลน์และช่องทางอื่นๆ */}
             <ChatWidget
               lineOAUrl="https://line.me/R/ti/p/@147zaegh" />
+            {/* ลงทะเบียน Service Worker สำหรับ PWA */}
             <ServiceWorkerRegistration />
           </NavigationProvider>
         </ThemeProvider>

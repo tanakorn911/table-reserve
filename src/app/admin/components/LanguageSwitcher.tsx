@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useState, useEffect } from 'react';
 import { LanguageIcon } from '@heroicons/react/24/outline';
@@ -6,17 +6,23 @@ import { LanguageIcon } from '@heroicons/react/24/outline';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
-type Locale = 'th' | 'en';
+type Locale = 'th' | 'en'; // กำหนด Type ภาษา (ไทย/อังกฤษ)
 
 interface LanguageSwitcherProps {
     className?: string;
 }
 
+/**
+ * LanguageSwitcher Component
+ * 
+ * ปุ่มสลับภาษา (TH/EN) เฉพาะส่วนของ Admin Panel
+ * เก็บค่าภาษาลงใน localStorage แยกกับหน้าบ้าน (Frontend)
+ */
 export default function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
     const [locale, setLocale] = useState<Locale>('th');
     const { adminTheme } = useAdminTheme();
 
-    // Load locale from localStorage on mount
+    // โหลดภาษาที่บันทึกไว้เมื่อ Component Mount
     useEffect(() => {
         const savedLocale = localStorage.getItem('admin-locale') as Locale;
         if (savedLocale && (savedLocale === 'th' || savedLocale === 'en')) {
@@ -24,11 +30,12 @@ export default function LanguageSwitcher({ className = '' }: LanguageSwitcherPro
         }
     }, []);
 
+    // ฟังก์ชันสลับภาษา และบันทึกลง localStorage
     const toggleLanguage = () => {
         const newLocale: Locale = locale === 'th' ? 'en' : 'th';
         setLocale(newLocale);
         localStorage.setItem('admin-locale', newLocale);
-        // Trigger a custom event for other components to listen to
+        // Dispatch Custom Event เพื่อแจ้งให้ Component อื่นๆ ทราบว่ามีการเปลี่ยนภาษา
         window.dispatchEvent(new CustomEvent('locale-change', { detail: newLocale }));
     };
 
@@ -47,7 +54,7 @@ export default function LanguageSwitcher({ className = '' }: LanguageSwitcherPro
     );
 }
 
-// Hook to use locale in other components
+// Hook: สำหรับดึงค่า Locale ปัจจุบันไปใช้ใน Component อื่น
 export function useAdminLocale() {
     const [locale, setLocale] = useState<Locale>('th');
 
@@ -58,7 +65,7 @@ export function useAdminLocale() {
             setLocale(savedLocale);
         }
 
-        // Listen for locale changes
+        // Event Listener: รอรับ event 'locale-change'
         const handleLocaleChange = (e: CustomEvent<Locale>) => {
             setLocale(e.detail);
         };
@@ -72,7 +79,8 @@ export function useAdminLocale() {
     return locale;
 }
 
-// Translation helper
+// Helper Function: สำหรับดึงข้อความแปล (Translation) ในส่วน Admin
+// ทำงานคล้าย i18next แต่เขียนเองแบบง่ายๆ (Lightweight)
 export const adminT = (key: string, locale: Locale): string => {
     const translations: Record<string, Record<Locale, string>> = {
         // Login page
@@ -106,8 +114,8 @@ export const adminT = (key: string, locale: Locale): string => {
         'header.floorPlan': { th: 'จัดการผังร้าน', en: 'Floor Plan Management' },
         'header.checkStatus': { th: 'เช็คสถานะจอง', en: 'Check Booking Status' },
         'header.loading': { th: 'กำลังตรวจสอบสิทธิ์...', en: 'Checking permissions...' },
-        'header.role.admin': { th: 'ผู้ดูแลระบบ (Admin)', en: 'Administrator' },
-        'header.role.staff': { th: 'พนักงาน (Staff)', en: 'Staff Member' },
+        'header.role.admin': { th: 'ผู้ดูแลระบบ', en: 'Administrator' },
+        'header.role.staff': { th: 'พนักงาน', en: 'Staff Member' },
         'header.role.checking': { th: 'กำลังตรวจสอบ...', en: 'Checking...' },
         'header.role.undefined': { th: 'ยังไม่ระบุสิทธิ์', en: 'Role Undefined' },
         'header.role.error': { th: 'เกิดข้อผิดพลาด', en: 'Error' },

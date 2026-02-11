@@ -4,12 +4,14 @@ import type { UpdateReservationInput } from '@/types/database.types';
 import { sendLineNotification } from '@/lib/notifications';
 
 // GET /api/reservations/[id] - Get a single reservation
+// GET: ดึงข้อมูลการจอง 1 รายการ
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์การใช้งาน (ต้องล็อกอินก่อน)
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -38,12 +40,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // PUT /api/reservations/[id] - Update a reservation
+// PUT: อัปเดตข้อมูลการจอง
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์การใช้งาน
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -54,11 +58,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body: UpdateReservationInput = await request.json();
 
     // Validate party size if provided
+    // ตรวจสอบจำนวนลูกค้า (ต้องอยู่ระหว่าง 1-50 คน)
     if (body.party_size !== undefined && (body.party_size < 1 || body.party_size > 50)) {
       return NextResponse.json({ error: 'Party size must be between 1 and 50' }, { status: 400 });
     }
 
     // Validate status if provided
+    // ตรวจสอบสถานะที่ส่งมา
     const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
     if (body.status && !validStatuses.includes(body.status)) {
       return NextResponse.json(
@@ -67,6 +73,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
+    // Update reservation
+    // อัปเดตข้อมูลลงฐานข้อมูล
     const { data, error } = await supabase
       .from('reservations')
       .update({
@@ -89,6 +97,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Send Notification for Update
+    // ส่งไลน์แจ้งเตือนเมื่อมีการอัปเดตข้อมูล
     (async () => {
       try {
         const statusMap: any = {
@@ -105,6 +114,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         // Get table name if table changed
+        // ดึงชื่อโต๊ะใหม่ถ้ามีการเปลี่ยนโต๊ะ
         if (body.table_number) {
           const { data: tableData } = await supabase
             .from('tables')
@@ -117,6 +127,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         // Get staff details from profiles table for up-to-date info
+        // ดึงข้อมูลพนักงานที่ทำการแก้ไข
         const { user } = session;
         let staffName = user.email?.split('@')[0] || 'Admin';
         let staffPosition = 'Staff';
@@ -150,6 +161,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // DELETE /api/reservations/[id] - Cancel a reservation (hard delete)
+// DELETE: ลบรายการจอง (ลบถาวร)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -159,6 +171,7 @@ export async function DELETE(
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์การใช้งาน
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -167,6 +180,7 @@ export async function DELETE(
     }
 
     // First get the reservation data to send notification
+    // ดึงข้อมูลการจองก่อนลบ เพื่อใช้ส่งแจ้งเตือน
     const { data: existingData, error: fetchError } = await supabase
       .from('reservations')
       .select('*')
@@ -179,6 +193,7 @@ export async function DELETE(
     }
 
     // Hard delete: remove from database
+    // ลบข้อมูลออกจากฐานข้อมูลถาวร
     const { error } = await supabase.from('reservations').delete().eq('id', id);
 
     if (error) {
@@ -190,6 +205,7 @@ export async function DELETE(
     }
 
     // Send Notification for Cancellation
+    // ส่งไลน์แจ้งเตือนการลบ
     (async () => {
       try {
         // Get staff details from profiles table for up-to-date info

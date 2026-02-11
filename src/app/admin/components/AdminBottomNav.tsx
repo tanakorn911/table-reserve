@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -14,6 +14,13 @@ import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminLocale, adminT } from './LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
+/**
+ * AdminBottomNav Component
+ * 
+ * เมนูนำทางด้านล่างสำหรับหน้าจอ Mobile (Fixed Bottom Navigation)
+ * แสดงเฉพาะเมื่อหน้าจอมีความกว้างน้อยกว่าระดับ md
+ * ช่วยให้เข้าถึงเมนูสำคัญได้ง่ายด้วยนิ้วโป้ง
+ */
 export default function AdminBottomNav() {
     const pathname = usePathname();
     const router = useRouter();
@@ -22,6 +29,7 @@ export default function AdminBottomNav() {
     const locale = useAdminLocale();
     const { adminTheme } = useAdminTheme();
 
+    // ฟังก์ชัน Logout (ไม่ได้ใช้ใน Bottom Nav แต่เตรียมไว้เผื่อจำเป็น)
     const handleLogout = async () => {
         if (window.confirm(adminT('logout.confirm', locale))) {
             await supabase.auth.signOut();
@@ -30,6 +38,7 @@ export default function AdminBottomNav() {
         }
     };
 
+    // ตรวจสอบ Role เพื่อแสดงเมนูให้ถูกต้อง
     useEffect(() => {
         const checkRole = async () => {
             const {
@@ -52,6 +61,7 @@ export default function AdminBottomNav() {
         checkRole();
     }, [supabase]);
 
+    // รายการเมนูทั้งหมด
     const allMenuItems = [
         { name: 'sidebar.dashboard', href: '/admin/dashboard', icon: HomeIcon, roles: ['admin', 'staff'] },
         {
@@ -64,9 +74,10 @@ export default function AdminBottomNav() {
         { name: 'sidebar.settings', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['admin'] },
     ];
 
+    // กรองเมนูตาม Role
     const menuItems = allMenuItems.filter((item) => item.roles.includes(role));
 
-    // Theme-aware classes
+    // กำหนด Class ตาม Theme
     const themeClasses = adminTheme === 'dark'
         ? {
             container: 'bg-gray-900/95 border-yellow-500/20',

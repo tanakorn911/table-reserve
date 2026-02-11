@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { checkBookingRateLimiter, checkRateLimit, getClientIp } from '@/lib/ratelimit';
 
+/**
+ * Public API: Check Booking Status
+ * Allows customers to check their reservation status using Booking Code or Phone Number
+ * API สำหรับตรวจสอบสถานะการจอง (สำหรับลูกค้า) โดยใช้รหัสการจองหรือเบอร์โทรศัพท์
+ */
 export async function GET(request: NextRequest) {
     try {
         // 🔒 Rate limiting: 20 requests per hour per IP
+        // 🔒 จำกัดการเรียกใช้งาน: 20 ครั้งต่อชั่วโมงต่อ IP เพื่อป้องกันการสุ่มเดา
         const clientIp = getClientIp(request);
         const rateLimitResult = await checkRateLimit(checkBookingRateLimiter, clientIp);
 
@@ -27,6 +33,7 @@ export async function GET(request: NextRequest) {
 
         // 🔒 SECURITY FIX: Separate queries to prevent SQL injection
         // First try booking code
+        // 1. ลองค้นหาจากรหัสการจอง (Booking Code)
         let { data, error } = await supabase
             .from('reservations')
             .select('id, guest_name, reservation_date, reservation_time, status, party_size, table_number, guest_phone, booking_code')
@@ -34,6 +41,7 @@ export async function GET(request: NextRequest) {
             .maybeSingle();
 
         // If not found, try phone number
+        // 2. ถ้าไม่เจอ ลองค้นหาจากเบอร์โทรศัพท์ (เอาทรายการล่าสุด)
         if (!data && !error) {
             const phoneResult = await supabase
                 .from('reservations')
@@ -55,6 +63,7 @@ export async function GET(request: NextRequest) {
         const reservationData: any = data;
 
         // Fetch table name if table_number exists
+        // ดึงชื่อโต๊ะมาแสดง (ถ้ามี)
         if (reservationData.table_number) {
             const { data: tableData } = await supabase
                 .from('tables')
@@ -68,6 +77,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Basic masking for privacy
+        // เซ็นเซอร์ชื่อลูกค้าบางส่วนเพื่อความเป็นส่วนตัว (เช่น "Somchai" -> "S******")
         const maskName = (name: string) => {
             const parts = name.split(' ');
             return parts.map(p => p[0] + '*'.repeat(Math.max(0, p.length - 1))).join(' ');

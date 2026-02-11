@@ -1,55 +1,57 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client Component
 
 import { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'; // Library สำหรับ Animation
 import Icon from '@/components/ui/AppIcon';
-import { usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation'; // Hook สำหรับดึง URL ปัจจุบัน
 import { useTranslation } from '@/lib/i18n';
 import { useNavigation } from '@/contexts/NavigationContext';
 
 interface ChatWidgetProps {
-    lineOAUrl?: string;
-    tawkToId?: string;
+    lineOAUrl?: string; // URL ของ LINE Official Account
+    tawkToId?: string; // ID ของ Tawk.to (ถ้ามี)
 }
 
 /**
  * Live Chat Widget
- * Floating chat button that opens LINE OA or Tawk.to chat
- * Draggable to any position on screen
+ * ปุ่มแชทลอย (Floating Button) ที่มุมขวาล่าง
+ * - เปิดลิงก์ไปยัง LINE OA
+ * - หรือโหลด Widget ของ Tawk.to
+ * - สามารถลากย้ายตำแหน่งได้ (Draggable)
  */
 export default function ChatWidget({
-    lineOAUrl = 'https://line.me/R/ti/p/@tablereserve',
+    lineOAUrl = 'https://line.me/R/ti/p/@tablereserve', // ค่า Default
     tawkToId
 }: ChatWidgetProps) {
     const pathname = usePathname();
-    const { locale } = useNavigation(); // Use locale from NavigationContext
+    const { locale } = useNavigation(); // ดึงภาษาปัจจุบันจาก Context
     const { t } = useTranslation(locale);
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [showTooltip, setShowTooltip] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const constraintsRef = useRef<HTMLDivElement>(null);
+    const [isOpen, setIsOpen] = useState(false); // สถานะเปิด/ปิดเมนูแชท
+    const [showTooltip, setShowTooltip] = useState(false); // สถานะแสดง Tooltip
+    const [isDragging, setIsDragging] = useState(false); // สถานะกำลังลาก (ป้องกันการคลิกโดยไม่ตั้งใจ)
+    const constraintsRef = useRef<HTMLDivElement>(null); // ขอบเขตการลาก
 
-    // Hide on admin pages
+    // ซ่อน Widget ในหน้า Admin
     if (pathname?.startsWith('/admin')) {
         return null;
     }
 
-    // Show tooltip after 3 seconds visit
+    // Effect: แสดง Tooltip หลังจากเข้าเว็บมา 3 วินาที และซ่อนอัตโนมัติ
     useEffect(() => {
         const timer = setTimeout(() => {
             setShowTooltip(true);
-            // Hide tooltip after 5 seconds
+            // ซ่อน Tooltip หลังแสดง 5 วินาที
             setTimeout(() => setShowTooltip(false), 5000);
         }, 3000);
 
         return () => clearTimeout(timer);
     }, []);
 
-    // Handle Tawk.to script if ID is provided
+    // Effect: โหลด Tawk.to Script (ถ้ามี ID)
     useEffect(() => {
         if (tawkToId && typeof window !== 'undefined') {
-            // Load Tawk.to script
+            // สร้าง Script tag เพื่อโหลด Tawk.to
             const script = document.createElement('script');
             script.async = true;
             script.src = `https://embed.tawk.to/${tawkToId}/default`;
@@ -58,51 +60,53 @@ export default function ChatWidget({
             document.body.appendChild(script);
 
             return () => {
-                document.body.removeChild(script);
+                document.body.removeChild(script); // ลบ Script เมื่อ unmount
             };
         }
     }, [tawkToId]);
 
-    // If Tawk.to is enabled, don't render custom widget
+    // ถ้าใช้ Tawk.to ให้ซ่อน Custom Widget นี้ (ใช้ UI ของ Tawk.to แทน)
     if (tawkToId) {
         return null;
     }
 
+    // ฟังก์ชันเปิด/ปิดเมนูแชท
     const handleButtonClick = () => {
-        // Don't open if just finished dragging
+        // ถ้าเพิ่งลากเสร็จ (isDragging = true) ไม่ต้องเปิดเมนู
         if (isDragging) {
             return;
         }
         setIsOpen(!isOpen);
     };
 
+    // ฟังก์ชันคลิกปุ่ม LINE
     const handleLineClick = () => {
-        window.open(lineOAUrl, '_blank');
-        setIsOpen(false);
+        window.open(lineOAUrl, '_blank'); // เปิด Link ใน Tab ใหม่
+        setIsOpen(false); // ปิดเมนู
     };
 
     return (
         <>
-            {/* Drag Constraints Container */}
+            {/* พื้นที่ขอบเขตการลาก (เต็มหน้าจอ) - ป้องกันการลากหลุดจอ */}
             <div
                 ref={constraintsRef}
                 className="fixed inset-0 pointer-events-none z-[399]"
             />
 
-            {/* Widget Container */}
+            {/* ตัว Widget หลัก */}
             <motion.div
-                drag
-                dragConstraints={constraintsRef}
-                dragElastic={0.1}
-                dragMomentum={false}
-                onDragStart={() => setIsDragging(true)}
+                drag // เปิดใช้งานการลาก
+                dragConstraints={constraintsRef} // จำกัดขอบเขต
+                dragElastic={0.1} // ความยืดหยุ่นขอบ
+                dragMomentum={false} // ไม่ให้ไถลต่อเมื่อปล่อย
+                onDragStart={() => setIsDragging(true)} // เริ่มลาก
                 onDragEnd={() => {
-                    setTimeout(() => setIsDragging(false), 100);
+                    setTimeout(() => setIsDragging(false), 100); // หน่วงเวลาเล็กน้อยเพื่อให้แน่ใจว่าจบการลากจริง
                 }}
                 className="fixed bottom-6 right-6 z-[400] cursor-grab active:cursor-grabbing"
-                style={{ touchAction: 'none' }}
+                style={{ touchAction: 'none' }} // ป้องกัน Browser action บนมือถือ
             >
-                {/* Tooltip */}
+                {/* Tooltip แนะนำให้แชท */}
                 <AnimatePresence>
                     {showTooltip && !isOpen && (
                         <motion.div
@@ -115,14 +119,14 @@ export default function ChatWidget({
                                 <p className="text-sm font-bold text-gray-800">
                                     💬 {t('ai.chat.tooltip')}
                                 </p>
-                                {/* Arrow */}
+                                {/* ลูกศรชี้ลง */}
                                 <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r border-b border-gray-100 transform rotate-45" />
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Chat Options Popup */}
+                {/* เมนูตัวเลือกการติดต่อ (Popup) */}
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
@@ -137,7 +141,7 @@ export default function ChatWidget({
                                     <p className="text-white/80 text-xs">{t('ai.chat.subtitle')}</p>
                                 </div>
                                 <div className="p-3 space-y-2">
-                                    {/* LINE Option */}
+                                    {/* ตัวเลือก: LINE */}
                                     <button
                                         onClick={handleLineClick}
                                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#00B900] hover:bg-[#00A000] text-white transition-colors"
@@ -148,9 +152,9 @@ export default function ChatWidget({
                                         <span className="font-bold">{t('ai.chat.line')}</span>
                                     </button>
 
-                                    {/* Phone Option */}
+                                    {/* ตัวเลือก: โทรศัพท์ */}
                                     <a
-                                        href="tel:0809317630"
+                                        href="tel:0801234567"
                                         className="flex items-center gap-3 p-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors"
                                     >
                                         <Icon name="PhoneIcon" size={24} />
@@ -162,24 +166,25 @@ export default function ChatWidget({
                     )}
                 </AnimatePresence>
 
-                {/* Main Chat Button */}
+                {/* ปุ่มหลัก (ไอคอนแชท) */}
                 <motion.button
                     onClick={handleButtonClick}
                     className={`
                         w-14 h-14 rounded-full shadow-lg flex items-center justify-center
                         transition-all duration-300 pointer-events-auto
                         ${isOpen
-                            ? 'bg-gray-600 hover:bg-gray-700'
-                            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                            ? 'bg-gray-600 hover:bg-gray-700' // สีเมื่อเปิด (สีเทา)
+                            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' // สีปกติ (สีเขียว)
                         }
                     `}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    animate={showTooltip && !isOpen ? { scale: [1, 1.1, 1] } : {}}
+                    animate={showTooltip && !isOpen ? { scale: [1, 1.1, 1] } : {}} // Animation เรียกร้องความสนใจ
                     transition={{ duration: 0.5, repeat: showTooltip && !isOpen ? Infinity : 0 }}
                 >
                     <AnimatePresence mode="wait">
                         {isOpen ? (
+                            // ไอคอนปิด (X)
                             <motion.div
                                 key="close"
                                 initial={{ rotate: -90, opacity: 0 }}
@@ -189,6 +194,7 @@ export default function ChatWidget({
                                 <Icon name="XMarkIcon" size={24} className="text-white" />
                             </motion.div>
                         ) : (
+                            // ไอคอนแชท
                             <motion.div
                                 key="chat"
                                 initial={{ rotate: 90, opacity: 0 }}
@@ -201,7 +207,7 @@ export default function ChatWidget({
                     </AnimatePresence>
                 </motion.button>
 
-                {/* Pulse animation when closed */}
+                {/* วงแหวน Pulse Animation เมื่อยังไม่ได้เปิด */}
                 {!isOpen && (
                     <motion.div
                         className="absolute inset-0 rounded-full bg-green-500 pointer-events-none"

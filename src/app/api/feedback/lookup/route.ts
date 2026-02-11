@@ -7,6 +7,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 /**
  * GET /api/feedback/lookup?code=BX-XXXXXX
  * Lookup reservation by booking code for feedback submission
+ * API สำหรับค้นหาข้อมูลการจองด้วยรหัส Booking Code เพื่อใช้ในการส่ง Feedback
  */
 export async function GET(request: NextRequest) {
     try {
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // First try to find by booking_code column
+        // 1. ลองค้นหาจาก booking_code ตรงๆ
         let reservation = null;
 
         // Try booking_code exact match
@@ -37,6 +39,7 @@ export async function GET(request: NextRequest) {
             reservation = byCode;
         } else {
             // Try by ID prefix (for codes like BX-abc123)
+            // 2. ถ้าไม่เจอ ลองตัด Prefix 'BX-' ออกแล้วค้นหาจาก ID ต้นทาง (รองรับเคสเก่า)
             const idPrefix = code.replace(/^BX-/i, '');
             const { data: byId } = await supabase
                 .from('reservations')
@@ -49,6 +52,7 @@ export async function GET(request: NextRequest) {
                 reservation = byId;
             } else {
                 // Try exact ID match
+                // 3. ลองค้นหาด้วย ID ตรงๆ
                 const { data: exactId } = await supabase
                     .from('reservations')
                     .select('id, booking_code, guest_name, guest_phone, reservation_date, reservation_time, status')
@@ -70,6 +74,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Check if feedback already exists
+        // ตรวจสอบว่าเคยส่ง Feedback ไปแล้วหรือยัง
         const { data: existingFeedback } = await supabase
             .from('feedback')
             .select('id')

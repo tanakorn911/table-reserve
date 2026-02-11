@@ -45,6 +45,7 @@ const DEFAULT_HOURS: BusinessHours = {
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const DAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// AdminSettingsPage: หน้าตั้งค่าระบบ (จัดการเวลาทำการ, พนักงาน, วันหยุด)
 export default function AdminSettingsPage() {
   const locale = useAdminLocale();
   const { adminTheme } = useAdminTheme();
@@ -54,18 +55,22 @@ export default function AdminSettingsPage() {
   const [profilesLoading, setProfilesLoading] = useState(true);
 
   // Business Hours State
+  // สถานะเวลาทำการ
   const [businessHours, setBusinessHours] = useState<BusinessHours>(DEFAULT_HOURS);
   const [hoursLoading, setHoursLoading] = useState(true);
   const [hoursSaving, setHoursSaving] = useState(false);
 
   // Tables State
+  // สถานะข้อมูลโต๊ะ
   const [tables, setTables] = useState<Table[]>([]);
 
   // Staff Members State
+  // สถานะข้อมูลพนักงาน
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [staffSearch, setStaffSearch] = useState('');
 
   // Holidays State
+  // สถานะวันหยุด
   const [holidays, setHolidays] = useState<any[]>([]);
   const [holidayDate, setHolidayDate] = useState('');
   const [holidayEndDate, setHolidayEndDate] = useState('');
@@ -79,6 +84,8 @@ export default function AdminSettingsPage() {
 
 
 
+  // Function to fetch staff profiles
+  // ฟังก์ชันดึงข้อมูลพนักงานจาก Supabase
   const fetchProfiles = async () => {
     setProfilesLoading(true);
     try {
@@ -101,6 +108,8 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Initial data loading
+  // โหลดข้อมูลเริ่มต้นเมื่อเปิดหน้าเว็บ
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -136,6 +145,8 @@ export default function AdminSettingsPage() {
     fetchData();
   }, []);
 
+  // Sync profiles from Auth to DB
+  // ซิงค์ข้อมูลพนักงานจากระบบ Auth ลง DB
   const syncProfiles = async () => {
     if (!confirm(locale === 'th' ? 'ต้องการดึงรายชื่อพนักงานทั้งหมดจากระบบ Authentication มาลงตารางใหม่หรือไม่?' : 'Do you want to sync all staff from Authentication system?'))
       return;
@@ -152,6 +163,8 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Toggle staff role (Admin <-> Staff)
+  // เปลี่ยนสิทธิ์พนักงาน (Admin <-> Staff)
   const toggleRole = async (profileId: string, currentRole: 'admin' | 'staff') => {
     const newRole = currentRole === 'admin' ? 'staff' : 'admin';
     const roleLabel = newRole === 'admin' ? (locale === 'th' ? 'ผู้ดูแลระบบ' : 'Administrator') : (locale === 'th' ? 'พนักงาน' : 'Staff');
@@ -190,6 +203,8 @@ export default function AdminSettingsPage() {
     }));
   };
 
+  // Save business hours settings
+  // บันทึกการตั้งค่าเวลาทำการ
   const handleSaveHours = async () => {
     setHoursSaving(true);
     try {

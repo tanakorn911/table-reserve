@@ -3,6 +3,12 @@
 import React from 'react';
 import { useAdminLocale } from './components/LanguageSwitcher';
 
+/**
+ * AdminLoading Component
+ * แสดงหน้าจอ Loading ระหว่างรอโหลดข้อมูลในส่วน Admin
+ * - แสดง Spinner หมุนๆ
+ * - แสดงข้อความ "กำลังโหลดข้อมูลระบบ..." (รองรับ 2 ภาษา)
+ */
 export default function AdminLoading() {
   const locale = useAdminLocale();
   return (

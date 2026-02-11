@@ -17,6 +17,7 @@ import {
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 
+// CheckStatusPage: หน้าตรวจสอบสถานะการจองด้วยรหัส Booking Code (BX-XXXXXX)
 export default function CheckStatusPage() {
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
@@ -26,6 +27,7 @@ export default function CheckStatusPage() {
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // แปลงเวลารูปแบบ HH:mm
   const formatTime = (time: string) => {
     const cleanTime = time.substring(0, 5);
     if (locale === 'th') return `${cleanTime} น.`;
@@ -36,6 +38,7 @@ export default function CheckStatusPage() {
     return `${hour}:${m} ${ampm}`;
   };
 
+  // แปลงวันที่ขเป็นรูปแบบที่อ่านง่ายตามภาษา
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString + 'T00:00:00');
@@ -49,6 +52,7 @@ export default function CheckStatusPage() {
     }
   };
 
+  // ฟังก์ชันค้นหาการจอง
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue) return;
@@ -60,6 +64,7 @@ export default function CheckStatusPage() {
 
     try {
       // Precise search by code BX-XXXXXX
+      // ค้นหาด้วยรหัสจองตรงตัว
       const res = await fetch(`/api/public/check-booking?code=${inputValue.trim().toUpperCase()}`);
       const json = await res.json();
 
@@ -76,6 +81,7 @@ export default function CheckStatusPage() {
     }
   };
 
+  // ฟังก์ชันแสดงสถานะ (สี, ไอคอน, ข้อความ) ตาม Status Code
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case 'confirmed':

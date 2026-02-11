@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client
 
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -6,14 +6,14 @@ import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useNavigation } from '@/contexts/NavigationContext';
 
 interface CalendarPickerProps {
-  id: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  onBlur?: () => void;
-  minDate?: string;
-  error?: boolean;
-  success?: boolean;
+  id: string; // ID ของ Component
+  name: string; // ชื่อ Field
+  value: string; // ค่าวันที่ (YYYY-MM-DD)
+  onChange: (value: string) => void; // ฟังก์ชันเปลี่ยนค่า
+  onBlur?: () => void; // ฟังก์ชันเมื่อหลุดโฟกัส
+  minDate?: string; // วันที่ต่ำสุดที่เลือกได้
+  error?: boolean; // สถานะ Error
+  success?: boolean; // สถานะ Success
 }
 
 const THAI_DAYS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
@@ -48,6 +48,13 @@ const EN_MONTHS = [
   'December',
 ];
 
+/**
+ * CalendarPicker Component
+ * ตัวเลือกวันที่แบบปฏิทิน (Custom Calendar)
+ * - รองรับปี พ.ศ./ค.ศ. (Thai/English)
+ * - แสดงวันหยุด (Holidays) จาก Supabase
+ * - ปิดกั้นวันที่ผ่านมาแล้ว หรือวันหยุดประจำสัปดาห์ (เช่น วันศุกร์ปิดร้าน)
+ */
 const CalendarPicker: React.FC<CalendarPickerProps> = ({
   id,
   name,
@@ -59,11 +66,12 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
   success = false,
 }) => {
   const { locale } = useNavigation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [holidays, setHolidays] = useState<{ date: string; desc: string }[]>([]);
+  const [isOpen, setIsOpen] = useState(false); // สถานะเปิด Popup
+  const [currentMonth, setCurrentMonth] = useState(new Date()); // เดือนปัจจุบันที่แสดง
+  const [holidays, setHolidays] = useState<{ date: string; desc: string }[]>([]); // ข้อมูลวันหยุด
   const supabase = createClientSupabaseClient();
 
+  // Effect: ดึงข้อมูลวันหยุดจาก Supabase
   useEffect(() => {
     const fetchHolidays = async () => {
       const { data } = await supabase.from('holidays').select('holiday_date, description');
@@ -72,18 +80,20 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     fetchHolidays();
   }, [supabase]);
 
-  // Initialize to selected date's month or current month
+  // Effect: ตั้งค่าเริ่มต้นเป็นเดือนของวันที่เลือก (ถ้ามี)
   useEffect(() => {
     if (value) {
       setCurrentMonth(new Date(value + 'T00:00:00'));
     }
   }, []);
 
+  // สร้าง Date Object จาก minDate
   const getMinDateObj = () => {
     if (!minDate) return null;
     return new Date(minDate + 'T00:00:00');
   };
 
+  // คำนวณวันในเดือน (รวมช่องว่างวันก่อนหน้า)
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -94,12 +104,12 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
 
     const days: (number | null)[] = [];
 
-    // Add empty cells for days before the first day
+    // เพิ่มช่องว่างสำหรับวันก่อนวันที่ 1
     for (let i = 0; i < startingDay; i++) {
       days.push(null);
     }
 
-    // Add the days
+    // เพิ่มวันที่จริง
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
@@ -107,6 +117,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     return days;
   };
 
+  // ตรวจสอบว่าวันที่ถูกปิดกั้นหรือไม่
   const isDateDisabled = (day: number) => {
     const minDateObj = getMinDateObj();
     if (!minDateObj) return false;
@@ -114,31 +125,33 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     date.setHours(0, 0, 0, 0);
 
-    // Max Date: 30 days from now
+    // กำหนดวันจองล่วงหน้าสูงสุด 30 วัน
     const maxDate = new Date();
     maxDate.setDate(maxDate.getDate() + 30);
     maxDate.setHours(0, 0, 0, 0);
 
     minDateObj.setHours(0, 0, 0, 0);
 
-    // Check against minDate & maxDate
+    // ตรวจสอบช่วงเวลาที่อนุญาต
     if (date < minDateObj || date > maxDate) return true;
 
-    // 🛡️ PERMANENT FRIDAY HOLIDAY: Friday is day 5
+    // 🛡️ ปิดวันศุกร์ (วันหยุดประจำร้าน)
     if (date.getDay() === 5) return true;
 
-    // Check against holidays
+    // ตรวจสอบกับวันหยุดพิเศษ
     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     if (holidays.some((h) => h.date === dateStr)) return true;
 
     return false;
   };
 
+  // ดึงข้อมูลวันหยุดของวันที่ระบุ
   const getHoliday = (day: number) => {
     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return holidays.find((h) => h.date === dateStr);
   };
 
+  // ตรวจสอบว่าเป็นวันนี้หรือไม่
   const isToday = (day: number) => {
     const today = new Date();
     return (
@@ -148,6 +161,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     );
   };
 
+  // ตรวจสอบว่าเป็นวันที่ถูกเลือกหรือไม่
   const isSelected = (day: number) => {
     if (!value) return false;
     const selectedDate = new Date(value + 'T00:00:00');
@@ -158,14 +172,17 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     );
   };
 
+  // เลื่อนเเดือนก่อนหน้า
   const prevMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
 
+  // เลื่อนเดือนถัดไป
   const nextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
+  // จัดรูปแบบวันที่สำหรับแสดงผลในปุ่ม
   const formatDisplayDate = (dateStr: string) => {
     if (!dateStr) return locale === 'th' ? 'เลือกวันที่' : 'Select Date';
     const date = new Date(dateStr + 'T00:00:00');
@@ -173,7 +190,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
 
     if (locale === 'th') {
       const month = THAI_MONTHS[date.getMonth()];
-      const year = date.getFullYear() + 543; // Buddhist era
+      const year = date.getFullYear() + 543; // ปี พ.ศ.
       return `${day} ${month} ${year}`;
     } else {
       const month = EN_MONTHS[date.getMonth()];
@@ -182,6 +199,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     }
   };
 
+  // ตรวจสอบว่าสามารถย้อนกลับเดือนได้หรือไม่
   const canGoPrevMonth = () => {
     const minDateObj = getMinDateObj();
     if (!minDateObj) return true;
@@ -192,6 +210,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     return prevMonthDate >= minMonthStart;
   };
 
+  // ดึงวันที่ปัจจุบันตามเวลาไทย
   const getThailandDate = (offsetDays = 0) => {
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -210,6 +229,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     };
   };
 
+  // ตรวจสอบว่าค่าวันที่ (String) ถูกปิดกั้นหรือไม่
   const isDateValueDisabled = (dateValue: string) => {
     const [y, m, d] = dateValue.split('-').map(Number);
     const date = new Date(y, m - 1, d);
@@ -226,7 +246,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     maxDate.setHours(0, 0, 0, 0);
     if (date > maxDate) return true;
 
-    // 🛡️ PERMANENT FRIDAY HOLIDAY
+    // 🛡️ ปิดวันศุกร์
     if (date.getDay() === 5) return true;
 
     if (holidays.some((h) => h.date === dateValue)) return true;
@@ -234,13 +254,11 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     return false;
   };
 
+  // เลือกวันที่ด่วน (วันนี้/พรุ่งนี้)
   const handleQuickSelect = (offset: number) => {
-    console.log('[DEBUG] Quick Select triggered, offset:', offset);
     const { dateStr, month, year } = getThailandDate(offset);
-    console.log('[DEBUG] Calculated date string:', dateStr);
 
     if (isDateValueDisabled(dateStr)) {
-      console.log('[DEBUG] Date is disabled, skipping selection.');
       alert(
         locale === 'th'
           ? 'ขออภัย วันที่เลือกไม่สามารถจองได้'
@@ -254,13 +272,12 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     setIsOpen(false);
 
     setTimeout(() => {
-      console.log('[DEBUG] Triggering onBlur after quick select');
       onBlur?.();
     }, 100);
   };
 
+  // เลือกวันที่จากปฏิทิน
   const handleSelect = (day: number) => {
-    console.log('[DEBUG] Normal day selected:', day);
     if (isDateDisabled(day)) return;
 
     const year = currentMonth.getFullYear();
@@ -268,7 +285,6 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     const dayStr = String(day).padStart(2, '0');
     const dateValue = `${year}-${month}-${dayStr}`;
 
-    console.log('[DEBUG] Date value for select:', dateValue);
     onChange(dateValue);
     setIsOpen(false);
   };
@@ -282,6 +298,8 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
   return (
     <div className="relative">
       <input type="hidden" id={id} name={name} value={value} />
+
+      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -308,14 +326,18 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
         </span>
       </button>
 
+      {/* Calendar Popup */}
       {isOpen && (
         <>
+          {/* Backdrop */}
           <div
             className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] cursor-pointer"
             onClick={() => setIsOpen(false)}
           />
+
+          {/* Calendar Content */}
           <div className="absolute z-[110] top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-2xl shadow-xl p-4 pointer-events-auto">
-            {/* Header */}
+            {/* Header: Month/Year navigation */}
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
@@ -337,7 +359,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
               </button>
             </div>
 
-            {/* Day headers */}
+            {/* Day Headers (Sun, Mon, Tue...) */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {currentDays.map((day, i) => (
                 <div
@@ -350,7 +372,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
               ))}
             </div>
 
-            {/* Days grid */}
+            {/* Days Grid */}
             <div className="grid grid-cols-7 gap-1">
               {days.map((day, index) => (
                 <div key={index} className="aspect-[2/1]">
@@ -385,7 +407,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
               ))}
             </div>
 
-            {/* Quick select */}
+            {/* Quick Select Buttons */}
             <div className="mt-4 pt-3 border-t border-border flex gap-2">
               <button
                 type="button"

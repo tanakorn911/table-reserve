@@ -1,21 +1,22 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client Component
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion'; // Library สำหรับ Animation
+import { useTheme } from '@/contexts/ThemeContext'; // Context ธีม
 
 interface ThemeToggleProps {
     className?: string;
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'sm' | 'md' | 'lg'; // ขนาดปุ่ม
 }
 
 /**
  * Theme Toggle Button
- * Animated switch between light and dark modes
+ * ปุ่มสลับโหมด Light/Dark พร้อม Animation
  */
 export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggleProps) {
     const { resolvedTheme, toggleTheme } = useTheme();
 
+    // กำหนดขนาดตาม Props
     const sizes = {
         sm: { button: 'w-8 h-8', icon: 16 },
         md: { button: 'w-10 h-10', icon: 20 },
@@ -27,23 +28,26 @@ export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggle
     return (
         <motion.button
             onClick={toggleTheme}
+            // จัดสไตล์ปุ่ม
             className={`
         ${button} rounded-full flex items-center justify-center
         bg-muted/50 hover:bg-muted border border-border
         transition-colors duration-200
         ${className}
       `}
+            // Animation เมื่อเอาเมาส์ชี้และคลิก
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
         >
+            {/* ส่วนไอคอนหมุน 180 องศาเมื่อเปลี่ยนโหมด */}
             <motion.div
                 initial={false}
                 animate={{ rotate: resolvedTheme === 'dark' ? 0 : 180 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
                 {resolvedTheme === 'dark' ? (
-                    // Moon icon
+                    // ไอคอนดวงจันทร์ (Dark Mode)
                     <svg
                         width={icon}
                         height={icon}
@@ -58,7 +62,7 @@ export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggle
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                     </svg>
                 ) : (
-                    // Sun icon
+                    // ไอคอนดวงอาทิตย์ (Light Mode)
                     <svg
                         width={icon}
                         height={icon}

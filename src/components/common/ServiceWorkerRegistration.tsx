@@ -1,18 +1,20 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client Component
 
 import { useEffect } from 'react';
 
 /**
  * Service Worker Registration Component
- * Registers the service worker for PWA functionality
+ * ทำหน้าที่ลงทะเบียน Service Worker เมื่อโหลดหน้าเว็บเสร็จ
+ * เพื่อรองรับฟีเจอร์ Progressive Web App (PWA) เช่น Offline mode, Install app
  */
 export default function ServiceWorkerRegistration() {
     useEffect(() => {
+        // ตรวจสอบว่า Browser รองรับ Service Worker หรือไม่
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-            // Register service worker on page load
+            // ลงทะเบียน Service Worker เมื่อโหลดหน้าเสร็จ (Load Event)
             window.addEventListener('load', () => {
                 navigator.serviceWorker
-                    .register('/sw.js')
+                    .register('/sw.js') // ไฟล์ Service Worker หลัก
                     .then((registration) => {
                         console.log('SW registered: ', registration);
                     })
@@ -23,5 +25,6 @@ export default function ServiceWorkerRegistration() {
         }
     }, []);
 
+    // Component นี้ไม่มี UI
     return null;
 }

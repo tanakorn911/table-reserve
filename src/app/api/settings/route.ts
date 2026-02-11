@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
+// GET: Fetch Settings
+// GET: ดึงค่าตั้งค่าระบบ
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -10,6 +12,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseClient();
 
     // 🔒 Authentication required (except for business hours)
+    // 🔒 ตรวจสอบสิทธิ์ (ยกเว้น business_hours ที่เปิดเป็น Public)
     const { data: { session } } = await supabase.auth.getSession();
     if (!session && key !== 'business_hours') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -39,11 +42,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// POST: Upsert Settings (Admin)
+// POST: สร้างหรืออัปเดตค่าตั้งค่า (เฉพาะ Admin)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
 
     // 🔒 Authentication required
+    // 🔒 ตรวจสอบสิทธิ์การใช้งาน
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -57,6 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert setting
+    // บันทึกค่าตั้งค่า (ถ้ามีอยู่แล้วจะอัปเดต)
     const { data, error } = await supabase
       .from('settings')
       .upsert({
@@ -79,6 +86,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PUT: Update User Profile (Admin Only)
+// PUT: อัปเดตข้อมูลพนักงาน (เฉพาะ Admin)
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -91,6 +100,7 @@ export async function PUT(request: NextRequest) {
     const supabase = await createServerSupabaseClient();
 
     // Check if requester is authenticated
+    // ตรวจสอบสิทธิ์ผู้เรียกใช้งาน
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -99,6 +109,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 🔒 Check if user is admin - CRITICAL SECURITY FIX
+    // 🔒 ตรวจสอบว่าเป็น Admin จริงหรือไม่
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -109,6 +120,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
+    // Update profile
+    // อัปเดตข้อมูลลงฐานข้อมูล profiles
     const { error } = await supabase
       .from('profiles')
       .update({

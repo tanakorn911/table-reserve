@@ -5,15 +5,22 @@ import { useTranslation } from '@/lib/i18n';
 interface GuestNumberInputProps {
   id: string;
   name: string;
-  value: string;
+  value: string; // ค่าจำนวนแขก (เป็น string เพื่อให้รองรับ Empty state ใน input)
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  min?: number;
-  max?: number;
-  error?: boolean;
-  success?: boolean;
+  min?: number; // จำนวนขั้นต่ำ
+  max?: number; // จำนวนสูงสุด
+  error?: boolean; // สถานะ Error
+  success?: boolean; // สถานะ Success
 }
 
+/**
+ * GuestNumberInput Component
+ * Input สำหรับเลือกจำนวนแขก แบบมีปุ่ม +/-
+ * - แสดงเป็นตัวเลขตรงกลาง
+ * - ปุ่มลบ (-) ด้านซ้าย
+ * - ปุ่มบวก (+) ด้านขวา
+ */
 const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
   id,
   name,
@@ -28,9 +35,11 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
 
+  // เพิ่มจำนวนแขก
   const handleIncrement = () => {
     const currentValue = parseInt(value) || 0;
     if (currentValue < max) {
+      // สร้าง Event ปลอมเพื่อส่งกลับไปให้ onChange
       const syntheticEvent = {
         target: { name, value: String(currentValue + 1) },
       } as React.ChangeEvent<HTMLInputElement>;
@@ -38,6 +47,7 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
     }
   };
 
+  // ลดจำนวนแขก
   const handleDecrement = () => {
     const currentValue = parseInt(value) || 0;
     if (currentValue > min) {
@@ -50,6 +60,7 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
 
   return (
     <div className="relative flex items-center group">
+      {/* ปุ่มลดจำนวน */}
       <button
         type="button"
         onClick={handleDecrement}
@@ -64,6 +75,8 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
       >
         <Icon name="MinusIcon" size={20} />
       </button>
+
+      {/* ช่องกรอกตัวเลข */}
       <div className="relative flex-1 h-14">
         <input
           id={id}
@@ -83,10 +96,13 @@ const GuestNumberInput: React.FC<GuestNumberInputProps> = ({
             ${error ? 'border-error/50 bg-error/10' : success ? 'border-success/50 bg-success/10' : ''}
           `}
         />
+        {/* Label ลอยที่ด้านล่าง */}
         <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 text-xs font-medium text-muted-foreground">
           {t('form.guests.label')}
         </div>
       </div>
+
+      {/* ปุ่มเพิ่มจำนวน */}
       <button
         type="button"
         onClick={handleIncrement}

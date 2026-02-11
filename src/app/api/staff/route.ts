@@ -3,11 +3,13 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Create staff member (requires service role for auth.admin)
+// POST: สร้างบัญชีพนักงานใหม่ (ต้องใช้ Service Role)
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient();
 
         // 🔒 Check if requester is authenticated and is admin
+        // 🔒 ตรวจสอบสิทธิ์ Admin
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -49,6 +51,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Create user in auth
+        // สร้างผู้ใช้ในระบบ Auth
         const { data: newUser, error: authError } = await adminClient.auth.admin.createUser({
             email,
             password,
@@ -66,6 +69,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create profile entry (using upsert in case there's a trigger already creating it)
+        // สร้างข้อมูลในตาราง Profiles (ใช้ upsert กันพลาดกรณีมี Trigger)
         const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
@@ -80,6 +84,7 @@ export async function POST(request: NextRequest) {
         if (profileError) {
             console.error('Profile error:', profileError);
             // Try to delete the auth user if profile creation failed
+            // ถ้าสร้าง Profile ไม่สำเร็จ ให้ลบ Auth user ทิ้งเพื่อไม่ให้ข้อมูลขยะ
             await adminClient.auth.admin.deleteUser(newUser.user.id);
             return NextResponse.json({ error: profileError.message }, { status: 500 });
         }
@@ -102,6 +107,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Update staff member
+// PUT: อัปเดตข้อมูลพนักงาน
 export async function PUT(request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient();
@@ -133,19 +139,16 @@ export async function PUT(request: NextRequest) {
         // 🔒 Smart Password Change Logic
         // If changing own password, warn that it will cause logout
         // But allow admin to change other users' passwords freely
+        // 🔒 ตรวจสอบกรณีเปลี่ยนรหัสผ่านตัวเอง (ซึ่งจะทำให้ Logout)
         const isChangingOwnPassword = password && id === user.id;
 
         if (isChangingOwnPassword) {
-            // Option 1: Block it completely (current behavior)
-            // return NextResponse.json({ 
-            //     error: 'Cannot change your own password here. Use /api/change-password instead to avoid logout.' 
-            // }, { status: 400 });
-
             // Option 2: Allow but warn (recommended)
             console.warn(`Admin ${user.email} is changing their own password. They will be logged out.`);
         }
 
         // Update Auth (Email/Password)
+        // อัปเดตข้อมูล Auth (Email/Password)
         const updateData: any = {};
         if (email) updateData.email = email;
         if (password) updateData.password = password;
@@ -169,6 +172,7 @@ export async function PUT(request: NextRequest) {
         }
 
         // Update Profile Table
+        // อัปเดตข้อมูลในตาราง Profile
         const profileUpdateData: { [key: string]: string | null } = {};
         if (email !== undefined) profileUpdateData.email = email;
         if (full_name !== undefined) profileUpdateData.full_name = full_name;
@@ -196,6 +200,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // Delete staff member
+// DELETE: ลบพนักงาน
 export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -225,6 +230,7 @@ export async function DELETE(request: NextRequest) {
 
         // Delete from profiles is handled by cascade (if configured) or manually
         // It's safer to delete from profiles first, then auth, in case of cascade issues
+        // ลบข้อมูลจาก profile ก่อน แล้วค่อยลบจาก Auth
         const { error: profileDeleteError } = await supabase.from('profiles').delete().eq('id', id);
         if (profileDeleteError) {
             console.error('Profile delete error:', profileDeleteError);

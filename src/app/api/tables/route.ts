@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
 // GET /api/tables - Get all tables
+// GET: ดึงข้อมูลโต๊ะทั้งหมด
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -32,11 +33,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// POST: Create a new table (Admin)
+// POST: สร้างโต๊ะใหม่ (เฉพาะ Admin)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์ Admin
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -47,6 +51,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // 🔒 SECURITY FIX: Input validation
+    // 🔒 ตรวจสอบความถูกต้องของข้อมูล
     const { name, capacity, x, y, zone, shape, width, height } = body;
 
     // Validate name

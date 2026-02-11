@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 
+// FeedbackContent: ส่วนเนื้อหาหลักของหน้า Feedback
+// ใช้สำหรับรับคะแนนความพึงพอใจและคอมเมนต์จากลูกค้า
 function FeedbackContent() {
     const searchParams = useSearchParams();
     const code = searchParams.get('code');
@@ -20,6 +22,7 @@ function FeedbackContent() {
     const [isLoading, setIsLoading] = useState(true);
 
     // Lookup reservation by booking code
+    // ค้นหาข้อมูลการจองจาก Code ที่ส่งมา
     useEffect(() => {
         const lookupReservation = async () => {
             if (!code) {
@@ -48,6 +51,7 @@ function FeedbackContent() {
         lookupReservation();
     }, [code]);
 
+    // บันทึกความเห็น
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 

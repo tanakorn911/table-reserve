@@ -6,11 +6,13 @@ import { sendLineNotification, sendEmailConfirmation } from '@/lib/notifications
 import { reservationRateLimiter, checkRateLimit, getClientIp } from '@/lib/ratelimit';
 
 // GET /api/reservations - Get reservations (Public/Protected hybrid)
+// GET: ดึงข้อมูลการจอง (ใช้ร่วมกันทั้ง Public และ Admin)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์การใช้งาน
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date');
 
     // Admin can see everything (*), Public sees limited fields
-    // Public needs to see booked slots to avoid conflict  
+    // Admin เห็นข้อมูลทั้งหมด, Public เห็นเฉพาะข้อมูลจำเป็น (เพื่อตรวจสอบที่ว่าง)
     const selectFields = isAdmin
       ? '*'
       : 'reservation_time, table_number, status, reservation_date';
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // If public, only show confirmed or pending (active) reservations
-    // Admins might want to see 'cancelled' too (but usually filtered by param)
+    // ถ้าเป็น Public ให้แสดงเฉพาะรายการที่ Active (Confirmed/Pending)
     if (!isAdmin) {
       query = query.in('status', ['confirmed', 'pending']);
     }
@@ -59,6 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Manual table name lookup for admin
+    // ดึงชื่อโต๊ะมาแสดงเพิ่มเติม (เฉพาะ Admin)
     if (isAdmin && data) {
       // Get all unique table numbers
       const tableNumbers = [...new Set(data.map((r: any) => r.table_number).filter(Boolean))];
@@ -91,9 +94,11 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/reservations - Create a new reservation (Public)
+// POST: สร้างรายการจองใหม่ (สำหรับลูกค้า)
 export async function POST(request: NextRequest) {
   try {
     // 🔒 Rate limiting: 10 requests per hour per IP
+    // 🔒 จำกัดการจอง: 10 ครั้งต่อชั่วโมงต่อ IP
     const clientIp = getClientIp(request);
     const rateLimitResult = await checkRateLimit(reservationRateLimiter, clientIp);
 
@@ -121,6 +126,7 @@ export async function POST(request: NextRequest) {
     const { locale, ...body } = reqBody;
 
     // Validate required fields
+    // ตรวจสอบข้อมูลจำเป็น
     const requiredFields = [
       'guest_name',
       'guest_phone',
@@ -135,13 +141,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate party size
+    // ตรวจสอบจำนวนลูกค้า
     if (body.party_size < 1 || body.party_size > 50) {
       return NextResponse.json({ error: 'Party size must be between 1 and 50' }, { status: 400 });
     }
 
     // Check if table is already booked for this date and time
+    // ตรวจสอบว่าโต๊ะว่างหรือไม่ในช่วงเวลานั้น
     if (body.table_number) {
       // 90 mins dining + 15 mins buffer = 105 mins total block
+      // ระยะเวลาทาน 90 นาที + พักโต๊ะ 15 นาที
       const totalDuration = 90 + 15;
 
       // Convert requested time to minutes
@@ -166,6 +175,7 @@ export async function POST(request: NextRequest) {
         const dbMinutes = dbHour * 60 + dbMinute;
 
         // Overlap check: |TimeA - TimeB| < 105 mins
+        // ตรวจสอบช่วงเวลาซ้อนทับ
         return Math.abs(dbMinutes - reqMinutes) < totalDuration;
       });
 
@@ -200,6 +210,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send Notifications (Async - don't block response)
+    // ส่งแจ้งเตือน (Async)
     (async () => {
       try {
         // 1. Get table name if table_number exists
@@ -217,11 +228,13 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. LINE Notify to Staff
+        // ส่งไลน์แจ้งAdmin
         const bookingCode = data.booking_code || data.id.slice(0, 8);
         const message = `📢 จองโต๊ะใหม่! [${bookingCode}]\nคุณ ${data.guest_name}\n📞 ${data.guest_phone}\n👥 ${data.party_size} ท่าน\n📅 ${data.reservation_date} เวลา ${data.reservation_time}\n🪑 โต๊ะ ${tableName}\n📝 ${data.special_requests || '-'}`;
         await sendLineNotification(message, data.payment_slip_url);
 
         // 3. Email Confirmation to Customer
+        // ส่งอีเมลยืนยันลูกค้า
         if (data.guest_email) {
           await sendEmailConfirmation(data.guest_email, data, locale || 'th');
         }

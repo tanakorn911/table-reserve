@@ -10,11 +10,17 @@ interface TextAreaProps {
   disabled?: boolean;
   rows?: number;
   maxLength?: number;
-  label?: string;
-  error?: string;
+  label?: string; // ถ้ามี label จะถูกห่อด้วย FormField
+  error?: string; // ข้อความ error
   required?: boolean;
 }
 
+/**
+ * TextArea Component
+ * ช่องกรอกข้อความแบบหลายบรรทัด
+ * - รองรับการนับตัวอักษร (maxLength)
+ * - รองรับ Dark Mode และ Styling มาตรฐาน
+ */
 const TextArea: React.FC<TextAreaProps> = ({
   id,
   name,
@@ -51,6 +57,7 @@ const TextArea: React.FC<TextAreaProps> = ({
           hover:border-primary/20 hover:bg-muted/80
         `}
       />
+      {/* ตัวนับจำนวนอักษร มุมขวาล่าง */}
       {maxLength && (
         <div className="absolute bottom-2 right-3 text-xs text-muted-foreground">
           {value.length}/{maxLength}
@@ -59,6 +66,7 @@ const TextArea: React.FC<TextAreaProps> = ({
     </div>
   );
 
+  // ถ้ามี Label ให้ห่อด้วย FormField
   if (label) {
     return (
       <FormField label={label} htmlFor={id} required={required} error={error}>

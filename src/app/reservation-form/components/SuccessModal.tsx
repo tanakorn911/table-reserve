@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ทำงานฝั่ง Client
 
 import React, { useEffect, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -24,27 +24,35 @@ interface ReservationDetails {
 }
 
 interface SuccessModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  reservation: ReservationDetails;
+  isOpen: boolean; // สถานะเปิด Modal
+  onClose: () => void; // ฟังก์ชันปิด Modal
+  reservation: ReservationDetails; // ข้อมูลการจองที่สำเร็จ
 }
 
+/**
+ * SuccessModal Component
+ * Modal แสดงผลเมื่อจองสำเร็จ
+ * - แสดงรายละเอียดการจอง
+ * - แสดง Confetti เฉลิมฉลอง
+ * - ปุ่มเพิ่มลงปฏิทิน (Google Calendar, Apple Calendar)
+ * - แนะนำให้แคปหน้าจอ
+ */
 const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservation }) => {
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Trigger confetti when modal opens
+  // Effect: แสดง Confetti เมื่อเปิด Modal
   useEffect(() => {
     if (isOpen) {
       setShowConfetti(true);
-      // Stop confetti after 4 seconds
+      // หยุด Confetti หลังจาก 4 วินาที
       const timer = setTimeout(() => setShowConfetti(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
-  // Calendar event handlers - now with locale support
+  // ฟังก์ชันเพิ่มลง Google Calendar
   const handleAddToGoogleCalendar = () => {
     const event = createReservationEvent(
       reservation.bookingCode || reservation.id.slice(0, 8),
@@ -61,6 +69,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
     window.open(url, '_blank');
   };
 
+  // ฟังก์ชันดาวน์โหลดไฟล์ .ics สำหรับ Apple Calendar / Outlook
   const handleAddToAppleCalendar = () => {
     const event = createReservationEvent(
       reservation.bookingCode || reservation.id.slice(0, 8),
@@ -79,9 +88,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
   if (!isOpen || !reservation) return null;
   const activeReservation = reservation;
 
+  // ฟังก์ชันจัดรูปแบบวันที่ให้แสดงผลสวยงาม (รองรับภาษาไทย)
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + 'T00:00:00');
-    // Add Thailand timezone offset (UTC+7)
+    // ปรับ Timezone เป็น UTC+7 สำหรับการแสดงผลที่ถูกต้อง
     const thailandOffset = 7 * 60;
     const localOffset = date.getTimezoneOffset();
     const thailandDate = new Date(date.getTime() + (thailandOffset + localOffset) * 60000);
@@ -93,13 +103,14 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
     });
   };
 
+  // ฟังก์ชันจัดรูปแบบเวลา (รองรับ 12h/24h format)
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(':');
     const hour = parseInt(hours, 10);
     if (locale === 'th') {
       return `${hour}:${minutes} น.`;
     }
-    // Convert to 12-hour format for EN
+    // ใช้ 12-hour format สำหรับภาษาอังกฤษ
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
@@ -110,11 +121,14 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
       {/* Confetti Animation */}
       <Confetti trigger={showConfetti} duration={3000} />
 
+      {/* Backdrop */}
       <div
         className="fixed inset-0 z-300 bg-foreground/60 backdrop-blur-sm transition-smooth"
         onClick={onClose}
         aria-hidden="true"
       />
+
+      {/* Modal Container */}
       <div className="fixed inset-0 z-300 flex items-center justify-center p-4 overflow-y-auto">
         <div
           className="
@@ -126,6 +140,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
           aria-modal="true"
           aria-labelledby="success-title"
         >
+          {/* Header & Success Icon */}
           <div className="p-6 flex flex-col items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
               <Icon name="CheckCircleIcon" size={40} className="text-success" variant="solid" />
@@ -137,6 +152,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
               {t('success.title')}
             </h2>
             <p className="text-base text-muted-foreground text-center">{t('success.subtitle')}</p>
+
+            {/* Screenshot Reminder Alert */}
             <div className="bg-red-600 px-6 py-3 rounded-2xl animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.4)] mt-4">
               <p className="text-sm md:text-base font-black text-white text-center flex items-center gap-2 tracking-tight">
                 <Icon name="CameraIcon" size={20} variant="solid" />
@@ -145,8 +162,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
             </div>
           </div>
 
+          {/* Reservation Details Card */}
           <div className="px-6 pb-6">
             <div className="bg-muted rounded-2xl p-6 space-y-4 border border-border">
+              {/* Booking Code */}
               <div className="flex items-start gap-4">
                 <Icon name="IdentificationIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
@@ -156,6 +175,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </p>
                 </div>
               </div>
+
+              {/* Name */}
               <div className="flex items-start gap-4">
                 <Icon name="UserIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
@@ -165,6 +186,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </p>
                 </div>
               </div>
+
+              {/* Phone */}
               <div className="flex items-start gap-4">
                 <Icon name="PhoneIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
@@ -172,6 +195,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   <p className="text-base font-bold text-foreground">{activeReservation.phone}</p>
                 </div>
               </div>
+
+              {/* Date */}
               <div className="flex items-start gap-4">
                 <Icon name="CalendarIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
@@ -181,6 +206,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </p>
                 </div>
               </div>
+
+              {/* Time */}
               <div className="flex items-start gap-4">
                 <Icon name="ClockIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
@@ -190,6 +217,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </p>
                 </div>
               </div>
+
+              {/* Guests */}
               <div className="flex items-start gap-4">
                 <Icon name="UsersIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
@@ -199,6 +228,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </p>
                 </div>
               </div>
+
+              {/* Table Name (Optional) */}
               {activeReservation.tableName && (
                 <div className="flex items-start gap-4">
                   <Icon name="MapIcon" size={22} className="text-accent mt-0.5" variant="solid" />
@@ -210,6 +241,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                   </div>
                 </div>
               )}
+
+              {/* Special Requests (Optional) */}
               {activeReservation.specialRequests && (
                 <div className="flex items-start gap-4">
                   <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-accent mt-0.5" variant="solid" />

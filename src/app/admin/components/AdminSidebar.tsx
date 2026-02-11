@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -16,18 +16,26 @@ import { useAdminLocale, adminT } from './LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
 interface AdminSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean; // สถานะเปิด/ปิด Sidebar (สำหรับ Mobile)
+  onClose: () => void; // ฟังก์ชันปิด Sidebar
 }
 
+/**
+ * AdminSidebar Component
+ * 
+ * เมนูแถบด้านซ้ายสำหรับ Admin Panel (Desktop)
+ * หรือเป็น Slide-over Menu สำหรับ Mobile
+ * แสดงรายการเมนูตาม Role ของผู้ใช้ (Admin/Staff)
+ */
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClientSupabaseClient();
-  const [role, setRole] = useState<'admin' | 'staff'>('staff');
+  const [role, setRole] = useState<'admin' | 'staff'>('staff'); // เก็บ Role
   const locale = useAdminLocale();
   const { adminTheme } = useAdminTheme();
 
+  // ตรวจสอบ Role ของผู้ใช้เพื่อกรองเมนู
   useEffect(() => {
     const checkRole = async () => {
       const {
@@ -50,6 +58,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     checkRole();
   }, [supabase]);
 
+  // ฟังก์ชัน Logout
   const handleLogout = async () => {
     if (window.confirm(adminT('logout.confirm', locale))) {
       await supabase.auth.signOut();
@@ -58,6 +67,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     }
   };
 
+  // รายการเมนูทั้งหมด
   const allMenuItems = [
     { name: 'sidebar.dashboard', href: '/admin/dashboard', icon: HomeIcon, roles: ['admin', 'staff'] },
     {
@@ -66,13 +76,14 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       icon: CalendarDaysIcon,
       roles: ['admin', 'staff'],
     },
-    { name: 'sidebar.floorPlan', href: '/admin/floor-plan', icon: MapIcon, roles: ['admin'] },
-    { name: 'sidebar.settings', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['admin'] },
+    { name: 'sidebar.floorPlan', href: '/admin/floor-plan', icon: MapIcon, roles: ['admin'] }, // เฉพาะ Admin
+    { name: 'sidebar.settings', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['admin'] }, // เฉพาะ Admin
   ];
 
+  // กรองเมนูตาม Role
   const menuItems = allMenuItems.filter((item) => item.roles.includes(role));
 
-  // Theme-aware classes
+  // กำหนด Class ตาม Theme
   const themeClasses = adminTheme === 'dark'
     ? {
       overlay: 'bg-black/70',
@@ -105,21 +116,21 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay (ฉากหลังดำเมื่อเปิดเมนูในมือถือ) */}
       <div
         className={`fixed inset-0 ${themeClasses.overlay} z-40 transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         onClick={onClose}
       ></div>
 
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <div
         className={`
                 fixed inset-y-0 left-0 w-64 ${themeClasses.sidebar} backdrop-blur-sm border-r z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
       >
-        {/* Header */}
+        {/* Header ส่วนบนของ Sidebar */}
         <div className={`relative flex items-center justify-between h-16 px-6 border-b ${themeClasses.header}`}>
           <div>
             <span className={`text-lg font-bold ${themeClasses.headerTitle} leading-tight`}>
@@ -129,12 +140,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               ({adminT(role === 'admin' ? 'sidebar.admin' : 'sidebar.staff', locale)})
             </span>
           </div>
+          {/* ปุ่มปิด (เฉพาะ Mobile) */}
           <button onClick={onClose} className={`md:hidden ${themeClasses.closeBtn} transition-colors`}>
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Links */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
@@ -143,6 +155,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 key={item.name}
                 href={item.href}
                 onClick={() => {
+                  // ปิดเมนูอัตโนมัติเมื่อกดเลือก (เฉพาะ Mobile)
                   if (window.innerWidth < 768) onClose();
                 }}
                 className={`group flex items-center px-4 py-3 text-base font-bold rounded-xl transition-all border ${isActive
@@ -161,7 +174,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           })}
         </nav>
 
-        {/* Logout */}
+        {/* Logout Button (ส่วนล่างสุด) */}
         <div className={`p-4 border-t ${themeClasses.logoutBorder}`}>
           <button
             onClick={handleLogout}

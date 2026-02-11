@@ -22,27 +22,36 @@ export default function AdminReservationsPage() {
   const locale = useAdminLocale();
   const { adminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
+  // State สำหรับเก็บข้อมูลการจองทั้งหมดที่ดึงมาจาก API
   const [reservations, setReservations] = useState<any[]>([]);
+  // State สำหรับสถานะการโหลดข้อมูล
   const [loading, setLoading] = useState(true);
+  // State สำหรับตัวกรองสถานะ (all, pending, confirmed, cancelled, completed)
   const [filterStatus, setFilterStatus] = useState('all');
+  // State สำหรับตัวกรองวันที่
   const [filterDate, setFilterDate] = useState('');
+  // State สำหรับคำค้นหา (ชื่อ, เบอร์โทร, รหัสการจอง)
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal State
+  // State ควบคุมการแสดงผล Modal สำหรับสร้าง/แก้ไขการจอง
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editingReservation, setEditingReservation] = useState<any>(null);
 
   // Print State
+  // State สำหรับเก็บข้อมูลการจองที่ต้องการพิมพ์ใบจอง
   const [printReservation, setPrintReservation] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Hook สำหรับจัดการการพิมพ์
   const handlePrint = useReactToPrint({
     contentRef: printRef, // Use contentRef instead of content
   });
 
   // Trigger print when reservation is selected
+  // สั่งพิมพ์เมื่อเลือกรายการจอง (printReservation มีค่า)
   useEffect(() => {
     if (printReservation && printRef.current) {
       handlePrint();
@@ -55,10 +64,12 @@ export default function AdminReservationsPage() {
     fetchReservations();
 
     // 🆕 Auto-update every 60 seconds
+    // ตั้งเวลาอัปเดตข้อมูลอัตโนมัติทุก 60 วินาที
     const interval = setInterval(fetchReservations, 60000);
     return () => clearInterval(interval);
   }, [filterStatus, filterDate]);
 
+  // ฟังก์ชันดึงข้อมูลการจองจาก API
   const fetchReservations = async () => {
     if (reservations.length === 0) setLoading(true);
 
@@ -72,8 +83,8 @@ export default function AdminReservationsPage() {
 
       if (data) {
         // 🆕 Custom Sorting:
-        // 1. Cancelled goes to the bottom
-        // 2. Others sorted by newest (created_at) first
+        // 1. Cancelled goes to the bottom (รายการที่ยกเลิกอยู่ล่างสุด)
+        // 2. Others sorted by newest (created_at) first (รายการอื่นๆ เรียงตามเวลาที่สร้างล่าสุด)
         const sortedData = [...data].sort((a, b) => {
           // Priority 1: Status (Cancelled at the bottom)
           if (a.status === 'cancelled' && b.status !== 'cancelled') return 1;
@@ -92,6 +103,7 @@ export default function AdminReservationsPage() {
     }
   };
 
+  // ฟังก์ชันอัปเดตสถานะการจอง (Approve, Complete, Cancel)
   const updateStatus = async (id: string, newStatus: string) => {
     const statusLabel =
       newStatus === 'confirmed' ? 'อนุมัติ' : newStatus === 'cancelled' ? 'ยกเลิก' : 'เสร็จสิ้น';
@@ -107,6 +119,7 @@ export default function AdminReservationsPage() {
 
       if (response.ok) {
         // Use functional update to avoid stale state from polling
+        // อัปเดตข้อมูลใน Local State ทันทีเพื่อให้ UI ตอบสนองไว
         setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
       } else {
         const errorData = await response.json();
@@ -120,6 +133,7 @@ export default function AdminReservationsPage() {
     }
   };
 
+  // ฟังก์ชันลบรายการจองถาวร
   const deleteReservation = async (id: string) => {
     if (!confirm(locale === 'th' ? 'ยืนยันการลบรายการจองนี้ถาวร? (ไม่สามารถกู้คืนได้)' : 'Confirm permanent deletion? (Cannot be undone)')) return;
 
@@ -143,6 +157,7 @@ export default function AdminReservationsPage() {
     }
   };
 
+  // ฟังก์ชันจัดการการสร้างหรือแก้ไขการจอง (Submit Form)
   const handleCreateOrUpdate = async (formData: any) => {
     setIsSubmitting(true);
     try {
@@ -180,16 +195,19 @@ export default function AdminReservationsPage() {
     }
   };
 
+  // เปิด Modal เพื่อแก้ไขการจอง
   const openEditModal = (reservation: any) => {
     setEditingReservation(reservation);
     setIsModalOpen(true);
   };
 
+  // เปิด Modal เพื่อสร้างการจองใหม่
   const openCreateModal = () => {
     setEditingReservation(null);
     setIsModalOpen(true);
   };
 
+  // กรองรายการจองตามคำค้นหา (Search Term)
   const filteredReservations = reservations.filter(
     (r) =>
       r.guest_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -198,6 +216,7 @@ export default function AdminReservationsPage() {
       r.id.slice(0, 8).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // ฟังก์ชันกำหนดสีของป้ายสถานะ (Badge Color)
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -219,9 +238,11 @@ export default function AdminReservationsPage() {
         <h1 className={`text-2xl font-bold ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.reservations.title')}</h1>
 
         {/* Action Bar */}
+        {/* ส่วนปุ่มดำเนินการ: Export CSV และ Create Reservation */}
         <div className="flex items-center space-x-2">
           <button
             onClick={() => {
+              // Export CSV Logic
               const headers = [
                 'Booking Code',
                 'Date',
@@ -282,6 +303,7 @@ export default function AdminReservationsPage() {
       </div>
 
       {/* Filters */}
+      {/* ส่วนตัวกรอง: ค้นหา, สถานะ, วันที่ */}
       <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-4 md:space-y-0 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -318,6 +340,7 @@ export default function AdminReservationsPage() {
       </div>
 
       {/* Desktop Table View */}
+      {/* ตารางแสดงข้อมูลการจองสำหรับ Desktop */}
       <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -484,6 +507,7 @@ export default function AdminReservationsPage() {
                         </button>
 
                         {/* Status Actions */}
+                        {/* ปุ่มเปลี่ยนสถานะต่างๆ */}
                         {reservation.status === 'pending' && (
                           <button
                             onClick={() => updateStatus(reservation.id, 'confirmed')}
@@ -532,6 +556,7 @@ export default function AdminReservationsPage() {
       </div>
 
       {/* Mobile Card View */}
+      {/* การ์ดแสดงผลสำหรับ Mobile */}
       <div className="md:hidden space-y-4">
         {loading ? (
           <div className="bg-white p-12 rounded-lg shadow-sm text-center text-gray-500">
@@ -648,6 +673,7 @@ export default function AdminReservationsPage() {
       </div>
 
       {/* Modals & Hidden Print Area */}
+      {/* Modal และโซนสำหรับพิมพ์ (ซ่อนอยู่) */}
       <ReservationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

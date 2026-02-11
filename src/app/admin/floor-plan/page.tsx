@@ -1,4 +1,4 @@
-'use client';
+'use client'; // ใช้ Client Component
 
 import React, { useState, useEffect } from 'react';
 import FloorPlan from '@/components/floor-plan/FloorPlan';
@@ -9,6 +9,7 @@ import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import AdminTimeGrid from '../components/AdminTimeGrid';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
+// Props สำหรับ Modal แก้ไขโต๊ะ
 interface EditModalProps {
   table: Table | null;
   isOpen: boolean;
@@ -18,10 +19,16 @@ interface EditModalProps {
   t: any;
 }
 
+/**
+ * EditModal Component
+ * 
+ * หน้าต่าง Modal สำหรับแก้ไขข้อมูลโต๊ะ (ชื่อ, จำนวนคน, รูปทรง, โซน)
+ */
 const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalProps) => {
   const [formData, setFormData] = useState<Partial<Table>>({});
   const { adminTheme } = useAdminTheme();
 
+  // อัพเดทข้อมูลในฟอร์มเมื่อมีการเลือกโต๊ะใหม่
   useEffect(() => {
     if (table) {
       setFormData({ ...table });
@@ -30,6 +37,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
 
   if (!isOpen || !table) return null;
 
+  // จัดการการเปลี่ยนค่า input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -38,6 +46,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
     }));
   };
 
+  // บันทึกข้อมูล
   const handleSubmit = () => {
     if (formData && formData.name) {
       onSave(formData as Table);
@@ -45,7 +54,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
     }
   };
 
-  // Theme-aware colors
+  // Theme-aware colors definitions (กำหนดสีตาม Theme)
   const themeColors = adminTheme === 'dark' ? {
     backdrop: 'bg-black/60',
     modal: 'bg-gray-800 border-gray-700',
@@ -84,10 +93,12 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
         className={`absolute inset-0 ${themeColors.backdrop} backdrop-blur-sm transition-opacity`}
         onClick={onClose}
       />
+      {/* Modal Content */}
       <div className={`${themeColors.modal} rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative z-10 animate-in fade-in zoom-in-95 duration-200 border`}>
         <button
           onClick={onClose}
@@ -96,6 +107,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
           <Icon name="XMarkIcon" size={24} />
         </button>
 
+        {/* Header: แสดงหมายเลขโต๊ะที่กำลังแก้ไข */}
         <div className="mb-8 text-center">
           <div className={`w-16 h-16 ${themeColors.iconBg} rounded-2xl flex items-center justify-center mx-auto mb-4 border shadow-inner`}>
             <span className={`text-2xl font-black ${themeColors.iconText}`}>
@@ -110,8 +122,9 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
           </p>
         </div>
 
-
+        {/* Form Fields */}
         <div className="space-y-6">
+          {/* ชื่อโต๊ะ */}
           <div>
             <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider mb-2`}>
               {t('admin.floorPlan.editModal.name')}
@@ -126,6 +139,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
           </div>
 
           <div className="grid grid-cols-2 gap-5">
+            {/* ความจุ (Capacity) */}
             <div className="space-y-2">
               <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider`}>
                 {t('admin.floorPlan.editModal.capacity')}
@@ -162,6 +176,8 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                 </button>
               </div>
             </div>
+
+            {/* โซน (Zone) */}
             <div className="space-y-2">
               <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider`}>
                 {t('admin.floorPlan.editModal.zone')}
@@ -179,6 +195,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
             </div>
           </div>
 
+          {/* รูปร่างโต๊ะ (Shape) */}
           <div>
             <label className={`block text-xs font-bold ${themeColors.label} uppercase tracking-wider mb-2`}>
               {t('admin.floorPlan.editModal.shape')}
@@ -206,6 +223,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
           </div>
         </div>
 
+        {/* Action Buttons: Delete & Update */}
         <div className="mt-10 flex gap-3">
           <button
             onClick={() => {
@@ -232,22 +250,33 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
   );
 };
 
+/**
+ * FloorPlanAdminPage Component
+ * 
+ * หน้าจัดการผังร้านสำหรับ Admin
+ * - แสดงผังโต๊ะ (Drag & Drop ได้)
+ * - เพิ่ม/ลบ/แก้ไขโต๊ะ
+ * - โหมด "Check Status" เพื่อดูว่าวัน/เวลาไหน โต๊ะไหนว่างบ้าง
+ * - บันทึกตำแหน่งโต๊ะลงฐานข้อมูล
+ */
 export default function FloorPlanAdminPage() {
   const locale = useAdminLocale();
   const { adminTheme } = useAdminTheme();
-  const { t } = useTranslation(locale); // Dynamically use current locale
+  const { t } = useTranslation(locale);
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
-  const [viewMode, setViewMode] = useState<'edit' | 'check'>('edit');
+  const [viewMode, setViewMode] = useState<'edit' | 'check'>('edit'); // โหมด: แก้ไข หรือ ตรวจสอบ
   const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
-  const [checkTime, setCheckTime] = useState('18:00'); // Default time
+  const [checkTime, setCheckTime] = useState('18:00');
   const [bookedTables, setBookedTables] = useState<{ id: number; time: string }[]>([]);
 
+  // โหลดข้อมูลโต๊ะเมื่อเข้าหน้านี้
   useEffect(() => {
     fetchTables();
   }, []);
 
+  // ฟังก์ชันดึงข้อมูลโต๊ะจาก API
   const fetchTables = async () => {
     setIsLoading(true);
     try {
@@ -259,12 +288,12 @@ export default function FloorPlanAdminPage() {
           ...t,
           x: t.x ?? 0,
           y: t.y ?? 0,
-          width: 80, // Standard width
-          height: 80, // Standard height
+          width: 80, // กำหนดขนาดมาตรฐาน
+          height: 80,
           shape: t.shape || 'rectangle',
           zone: t.zone || 'Indoor',
         }));
-        // Sort by ID to keep consistent
+        // เรียงตาม ID
         setTables(tablesWithLayout.sort((a: Table, b: Table) => a.id - b.id));
       }
     } catch (error) {
@@ -274,6 +303,7 @@ export default function FloorPlanAdminPage() {
     }
   };
 
+  // ฟังก์ชันดึงข้อมูลการจองเพื่อแสดงสถานะโต๊ะ (ในโหมด Check)
   const fetchBookedTables = async () => {
     if (!checkDate) return;
     try {
@@ -282,14 +312,17 @@ export default function FloorPlanAdminPage() {
       if (result.data) {
         const booked = result.data
           .filter((r: any) => {
+            // เอาเฉพาะที่ยังไม่ยกเลิก
             if (r.status !== 'confirmed' && r.status !== 'pending') return false;
             if (r.table_number === null) return false;
 
+            // กรองตามเวลาถ้ามีการระบุ
             if (checkTime) {
               const bookingTime = parseInt(r.reservation_time.substring(0, 2));
               const checkHour = parseInt(checkTime.substring(0, 2));
-              const bookingEnd = bookingTime + 2;
+              const bookingEnd = bookingTime + 2; // สมมติว่ากิน 2 ชม.
               const checkEnd = checkHour + 2;
+              // เช็คช่วงเวลาทับซ้อน (Overlap)
               return bookingEnd > checkHour && checkEnd > bookingTime;
             }
             return true;
@@ -312,6 +345,7 @@ export default function FloorPlanAdminPage() {
     }
   };
 
+  // อัพเดทข้อมูลการจองเมื่อเปลี่ยนโหมด, วันที่ หรือ เวลา
   useEffect(() => {
     if (viewMode === 'check') {
       fetchBookedTables();
@@ -320,8 +354,9 @@ export default function FloorPlanAdminPage() {
     }
   }, [viewMode, checkDate, checkTime]);
 
+  // ฟังก์ชันอัพเดทข้อมูลโต๊ะ (แก้ไขชื่อ, ขนาด etc.)
   const handleTableUpdate = async (updatedTable: Table) => {
-    // Check for duplicate names (excluding itself)
+    // เช็คชื่อซ้ำ
     const isDuplicate = tables.some(t => t.name.toLowerCase() === updatedTable.name.toLowerCase() && t.id !== updatedTable.id);
     if (isDuplicate) {
       alert(locale === 'th' ? 'ชื่อโต๊ะนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น' : 'Table name already exists, please use another name');
@@ -341,8 +376,8 @@ export default function FloorPlanAdminPage() {
           zone: updatedTable.zone,
           x: updatedTable.x,
           y: updatedTable.y,
-          width: 80, // Ensure standard size
-          height: 80, // Ensure standard size
+          width: 80,
+          height: 80,
         }),
       });
     } catch (error) {
@@ -353,6 +388,7 @@ export default function FloorPlanAdminPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
+  // ฟังก์ชันบันทึกตำแหน่งโต๊ะทั้งหมด (Save Layout)
   const handleSaveLayout = async () => {
     setSaveStatus('saving');
     try {
@@ -363,8 +399,8 @@ export default function FloorPlanAdminPage() {
           body: JSON.stringify({
             x: t.x,
             y: t.y,
-            width: 80, // Force standard size
-            height: 80, // Force standard size
+            width: 80,
+            height: 80,
           }),
         })
       );
@@ -379,11 +415,12 @@ export default function FloorPlanAdminPage() {
     }
   };
 
+  // ฟังก์ชันเพิ่มโต๊ะใหม่
   const addTable = async (shape: TableShape, zone: string = 'Indoor') => {
     const newTableCount = tables.length + 1;
     let newName = `T-${newTableCount}`;
 
-    // Ensure unique default name
+    // หาชื่อที่ไม่ซ้ำ
     let counter = 1;
     while (tables.some(t => t.name === newName)) {
       newName = `T-${newTableCount + counter}`;
@@ -400,8 +437,8 @@ export default function FloorPlanAdminPage() {
           description: locale === 'th' ? 'โต๊ะใหม่' : 'New Table',
           x: 50,
           y: 50,
-          width: 80, // Standard size
-          height: 80, // Standard size
+          width: 80,
+          height: 80,
           shape: shape,
           zone: zone,
           locale: locale,
@@ -416,6 +453,7 @@ export default function FloorPlanAdminPage() {
     }
   };
 
+  // ฟังก์ชันลบโต๊ะ
   const deleteTable = async (id: number) => {
     try {
       await fetch(`/api/tables/${id}`, { method: 'DELETE' });
@@ -475,8 +513,12 @@ export default function FloorPlanAdminPage() {
 
   return (
     <div className={`h-full md:h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto overflow-y-auto md:overflow-hidden ${pageTheme.bg}`}>
-      {/* Main Canvas - Moved to TOP on mobile for better visibility */}
+      {/* 
+        Main Canvas (พื้นที่แสดงผังร้าน)
+        บนมือถือจะอยู่ด้านบน (order-1)
+      */}
       <div className={`flex-1 order-1 md:order-2 ${pageTheme.card} rounded-2xl shadow-sm border overflow-hidden flex flex-col relative group min-h-[500px] md:min-h-0`}>
+        {/* ตัวนับจำนวนโต๊ะ */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           <div className={`${pageTheme.counter} backdrop-blur px-4 py-2 rounded-xl border text-[13px] font-black shadow-lg flex items-center gap-2`}>
             <Icon name="Square2StackIcon" size={16} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-500'} />
@@ -517,7 +559,7 @@ export default function FloorPlanAdminPage() {
         </div>
       </div>
 
-      {/* Sidebar / Toolbar - Moved to BOTTOM on mobile */}
+      {/* Sidebar / Toolbar ด้านซ้าย (หรือล่างในมือถือ) */}
       <div className="w-full md:w-80 flex flex-col gap-4 order-2 md:order-1">
         <div className={`${pageTheme.card} rounded-2xl shadow-sm border p-6 flex flex-col gap-6`}>
           <div>
@@ -527,7 +569,7 @@ export default function FloorPlanAdminPage() {
             <p className={`text-sm ${pageTheme.textSecondary} mt-1`}>{t('admin.floorPlan.subtitle')}</p>
           </div>
 
-          {/* Mode Switcher */}
+          {/* Mode Switcher: ปุ่มสลับระหว่างโหมดแก้ไขกับโหมดตรวจสอบ */}
           <div className={`flex ${pageTheme.modeSwitch} p-1.5 rounded-2xl shadow-inner`}>
             <button
               onClick={() => setViewMode('edit')}
@@ -551,7 +593,7 @@ export default function FloorPlanAdminPage() {
             </button>
           </div>
 
-          {/* Check Date Picker */}
+          {/* Controls สำหรับ Mode Check */}
           {viewMode === 'check' && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
               <div>
@@ -578,6 +620,7 @@ export default function FloorPlanAdminPage() {
             </div>
           )}
 
+          {/* Controls สำหรับ Mode Edit: ปุ่มเพิ่มโต๊ะ */}
           {viewMode === 'edit' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className={`text-xs font-bold ${pageTheme.textSecondary} uppercase tracking-widest`}>
@@ -612,6 +655,7 @@ export default function FloorPlanAdminPage() {
             </div>
           )}
 
+          {/* ปุ่มบันทึก (Save) */}
           <div className={`pt-4 border-t ${pageTheme.border}`}>
             <div className="flex flex-col gap-2">
               <button
@@ -641,7 +685,7 @@ export default function FloorPlanAdminPage() {
           </div>
         </div>
 
-        {/* Tip Card - Smaller or Hidden on Mobile if needed */}
+        {/* Tip Card: คำแนะนำการใช้งาน */}
         <div className={`${pageTheme.card} rounded-2xl p-6 shadow-sm border hidden md:block`}>
           <h3 className={`font-black ${pageTheme.text} text-base mb-3 flex items-center gap-2`}>
             <Icon name="InformationCircleIcon" size={20} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
@@ -655,7 +699,7 @@ export default function FloorPlanAdminPage() {
         </div>
       </div>
 
-
+      {/* Render Modals */}
       <EditModal
         table={editingTable}
         isOpen={!!editingTable}
@@ -665,7 +709,7 @@ export default function FloorPlanAdminPage() {
         t={t}
       />
 
-      {/* Booking Detail Modal */}
+      {/* Booking Detail Modal: แสดงรายละเอียดจองเมื่อคลิกที่โต๊ะ (Mode Check) */}
       {selectedBooking && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div

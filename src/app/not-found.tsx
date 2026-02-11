@@ -6,15 +6,18 @@ import Icon from '@/components/ui/AppIcon';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 
+// NotFound Page: หน้าที่แสดงเมื่อไม่พบหน้าที่ต้องการ (404)
 export default function NotFound() {
   const router = useRouter();
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
 
+  // ฟังก์ชันกลับไปหน้าแรก
   const handleGoHome = () => {
     router?.push('/');
   };
 
+  // ฟังก์ชันย้อนกลับไปหน้าก่อนหน้า
   const handleGoBack = () => {
     if (typeof window !== 'undefined') {
       window.history?.back();

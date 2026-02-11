@@ -25,6 +25,7 @@ export default function ReservationModal({
   const { adminTheme } = useAdminTheme();
   const locale = useAdminLocale();
   const { t } = useTranslation(locale);
+  // State สำหรับเก็บข้อมูลในฟอร์ม
   const [formData, setFormData] = useState({
     guest_name: '',
     guest_phone: '',
@@ -36,8 +37,10 @@ export default function ReservationModal({
     admin_notes: '',
   });
 
+  // State สำหรับเก็บข้อมูลโต๊ะทั้งหมด
   const [tables, setTables] = useState<Table[]>([]);
 
+  // ดึงข้อมูลโต๊ะจาก API เมื่อเปิด Modal
   useEffect(() => {
     const fetchTables = async () => {
       try {
@@ -56,6 +59,7 @@ export default function ReservationModal({
     }
   }, [isOpen, tables.length]);
 
+  // ตั้งค่าเริ่มต้นของฟอร์ม (กรณีแก้ไข -> ใช้ initialData, กรณีสร้างใหม่ -> Reset)
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -85,6 +89,7 @@ export default function ReservationModal({
 
   if (!isOpen) return null;
 
+  // ฟังก์ชันจัดการการกดปุ่มบันทึก
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -93,6 +98,7 @@ export default function ReservationModal({
     });
   };
 
+  // กำหนด Classname ตาม Theme (Light/Dark)
   const themeClasses = adminTheme === 'dark' ? {
     modal: 'bg-gray-800 border-gray-700',
     text: 'text-white',

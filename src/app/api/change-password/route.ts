@@ -4,10 +4,14 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 /**
  * Change Password for Currently Logged-in User
  * This endpoint allows users to change their own password without being logged out
+ * API สำหรับเปลี่ยนรหัสผ่านของผู้ใช้ที่ล็อกอินอยู่
  */
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient();
+
+        // Get current user
+        // ดึงข้อมูลผู้ใช้ปัจจุบัน
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -15,6 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 🔒 Admin Only - Only admins can change passwords
+        // 🔒 ตรวจสอบสิทธิ์ - เฉพาะ Admin เท่านั้นที่เปลี่ยนรหัสผ่านได้ (ตาม Logic เดิม)
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -27,10 +32,10 @@ export async function POST(request: NextRequest) {
             }, { status: 403 });
         }
 
-
-
         const { currentPassword, newPassword } = await request.json();
 
+        // Validate inputs
+        // ตรวจสอบข้อมูลที่ส่งมา
         if (!currentPassword || !newPassword) {
             return NextResponse.json({
                 error: 'Current password and new password are required'
@@ -44,6 +49,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify current password by attempting to sign in
+        // ยืนยันรหัสผ่านปัจจุบันโดยการลองล็อกอิน
         const { error: signInError } = await supabase.auth.signInWithPassword({
             email: user.email!,
             password: currentPassword,
@@ -56,6 +62,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update password using the user's own session
+        // อัปเดตรหัสผ่านใหม่
         const { error: updateError } = await supabase.auth.updateUser({
             password: newPassword,
         });

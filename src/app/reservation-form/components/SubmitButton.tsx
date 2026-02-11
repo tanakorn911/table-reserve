@@ -4,11 +4,17 @@ import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 
 interface SubmitButtonProps {
-  disabled?: boolean;
-  loading: boolean;
-  onClick: () => void;
+  disabled?: boolean; // ปิดการใช้งานปุ่มหรือไม่
+  loading: boolean; // สถานะกำลังโหลด
+  onClick: () => void; // ฟังก์ชันเมื่อคลิก
 }
 
+/**
+ * SubmitButton Component
+ * ปุ่มสำหรับส่งข้อมูลฟอร์ม
+ * - แสดง Loading state (spinner)
+ * - แสดง Icon และข้อความเมื่อพร้อมใช้งาน
+ */
 const SubmitButton: React.FC<SubmitButtonProps> = ({ disabled = false, loading, onClick }) => {
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
@@ -21,15 +27,15 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ disabled = false, loading, 
       className={`
         w-full flex items-center justify-center gap-2 px-8 py-4 rounded-md
         text-base font-medium transition-smooth min-h-[44px]
-        ${
-          disabled || loading
-            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-            : 'bg-primary text-primary-foreground shadow-warm-sm hover:shadow-warm-md hover:-translate-y-0.5 active:scale-[0.97]'
+        ${disabled || loading
+          ? 'bg-muted text-muted-foreground cursor-not-allowed'
+          : 'bg-primary text-primary-foreground shadow-warm-sm hover:shadow-warm-md hover:-translate-y-0.5 active:scale-[0.97]'
         }
       `}
     >
       {loading ? (
         <>
+          {/* Spinner เมื่อกำลังโหลด */}
           <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
           <span>กำลังส่ง...</span>
         </>

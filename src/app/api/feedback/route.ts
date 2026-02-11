@@ -4,12 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// POST: Submit Feedback
+// POST: ส่งข้อมูล Feedback ลงฐานข้อมูล
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { reservationId, rating, comment, name, phone } = body;
 
         // Validate required fields
+        // ตรวจสอบข้อมูลจำเป็น
         if (!reservationId || !rating) {
             return NextResponse.json(
                 { success: false, error: 'Missing required fields' },
@@ -18,6 +21,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate rating
+        // ตรวจสอบค่าคะแนน (ต้องอยู่ระหว่าง 1-5)
         if (rating < 1 || rating > 5) {
             return NextResponse.json(
                 { success: false, error: 'Rating must be between 1 and 5' },
@@ -28,6 +32,7 @@ export async function POST(request: NextRequest) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Check if feedback already exists for this reservation
+        // ตรวจสอบว่าเคยส่ง Feedback ไปแล้วหรือยัง
         const { data: existing } = await supabase
             .from('feedback')
             .select('id')
@@ -42,6 +47,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Insert feedback
+        // บันทึกข้อมูล Feedback ลงฐานข้อมูล
         const { data, error } = await supabase
             .from('feedback')
             .insert([{
@@ -76,6 +82,8 @@ export async function POST(request: NextRequest) {
     }
 }
 
+// GET: Fetch Feedback List (Admin)
+// GET: ดึงรายการ Feedback ทั้งหมด (สำหรับ Admin)
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -85,6 +93,7 @@ export async function GET(request: NextRequest) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Fetch feedback with pagination
+        // ดึงข้อมูล Feedback พร้อมแบ่งหน้า (Pagination)
         const { data, error, count } = await supabase
             .from('feedback')
             .select('*, reservations(guest_name, reservation_date)', { count: 'exact' })
@@ -96,6 +105,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Calculate average rating
+        // คำนวณคะแนนเฉลี่ย
         const { data: avgData } = await supabase
             .from('feedback')
             .select('rating');

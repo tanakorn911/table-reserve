@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // PUT /api/tables/[id] - Update a table
+// PUT: อัปเดตข้อมูลโต๊ะ (เฉพาะ Admin)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์ Admin
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -35,6 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // DELETE /api/tables/[id] - Delete a table
+// DELETE: ลบโต๊ะ (เฉพาะ Admin)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -44,6 +47,7 @@ export async function DELETE(
     const supabase = await createServerSupabaseClient();
 
     // Check Auth
+    // ตรวจสอบสิทธิ์ Admin
     const {
       data: { session },
     } = await supabase.auth.getSession();
