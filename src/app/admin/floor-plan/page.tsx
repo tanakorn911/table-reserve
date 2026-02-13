@@ -269,7 +269,7 @@ export default function FloorPlanAdminPage() {
   const [viewMode, setViewMode] = useState<'edit' | 'check'>('edit'); // โหมด: แก้ไข หรือ ตรวจสอบ
   const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
   const [checkTime, setCheckTime] = useState('18:00');
-  const [bookedTables, setBookedTables] = useState<{ id: number; time: string }[]>([]);
+  const [bookedTables, setBookedTables] = useState<any[]>([]);
 
   // โหลดข้อมูลโต๊ะเมื่อเข้าหน้านี้
   useEffect(() => {
@@ -329,11 +329,13 @@ export default function FloorPlanAdminPage() {
           })
           .map((r: any) => ({
             id: Number(r.table_number),
+            reservationId: r.id, // Keep the real UUID for updates
             time: r.reservation_time.substring(0, 5),
             guestName: r.guest_name,
             guestPhone: r.guest_phone,
             partySize: r.party_size,
             status: r.status,
+            bookingCode: r.booking_code,
           }));
         setBookedTables(booked);
       } else {
@@ -386,7 +388,39 @@ export default function FloorPlanAdminPage() {
   };
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
+  const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+
+  // Function to update booking status (from Floor Plan)
+  const handleUpdateStatus = async (reservationId: string, newStatus: string) => {
+    setUpdatingBookingId(reservationId);
+    try {
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        // Update local state for bookedTables
+        setBookedTables((prev) =>
+          prev.map((b) => (b.reservationId === reservationId ? { ...b, status: newStatus } : b))
+        );
+        // Also update selectedBooking for the modal UI
+        if (selectedBooking && selectedBooking.reservationId === reservationId) {
+          setSelectedBooking({ ...selectedBooking, status: newStatus });
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || 'Failed to update status'}`);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Connection error. Please try again.');
+    } finally {
+      setUpdatingBookingId(null);
+    }
+  };
 
   // ฟังก์ชันบันทึกตำแหน่งโต๊ะทั้งหมด (Save Layout)
   const handleSaveLayout = async () => {
@@ -764,12 +798,76 @@ export default function FloorPlanAdminPage() {
                   <span
                     className={`font-bold px-2 py-0.5 rounded text-xs ${selectedBooking.status === 'confirmed'
                       ? 'bg-green-100/10 text-green-500 border border-green-500/20'
-                      : 'bg-yellow-100/10 text-yellow-500 border border-yellow-500/20'
+                      : selectedBooking.status === 'completed'
+                        ? 'bg-gray-100/10 text-gray-500 border border-gray-500/20'
+                        : 'bg-yellow-100/10 text-yellow-500 border border-yellow-500/20'
                       }`}
                   >
-                    {selectedBooking.status}
+                    {selectedBooking.status === 'pending'
+                      ? t('admin.reservations.filter.pending')
+                      : selectedBooking.status === 'confirmed'
+                        ? t('admin.reservations.filter.confirmed')
+                        : selectedBooking.status === 'cancelled'
+                          ? t('admin.reservations.filter.cancelled')
+                          : selectedBooking.status === 'completed'
+                            ? t('admin.reservations.filter.completed')
+                            : selectedBooking.status}
                   </span>
                 </div>
+              </div>
+
+              {/* Action Buttons for Booking */}
+              <div className="flex flex-col gap-2 pt-2">
+                {selectedBooking.status === 'pending' && (
+                  <button
+                    onClick={() => handleUpdateStatus(selectedBooking.reservationId, 'confirmed')}
+                    disabled={!!updatingBookingId}
+                    className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-600/20"
+                  >
+                    {updatingBookingId === selectedBooking.reservationId ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Icon name="CheckCircleIcon" size={20} />
+                        <span>{t('admin.reservations.actions.approve')}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {selectedBooking.status === 'confirmed' && (
+                  <button
+                    onClick={() => handleUpdateStatus(selectedBooking.reservationId, 'completed')}
+                    disabled={!!updatingBookingId}
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20"
+                  >
+                    {updatingBookingId === selectedBooking.reservationId ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Icon name="CheckCircleIcon" size={20} />
+                        <span>{t('admin.reservations.actions.complete')}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {(selectedBooking.status === 'pending' || selectedBooking.status === 'confirmed') && (
+                  <button
+                    onClick={() => {
+                      if (confirm(t('admin.reservations.actions.cancel') + '?')) {
+                        handleUpdateStatus(selectedBooking.reservationId, 'cancelled');
+                      }
+                    }}
+                    disabled={!!updatingBookingId}
+                    className={`w-full py-3 rounded-xl font-bold border transition-all ${adminTheme === 'dark'
+                      ? 'border-red-900/50 text-red-400 hover:bg-red-900/20'
+                      : 'border-red-100 text-red-600 hover:bg-red-50'
+                      }`}
+                  >
+                    {t('admin.reservations.actions.cancel')}
+                  </button>
+                )}
               </div>
             </div>
           </div>

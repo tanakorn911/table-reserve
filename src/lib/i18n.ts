@@ -304,6 +304,7 @@ export const translations = {
     'common.error': 'ข้อผิดพลาด',
     'common.uploading': 'กำลังอัปโหลด...',
     'common.processing': 'กำลังประมวลผล...',
+    'common.people': 'ท่าน',
 
     // Admin Login & Roles
     'admin.login.title': 'ลงชื่อเข้าใช้ระบบ (Admin)',
@@ -634,6 +635,7 @@ export const translations = {
     'common.loading': 'Loading...',
     'common.success': 'Success',
     'common.error': 'Error',
+    'common.people': 'people',
 
     // Admin Login & Roles
     'admin.login.title': 'Admin Login',
