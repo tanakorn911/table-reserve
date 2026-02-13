@@ -594,7 +594,7 @@ export default function FloorPlanAdminPage() {
       </div>
 
       {/* Sidebar / Toolbar ด้านซ้าย (หรือล่างในมือถือ) */}
-      <div className="w-full md:w-80 flex flex-col gap-4 order-2 md:order-1">
+      <div className="w-full md:w-80 flex flex-col gap-4 order-2 md:order-1 md:overflow-y-auto md:pr-2">
         <div className={`${pageTheme.card} rounded-2xl shadow-sm border p-6 flex flex-col gap-6`}>
           <div>
             <h1 className={`text-2xl font-black ${pageTheme.text} tracking-tight`}>
