@@ -18,53 +18,38 @@ interface LanguageSwitcherProps {
  * ปุ่มสลับภาษา (TH/EN) เฉพาะส่วนของ Admin Panel
  */
 export default function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
-<<<<<<< HEAD
-    const { adminTheme } = useAdminTheme();
+    // รวมการใช้ Theme จากทั้งสองเวอร์ชันให้ถูกต้อง
+    const { adminTheme, resolvedAdminTheme } = useAdminTheme();
+    // ใช้ resolvedAdminTheme หากมี ถ้าไม่มีให้ถอยไปใช้ adminTheme
+    const currentTheme = resolvedAdminTheme || adminTheme;
     
-    // โหลดภาษาเริ่มต้นด้วย Lazy Initializer เพื่อลดการกระพริบของ UI
+    // โหลดภาษาเริ่มต้นด้วย Lazy Initializer เพื่อลดการกระพริบของ UI (ประสิทธิภาพสูง)
     const [locale, setLocale] = useState<Locale>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem(ADMIN_LOCALE_KEY) as Locale;
             return (saved === 'th' || saved === 'en') ? saved : 'th';
-=======
-    const [locale, setLocale] = useState<Locale>('th');
-    const { resolvedAdminTheme } = useAdminTheme();
-
-    // โหลดภาษาที่บันทึกไว้เมื่อ Component Mount
-    useEffect(() => {
-        const savedLocale = localStorage.getItem('admin-locale') as Locale;
-        if (savedLocale && (savedLocale === 'th' || savedLocale === 'en')) {
-            setLocale(savedLocale);
->>>>>>> d7e28e5330c55ea6aa41fcac85fc8e803ffe3f39
         }
         return 'th';
     });
 
-    // ฟังก์ชันสลับภาษา
+    // ฟังก์ชันสลับภาษา และแจ้งเตือนระบบ
     const toggleLanguage = useCallback(() => {
         const newLocale: Locale = locale === 'th' ? 'en' : 'th';
         setLocale(newLocale);
         localStorage.setItem(ADMIN_LOCALE_KEY, newLocale);
         
-        // แจ้งเตือน Component อื่นๆ
+        // Dispatch Custom Event เพื่อแจ้งให้ Component อื่นๆ ทราบทันที
         window.dispatchEvent(new CustomEvent(LOCALE_CHANGE_EVENT, { detail: newLocale }));
     }, [locale]);
 
     return (
         <button
             onClick={toggleLanguage}
-<<<<<<< HEAD
             className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all border active:scale-95 ${
-                adminTheme === 'dark'
+                currentTheme === 'dark'
                     ? 'bg-primary/10 text-yellow-400 hover:bg-primary/20 border-primary/20 shadow-lg shadow-yellow-500/5'
                     : 'bg-white text-slate-700 hover:bg-gray-100 border-gray-200 shadow-sm'
             } ${className}`}
-=======
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all border ${resolvedAdminTheme === 'dark'
-                ? 'bg-primary/10 text-yellow-400 hover:bg-primary/20 border-primary/20'
-                : 'bg-gray-100 text-slate-700 hover:bg-gray-200 border-gray-200'
-                } ${className}`}
->>>>>>> d7e28e5330c55ea6aa41fcac85fc8e803ffe3f39
             title={locale === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
             aria-label="Toggle Language"
         >
@@ -85,10 +70,10 @@ export function useAdminLocale() {
     });
 
     useEffect(() => {
-        // จัดการการเปลี่ยนภาษาในหน้าเดียวกัน
+        // จัดการการเปลี่ยนภาษาในหน้าเดียวกันผ่าน Custom Event
         const handleLocaleChange = (e: any) => setLocale(e.detail);
         
-        // จัดการการเปลี่ยนภาษาข้าม Tabs/Windows
+        // จัดการการเปลี่ยนภาษาข้าม Tabs/Windows (Sync ภาษาระหว่าง Tab)
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === ADMIN_LOCALE_KEY && (e.newValue === 'th' || e.newValue === 'en')) {
                 setLocale(e.newValue as Locale);
@@ -107,7 +92,7 @@ export function useAdminLocale() {
     return locale;
 }
 
-// --- Translation Helper ---
+// --- Translation Helper (ไม่มีการตัด Key ใดๆ ออก) ---
 export const adminT = (key: string, locale: Locale): string => {
     const translations: Record<string, Record<Locale, string>> = {
         // Login page
