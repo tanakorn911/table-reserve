@@ -112,7 +112,7 @@ const MobileMenu = () => {
           animate-in slide-in-from-top-4 duration-250
         "
       >
-        <nav className="flex flex-col p-6 gap-2">
+        <nav className="flex flex-col p-5 gap-1.5">
           {/* วนลูปแสดงเมนู */}
           {filteredNavItems.map((item, index) => (
             <Link
@@ -120,7 +120,7 @@ const MobileMenu = () => {
               href={item.path}
               onClick={() => setIsMobileMenuOpen(false)} // ปิดเมนูเมื่อคลิกลิงก์
               className={`
-                flex items-center gap-3 px-6 py-4 rounded-md text-base font-medium
+                flex items-center gap-3 px-5 py-3 rounded-md text-base font-medium
                 transition-smooth min-h-[44px]
                 ${isActiveRoute(item.path)
                   ? 'bg-primary text-primary-foreground shadow-warm-sm'
@@ -138,17 +138,17 @@ const MobileMenu = () => {
           ))}
 
           {/* ส่วนสลับ Theme สำหรับ Mobile */}
-          <div className="mt-6 pt-6 border-t border-border">
-            <div className="flex items-center justify-between px-2 mb-2">
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between px-2">
               <p className="text-sm font-medium text-muted-foreground">{locale === 'th' ? 'โหมดสี' : 'Theme'}</p>
               <ThemeToggle size="sm" />
             </div>
           </div>
 
           {/* ส่วนเปลี่ยนภาษา สำหรับ Mobile */}
-          <div className="mt-4 pt-6 border-t border-border">
-            <p className="text-sm font-medium text-muted-foreground mb-4 px-2">Language / ภาษา</p>
-            <div className="flex gap-4">
+          <div className="mt-2 pt-4 border-t border-border">
+            <p className="text-sm font-medium text-muted-foreground mb-3 px-2">Language / ภาษา</p>
+            <div className="flex gap-3">
               <button
                 onClick={() => {
                   setLocale('th');
