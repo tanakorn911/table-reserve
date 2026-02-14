@@ -10,6 +10,7 @@ import {
   Cog6ToothIcon,
   MapIcon,
   XMarkIcon,
+  SpeakerWaveIcon,
 } from '@heroicons/react/24/outline';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminLocale, adminT } from './LanguageSwitcher';
@@ -76,6 +77,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       icon: CalendarDaysIcon,
       roles: ['admin', 'staff'],
     },
+    { name: 'sidebar.advertisements', href: '/admin/advertisements', icon: SpeakerWaveIcon, roles: ['admin'] },
     { name: 'sidebar.floorPlan', href: '/admin/floor-plan', icon: MapIcon, roles: ['admin'] }, // เฉพาะ Admin
     { name: 'sidebar.settings', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['admin'] }, // เฉพาะ Admin
   ];

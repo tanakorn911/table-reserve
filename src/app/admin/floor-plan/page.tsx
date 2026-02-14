@@ -69,7 +69,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
     shapeInactive: 'border-gray-600 bg-gray-700 text-gray-400 hover:border-gray-500',
     shapeBorderActive: 'border-gray-900',
     shapeBorderInactive: 'border-gray-500',
-    saveBtn: 'bg-yellow-500 text-gray-900 shadow-yellow-500/20 hover:bg-yellow-400',
+    saveBtn: 'bg-[#4a6fa5] text-white shadow-[#4a6fa5]/20 hover:bg-[#3f5f8e]',
     deleteBtn: 'bg-red-900/30 text-red-400 hover:bg-red-900/50',
     focusRing: 'focus:ring-yellow-500/10',
   } : {
@@ -514,7 +514,7 @@ export default function FloorPlanAdminPage() {
     dashedBorder: 'border-gray-600 hover:border-yellow-500 hover:bg-yellow-500/10',
     dashedText: 'text-gray-400 group-hover:text-yellow-500',
     dashedIcon: 'border-gray-500 group-hover:border-yellow-500',
-    primaryBtn: 'bg-yellow-500 hover:bg-yellow-400 text-gray-900 shadow-yellow-500/20',
+    primaryBtn: 'bg-[#4a6fa5] hover:bg-[#3f5f8e] text-white shadow-sm',
   } : {
     bg: 'bg-gray-50',
     card: 'bg-white border-gray-200',
