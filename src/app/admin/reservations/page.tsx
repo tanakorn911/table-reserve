@@ -20,7 +20,7 @@ import { useTranslation } from '@/lib/i18n';
 
 export default function AdminReservationsPage() {
   const locale = useAdminLocale();
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
   // State สำหรับเก็บข้อมูลการจองทั้งหมดที่ดึงมาจาก API
   const [reservations, setReservations] = useState<any[]>([]);
@@ -235,7 +235,7 @@ export default function AdminReservationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-        <h1 className={`text-2xl font-bold ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.reservations.title')}</h1>
+        <h1 className={`text-2xl font-bold ${resolvedAdminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.reservations.title')}</h1>
 
         {/* Action Bar */}
         {/* ส่วนปุ่มดำเนินการ: Export CSV และ Create Reservation */}
@@ -319,7 +319,7 @@ export default function AdminReservationsPage() {
         </div>
 
         <select
-          className="w-full md:w-auto px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%222%22%20stroke%3D%22%236b7280%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_0.75rem_center] bg-no-repeat"
+          className="w-full md:w-auto px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%222%22%20stroke%3D%22%236b7280%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22/%3E%3C/svg%3E')] bg-size-[20px_20px] bg-position-[right_0.75rem_center] bg-no-repeat"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
         >

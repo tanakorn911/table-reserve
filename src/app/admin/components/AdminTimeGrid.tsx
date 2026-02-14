@@ -31,12 +31,12 @@ interface AdminTimeGridProps {
 const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onChange }) => {
   const locale = useAdminLocale();
   const { t } = useTranslation(locale);
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Theme configuration for colors
-  const themeColors = adminTheme === 'dark' ? {
+  const themeColors = resolvedAdminTheme === 'dark' ? {
     loading: 'text-gray-400',
     tips: 'text-gray-400 bg-gray-800/50',
     slot: {

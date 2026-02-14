@@ -33,7 +33,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const supabase = createClientSupabaseClient();
   const [role, setRole] = useState<'admin' | 'staff'>('staff'); // เก็บ Role
   const locale = useAdminLocale();
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
 
   // ตรวจสอบ Role ของผู้ใช้เพื่อกรองเมนู
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const menuItems = allMenuItems.filter((item) => item.roles.includes(role));
 
   // กำหนด Class ตาม Theme
-  const themeClasses = adminTheme === 'dark'
+  const themeClasses = resolvedAdminTheme === 'dark'
     ? {
       overlay: 'bg-black/70',
       sidebar: 'bg-gray-800/95 border-yellow-500/20',

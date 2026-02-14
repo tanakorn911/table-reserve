@@ -19,7 +19,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true); // สถานะการโหลดข้อมูล User
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // สถานะเปิด/ปิด Sidebar (Mobile)
   const locale = useAdminLocale(); // ภาษาที่เลือกใช้ใน Admin
-  const { adminTheme } = useAdminTheme(); // Theme ปัจจุบัน (light/dark)
+  const { resolvedAdminTheme } = useAdminTheme(); // Theme ปัจจุบัน (light/dark)
 
   // NOTE: เอา Auto-logout เมื่อปิด Tab ออก เพราะทำให้เกิดปัญหาเมื่อ Refresh หน้า
   // การจัดการ Session จะปล่อยให้เป็นหน้าที่ของ Supabase (Token Expiry)
@@ -94,7 +94,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   // กำหนด Class CSS ตาม Theme ที่เลือก (Light/Dark)
-  const themeClasses = adminTheme === 'dark'
+  const themeClasses = resolvedAdminTheme === 'dark'
     ? {
       container: 'bg-gray-900',
       header: 'bg-gray-800/50 border-yellow-500/20',
@@ -145,7 +145,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   router.refresh();
                 }
               }}
-              className={`md:hidden p-2 rounded-lg transition-all border ${adminTheme === 'dark'
+              className={`md:hidden p-2 rounded-lg transition-all border ${resolvedAdminTheme === 'dark'
                 ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'
                 : 'bg-red-50 text-red-500 hover:bg-red-100 border-red-200'
                 }`}

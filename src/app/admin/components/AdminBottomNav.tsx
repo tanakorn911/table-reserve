@@ -27,7 +27,7 @@ export default function AdminBottomNav() {
     const supabase = createClientSupabaseClient();
     const [role, setRole] = useState<'admin' | 'staff'>('staff');
     const locale = useAdminLocale();
-    const { adminTheme } = useAdminTheme();
+    const { resolvedAdminTheme } = useAdminTheme();
 
     // ฟังก์ชัน Logout (ไม่ได้ใช้ใน Bottom Nav แต่เตรียมไว้เผื่อจำเป็น)
     const handleLogout = async () => {
@@ -78,7 +78,7 @@ export default function AdminBottomNav() {
     const menuItems = allMenuItems.filter((item) => item.roles.includes(role));
 
     // กำหนด Class ตาม Theme
-    const themeClasses = adminTheme === 'dark'
+    const themeClasses = resolvedAdminTheme === 'dark'
         ? {
             container: 'bg-gray-900/95 border-yellow-500/20',
             active: 'text-yellow-400',
@@ -93,7 +93,7 @@ export default function AdminBottomNav() {
         };
 
     return (
-        <div className={`md:hidden fixed bottom-0 left-0 right-0 ${themeClasses.container} backdrop-blur-md border-t z-[60] pb-safe`}>
+        <div className={`md:hidden fixed bottom-0 left-0 right-0 ${themeClasses.container} backdrop-blur-md border-t z-60 pb-safe`}>
             <nav className="flex items-center justify-around h-16">
                 {menuItems.map((item) => {
                     const isActive = pathname === item.href;
