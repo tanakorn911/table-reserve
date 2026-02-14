@@ -11,7 +11,6 @@ export const translations = {
     'nav.reserve': 'จองโต๊ะ',
     'nav.checkStatus': 'ตรวจสอบสถานะ',
     'nav.admin': 'ผู้ดูแลระบบ',
-    'nav.language': 'ภาษา',
 
     // Landing Page
     'hero.title': 'ยินดีต้อนรับสู่ ซาโวรี่ บิสโทร',
@@ -307,6 +306,9 @@ export const translations = {
     'common.processing': 'กำลังประมวลผล...',
     'common.people': 'ท่าน',
 
+    // Sidebar Advertisements
+    'sidebar.advertisements': 'ลงโฆษณา',
+
     // Admin Login & Roles
     'admin.login.title': 'ลงชื่อเข้าใช้ระบบ (Admin)',
     'admin.login.email': 'อีเมลสารพัดประโยชน์',
@@ -335,43 +337,8 @@ export const translations = {
     'admin.ai.title': 'ข้อมูลเชิงลึกจาก AI',
     'admin.ai.subtitle': 'ขับเคลื่อนโดย Gemini',
     'admin.ai.analyzing': 'กำลังวิเคราะห์ข้อมูล...',
-
-    // Theme Toggle
-    'theme.light': 'โหมดสว่าง',
-    'theme.dark': 'โหมดมืด',
-    'theme.system': 'โหมดระบบ',
-    'theme.mode': 'โหมดสี',
-
-    // Feedback Page
-    'feedback.title': 'ให้คะแนนประสบการณ์ของคุณ',
-    'feedback.subtitle': 'ความคิดเห็นของคุณช่วยให้เราพัฒนาได้ดียิ่งนี้',
-    'feedback.label.rating': 'คุณพอใจกับบริการของเราแค่ไหน?',
-    'feedback.label.comment': 'ความคิดเห็นเพิ่มเติม',
-    'feedback.comment.placeholder': 'เล่าให้เราฟังหน่อยว่าประสบการณ์ของคุณเป็นอย่างไร...',
-    'feedback.submit': 'ส่งความคิดเห็น',
-    'feedback.submitting': 'กำลังส่ง...',
-    'feedback.success.title': 'ขอบคุณค่ะ/ครับ! 💖',
-    'feedback.success.desc': 'ความคิดเห็นของคุณมีค่ามากสำหรับเรา เราจะนำไปพัฒนาบริการให้ดียิ่งขึ้น',
-    'feedback.placeholder.optional': '(ไม่บังคับ)',
-    'feedback.error.code': 'กรุณาระบุรหัสการจอง',
-    'feedback.error.notFound': 'ไม่พบรหัสการจองนี้',
-    'feedback.error.rating': 'กรุณาให้คะแนน',
-    'feedback.error.general': 'เกิดข้อผิดพลาด กรุณาลองใหม่',
-    'feedback.rating.1': 'ไม่พอใจมาก',
-    'feedback.rating.2': 'ไม่ค่อยพอใจ',
-    'feedback.rating.3': 'พอใช้ได้',
-    'feedback.rating.4': 'พอใจ',
-    'feedback.rating.5': 'ยอดเยี่ยม!',
-    'feedback.thankyou': 'ขอบคุณที่ใช้บริการ Savory Bistro 🍽️',
-
-    // Admin Modals & Extra
-    'admin.reservations.modal.new': 'สร้างรายการจองใหม่',
-    'admin.reservations.modal.edit': 'แก้ไขข้อมูลการจอง',
-    'admin.reservations.table.optional': 'ไม่บังคับ',
-    'admin.reservations.table.walkin': 'ไม่ระบุ / จัดหน้างาน',
-    'admin.reservations.table.fromCustomer': 'จากลูกค้า',
-    'admin.reservations.table.clickFull': '* คลิกที่รูปเพื่อดูขนาดใหญ่',
-    'admin.reservations.notes.placeholder': 'เช่น ลูกค้าเจ้าประจำ, แพ้อาหาร, หรือประวัติ No-show...',
+    'admin.advertisements.title': 'จัดการโฆษณา',
+    'admin.advertisements.subtitle': 'เพิ่ม ลบ และจัดการแบนเนอร์ที่จะแสดงบนหน้าหลัก',
   },
   en: {
     // Common
@@ -381,23 +348,27 @@ export const translations = {
     'nav.reserve': 'Reserve a Table',
     'nav.checkStatus': 'Check Status',
     'nav.admin': 'Admin',
-    'nav.language': 'Language',
 
     // Landing Page
     'hero.title': 'Welcome to Savory Bistro',
-    'hero.subtitle': 'Where Every Meal Becomes a Memory',
+    'hero.subtitle':
+      'Where Every Meal Becomes a Memory',
     'hero.cta': 'Reserve a Table Now',
     'hero.imageAlt': 'Elegant restaurant atmosphere',
 
     'info.whyChooseUs': 'Why Choose Us',
-    'info.whyChooseUsDesc': 'Experience exceptional dining with our commitment to quality, service, and atmosphere.',
+    'info.whyChooseUsDesc':
+      'Experience exceptional dining with our commitment to quality, service, and atmosphere.',
 
     'info.premium.title': 'Premium Service',
-    'info.premium.desc': 'Convenient, fast, and highly efficient online table booking service to meet all your needs.',
+    'info.premium.desc':
+      'Convenient, fast, and highly efficient online table booking service to meet all your needs.',
     'info.service.title': 'Professional Team',
-    'info.service.desc': 'Expert team ready to serve you 24/7, resolving issues quickly and efficiently.',
+    'info.service.desc':
+      'Expert team ready to serve you 24/7, resolving issues quickly and efficiently.',
     'info.modern.title': 'Modern System',
-    'info.modern.desc': 'Latest technology for a smooth, secure, and user-friendly booking experience.',
+    'info.modern.desc':
+      'Latest technology for a smooth, secure, and user-friendly booking experience.',
 
     'trust.ssl.title': 'SSL Secured',
     'trust.ssl.desc': 'Your data is protected with high-level encryption.',
@@ -407,7 +378,8 @@ export const translations = {
     'trust.health.desc': 'Meets safety and hygiene standards.',
 
     'holiday.title': 'Special Holiday Announcement',
-    'holiday.message': 'We apologize for the inconvenience as we will be closed on the following dates:',
+    'holiday.message':
+      'We apologize for the inconvenience as we will be closed on the following dates:',
 
     'contact.visitUs': 'Visit Us',
     'contact.subtitle': 'Find us at our convenient location.',
@@ -468,7 +440,6 @@ export const translations = {
     'validation.time.required': 'Please select time',
     'validation.table.required': 'Please select a table',
     'validation.attachSlip': 'Please fill in details and attach payment slip',
-    'validation.fillAll': 'Please fill in all fields',
 
     // Loading
     'loading.uploadTitle': 'Uploading...',
@@ -484,9 +455,6 @@ export const translations = {
     'payment.scan': 'Scan to Pay',
     'payment.ready': 'Slip Attached',
     'payment.amount': 'Deposit 200.00 THB',
-    'payment.promptpay': 'PromptPay',
-    'payment.prepayment': 'Advance Deposit',
-    'payment.deposit_info': 'Deposit of 200 THB will be deducted from your total bill (No booking fee)',
     'payment.upload': 'Upload Payment Slip',
     'payment.upload.label': 'Click here to upload slip',
     'payment.upload.click': 'Click to change image',
@@ -495,7 +463,8 @@ export const translations = {
 
     // Policy
     'policy.title': 'Reservation Policy',
-    'policy.desc': 'Please arrive within 15 minutes of your booking time. For groups larger than 6, please call us directly at 081-222-2222',
+    'policy.desc':
+      'Please arrive within 15 minutes of your booking time. For groups larger than 6, please call us directly at 081-222-2222',
 
     // Alerts
     'alert.tableTaken': 'Sorry, this table has just been booked. Please select another.',
@@ -538,10 +507,10 @@ export const translations = {
 
     // Not Found
     'notFound.title': 'Page Not Found',
-    'notFound.description': 'The page you are looking for does not exist. Please check the URL or go back to home.',
+    'notFound.description':
+      'The page you are looking for does not exist. Please check the URL or go back to home.',
     'notFound.goBack': 'Go Back',
 
-    // Admin Floor Plan
     'admin.floorPlan.title': 'Floor Plan Management',
     'admin.floorPlan.subtitle': 'Manage restaurant layout and table positions',
     'admin.floorPlan.save': 'Save Layout',
@@ -569,25 +538,36 @@ export const translations = {
     'admin.floorPlan.showingBookingsWait': '* Showing bookings for 2 hours after selected time',
     'admin.floorPlan.tableCount': '{count} Tables',
     'admin.floorPlan.checkButton': 'Check Status',
+    'admin.floorPlan.legend.available': 'Available',
+    'admin.floorPlan.legend.selected': 'Selected',
+    'admin.floorPlan.legend.booked': 'Booked',
+    'admin.floorPlan.noTablesInZone': 'No tables in this zone',
+    'admin.floorPlan.allZones': 'All Zones',
+    'admin.floorPlan.entrance': 'Entrance',
     'admin.floorPlan.zone.indoor': 'Indoor Zone',
     'admin.floorPlan.zone.outdoor': 'Outdoor Zone',
     'admin.floorPlan.zone.vip': 'VIP Zone',
     'admin.floorPlan.cashier': 'Cashier Counter',
-    'admin.floorPlan.entrance': 'Entrance',
-    'admin.floorPlan.allZones': 'All Zones',
-    'admin.floorPlan.noTablesInZone': 'No tables in this zone',
-    'admin.floorPlan.legend.available': 'Available',
-    'admin.floorPlan.legend.selected': 'Selected',
-    'admin.floorPlan.legend.booked': 'Booked',
-    'admin.floorPlan.bookingDetails': 'Booking Details',
-    'admin.floorPlan.nextAvailable': 'Next Available',
-    'admin.floorPlan.timeGridTips': '* Red = Booked, White = Available',
 
     // Wizard Steps
     'wizard.step.schedule': 'Schedule',
     'wizard.step.table': 'Select Table',
     'wizard.step.confirm': 'Confirm',
     'wizard.fullBooked': 'Full Booked',
+
+    // Table Status
+    'table.status.available': 'Available',
+    'table.status.booked': 'Booked',
+    'table.status.selected': 'Selected',
+    'table.status.unavailable': 'Unavailable',
+    'payment.promptpay': 'PromptPay',
+    'payment.prepayment': 'Advance Deposit',
+    'payment.deposit_info':
+      'Deposit of 200 THB will be deducted from your total bill (No booking fee)',
+    'table.clickToSelect': 'Click table to select',
+    'table.selectedLabel': 'Selected Table',
+    'table.selectFromMap': 'Please select a table from the map',
+    'validation.fillAll': 'Please fill in all fields',
     'wizard.back': 'Back',
     'wizard.continue': 'Continue',
     'wizard.table': 'Select Table',
@@ -595,17 +575,8 @@ export const translations = {
     'wizard.view.list': 'List View',
     'wizard.ai.magic': 'AI Table Helper ✨',
 
-    // Table Status
-    'table.status.available': 'Available',
-    'table.status.booked': 'Booked',
-    'table.status.selected': 'Selected',
-    'table.status.unavailable': 'Unavailable',
-    'table.clickToSelect': 'Click table to select',
-    'table.selectedLabel': 'Selected Table',
-    'table.selectFromMap': 'Please select a table from the map',
-
     // Admin Dashboard
-    'admin.dashboard.title': "Today's Reservations Overview",
+    'admin.dashboard.title': 'Today\'s Reservations Overview',
     'admin.dashboard.subtitle': 'Reservations for',
     'admin.dashboard.today': 'Today',
     'admin.dashboard.week': 'This Week',
@@ -669,8 +640,6 @@ export const translations = {
     'common.loading': 'Loading...',
     'common.success': 'Success',
     'common.error': 'Error',
-    'common.uploading': 'Uploading...',
-    'common.processing': 'Processing...',
     'common.people': 'people',
 
     // Admin Login & Roles
@@ -701,43 +670,10 @@ export const translations = {
     'admin.ai.title': 'AI Insights',
     'admin.ai.subtitle': 'Powered by Gemini',
     'admin.ai.analyzing': 'Analyzing data...',
-
-    // Theme Toggle
-    'theme.light': 'Light Mode',
-    'theme.dark': 'Dark Mode',
-    'theme.system': 'System Mode',
-    'theme.mode': 'Color Mode',
-
-    // Feedback Page
-    'feedback.title': 'Rate Your Experience',
-    'feedback.subtitle': 'Your feedback helps us improve our service.',
-    'feedback.label.rating': 'How satisfied are you with our service?',
-    'feedback.label.comment': 'Additional Comments',
-    'feedback.comment.placeholder': 'Tell us about your experience...',
-    'feedback.submit': 'Submit Feedback',
-    'feedback.submitting': 'Submitting...',
-    'feedback.success.title': 'Thank you! 💖',
-    'feedback.success.desc': 'Your feedback is very valuable to us. We will use it to further improve our service.',
-    'feedback.placeholder.optional': '(Optional)',
-    'feedback.error.code': 'Please specify booking code',
-    'feedback.error.notFound': 'Booking code not found',
-    'feedback.error.rating': 'Please provide a rating',
-    'feedback.error.general': 'Something went wrong, please try again',
-    'feedback.rating.1': 'Very Dissatisfied',
-    'feedback.rating.2': 'Somewhat Dissatisfied',
-    'feedback.rating.3': 'Neutral',
-    'feedback.rating.4': 'Satisfied',
-    'feedback.rating.5': 'Excellent!',
-    'feedback.thankyou': 'Thank you for choosing Savory Bistro 🍽️',
-
-    // Admin Modals & Extra
-    'admin.reservations.modal.new': 'New Reservation',
-    'admin.reservations.modal.edit': 'Edit Reservation',
-    'admin.reservations.table.optional': 'Optional',
-    'admin.reservations.table.walkin': 'Walk-in / Assign Later',
-    'admin.reservations.table.fromCustomer': 'from customer',
-    'admin.reservations.table.clickFull': '* Click to view full image',
-    'admin.reservations.notes.placeholder': 'e.g., VIP, Food allergies, or No-show history...',
+    'admin.advertisements.title': 'Manage Advertisements',
+    'admin.advertisements.subtitle': 'Create, remove and manage banners shown on the homepage',
+    // Sidebar Advertisements
+    'sidebar.advertisements': 'Advertisements',
   },
 };
 

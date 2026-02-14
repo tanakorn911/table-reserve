@@ -103,6 +103,18 @@ model Feedback {
   @@schema("public")
 }
 
+model Advertisement {
+  id         String   @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  title      String   @db.Text
+  image_url  String   @db.Text
+  link       String?  @db.Text
+  active     Boolean? @default(true)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@map("advertisements")
+  @@schema("public")
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model audit_log_entries {
