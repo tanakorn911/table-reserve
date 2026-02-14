@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage'; // Component แสดงรูปภาพที่ Optimized โดย Next.js

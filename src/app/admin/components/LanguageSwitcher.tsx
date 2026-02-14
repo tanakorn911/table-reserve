@@ -18,6 +18,7 @@ interface LanguageSwitcherProps {
  * ปุ่มสลับภาษา (TH/EN) เฉพาะส่วนของ Admin Panel
  */
 export default function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
+<<<<<<< HEAD
     const { adminTheme } = useAdminTheme();
     
     // โหลดภาษาเริ่มต้นด้วย Lazy Initializer เพื่อลดการกระพริบของ UI
@@ -25,6 +26,16 @@ export default function LanguageSwitcher({ className = '' }: LanguageSwitcherPro
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem(ADMIN_LOCALE_KEY) as Locale;
             return (saved === 'th' || saved === 'en') ? saved : 'th';
+=======
+    const [locale, setLocale] = useState<Locale>('th');
+    const { resolvedAdminTheme } = useAdminTheme();
+
+    // โหลดภาษาที่บันทึกไว้เมื่อ Component Mount
+    useEffect(() => {
+        const savedLocale = localStorage.getItem('admin-locale') as Locale;
+        if (savedLocale && (savedLocale === 'th' || savedLocale === 'en')) {
+            setLocale(savedLocale);
+>>>>>>> d7e28e5330c55ea6aa41fcac85fc8e803ffe3f39
         }
         return 'th';
     });
@@ -42,11 +53,18 @@ export default function LanguageSwitcher({ className = '' }: LanguageSwitcherPro
     return (
         <button
             onClick={toggleLanguage}
+<<<<<<< HEAD
             className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all border active:scale-95 ${
                 adminTheme === 'dark'
                     ? 'bg-primary/10 text-yellow-400 hover:bg-primary/20 border-primary/20 shadow-lg shadow-yellow-500/5'
                     : 'bg-white text-slate-700 hover:bg-gray-100 border-gray-200 shadow-sm'
             } ${className}`}
+=======
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all border ${resolvedAdminTheme === 'dark'
+                ? 'bg-primary/10 text-yellow-400 hover:bg-primary/20 border-primary/20'
+                : 'bg-gray-100 text-slate-700 hover:bg-gray-200 border-gray-200'
+                } ${className}`}
+>>>>>>> d7e28e5330c55ea6aa41fcac85fc8e803ffe3f39
             title={locale === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
             aria-label="Toggle Language"
         >

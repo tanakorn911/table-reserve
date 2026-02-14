@@ -26,7 +26,7 @@ interface EditModalProps {
  */
 const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalProps) => {
   const [formData, setFormData] = useState<Partial<Table>>({});
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
 
   // อัพเดทข้อมูลในฟอร์มเมื่อมีการเลือกโต๊ะใหม่
   useEffect(() => {
@@ -55,7 +55,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
   };
 
   // Theme-aware colors definitions (กำหนดสีตาม Theme)
-  const themeColors = adminTheme === 'dark' ? {
+  const themeColors = resolvedAdminTheme === 'dark' ? {
     backdrop: 'bg-black/60',
     modal: 'bg-gray-800 border-gray-700',
     closeBtn: 'hover:bg-gray-700 text-gray-400 hover:text-white',
@@ -153,7 +153,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                       capacity: Math.max(1, (prev.capacity || 0) - 1),
                     }))
                   }
-                  className={`absolute left-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${adminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
+                  className={`absolute left-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${resolvedAdminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
                 >
                   -
                 </button>
@@ -170,7 +170,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, capacity: (prev.capacity || 0) + 1 }))
                   }
-                  className={`absolute right-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${adminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
+                  className={`absolute right-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${resolvedAdminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
                 >
                   +
                 </button>
@@ -261,7 +261,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
  */
 export default function FloorPlanAdminPage() {
   const locale = useAdminLocale();
-  const { adminTheme } = useAdminTheme();
+  const { adminTheme, resolvedAdminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -498,7 +498,7 @@ export default function FloorPlanAdminPage() {
   };
 
   // Theme-aware colors for the main page layout
-  const pageTheme = adminTheme === 'dark' ? {
+  const pageTheme = resolvedAdminTheme === 'dark' ? {
     bg: 'bg-gray-900',
     card: 'bg-gray-800 border-gray-700',
     cardBg: 'bg-gray-900/50',
@@ -535,7 +535,7 @@ export default function FloorPlanAdminPage() {
   };
 
   // Theme-aware colors for Booking Detail Modal
-  const modalTheme = adminTheme === 'dark' ? {
+  const modalTheme = resolvedAdminTheme === 'dark' ? {
     backdrop: 'bg-black/60',
     modal: 'bg-gray-800 border-gray-700',
     closeBtn: 'hover:bg-gray-700 text-gray-400 hover:text-white',
@@ -555,7 +555,7 @@ export default function FloorPlanAdminPage() {
         {/* ตัวนับจำนวนโต๊ะ */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           <div className={`${pageTheme.counter} backdrop-blur px-4 py-2 rounded-xl border text-[13px] font-black shadow-lg flex items-center gap-2`}>
-            <Icon name="Square2StackIcon" size={16} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-500'} />
+            <Icon name="Square2StackIcon" size={16} className={resolvedAdminTheme === 'dark' ? 'text-blue-400' : 'text-blue-500'} />
             {t('admin.floorPlan.tableCount').replace('{count}', tables.length.toString())}
           </div>
         </div>
@@ -564,7 +564,7 @@ export default function FloorPlanAdminPage() {
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <div className="flex flex-col items-center gap-3">
-                <div className={`w-10 h-10 border-4 border-gray-200 ${adminTheme === 'dark' ? 'border-t-yellow-500' : 'border-t-amber-500'} rounded-full animate-spin`} />
+                <div className={`w-10 h-10 border-4 border-gray-200 ${resolvedAdminTheme === 'dark' ? 'border-t-yellow-500' : 'border-t-amber-500'} rounded-full animate-spin`} />
                 <span className={`text-sm font-medium ${pageTheme.textSecondary}`}>
                   {t('admin.floorPlan.loading')}
                 </span>
@@ -580,7 +580,7 @@ export default function FloorPlanAdminPage() {
                 onTableEdit={setEditingTable}
                 bookedTables={bookedTables}
                 locale={locale}
-                theme={adminTheme}
+                theme={resolvedAdminTheme}
                 onTableSelect={(id) => {
                   if (viewMode === 'check') {
                     const booking = bookedTables.find((b) => b.id === id);
@@ -594,7 +594,7 @@ export default function FloorPlanAdminPage() {
       </div>
 
       {/* Sidebar / Toolbar ด้านซ้าย (หรือล่างในมือถือ) */}
-      <div className="w-full md:w-80 flex flex-col gap-4 order-2 md:order-1 md:overflow-y-auto md:pr-2">
+      <div className="w-full md:w-[400px] flex flex-col gap-4 order-2 md:order-1 md:overflow-y-auto md:pr-2">
         <div className={`${pageTheme.card} rounded-2xl shadow-sm border p-6 flex flex-col gap-6`}>
           <div>
             <h1 className={`text-2xl font-black ${pageTheme.text} tracking-tight`}>
@@ -607,7 +607,7 @@ export default function FloorPlanAdminPage() {
           <div className={`flex ${pageTheme.modeSwitch} p-1.5 rounded-2xl shadow-inner`}>
             <button
               onClick={() => setViewMode('edit')}
-              className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'edit'
+              className={`flex-1 min-w-max py-3 px-4 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'edit'
                 ? pageTheme.modeActive
                 : pageTheme.modeInactive
                 }`}
@@ -616,9 +616,9 @@ export default function FloorPlanAdminPage() {
               {t('admin.floorPlan.mode.edit')}
             </button>
             <button
-              onClick={() => setViewMode('check')}
-              className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'check'
-                ? adminTheme === 'dark' ? 'bg-gray-600 text-green-400 shadow-md' : 'bg-white text-green-600 shadow-md'
+              onClick={setViewMode.bind(null, 'check')}
+              className={`flex-1 min-w-max py-3 px-4 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'check'
+                ? resolvedAdminTheme === 'dark' ? 'bg-gray-600 text-green-400 shadow-md' : 'bg-white text-green-600 shadow-md'
                 : pageTheme.modeInactive
                 }`}
             >
@@ -638,7 +638,7 @@ export default function FloorPlanAdminPage() {
                   type="date"
                   value={checkDate}
                   onChange={(e) => setCheckDate(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border-2 font-bold focus:outline-none focus:ring-4 transition-all ${pageTheme.input} ${adminTheme === 'dark' ? 'focus:ring-yellow-500/10' : 'focus:ring-amber-500/10'}`}
+                  className={`w-full px-4 py-3 rounded-xl border-2 font-bold focus:outline-none focus:ring-4 transition-all ${pageTheme.input} ${resolvedAdminTheme === 'dark' ? 'focus:ring-yellow-500/10' : 'focus:ring-amber-500/10'}`}
                 />
               </div>
               <div>
@@ -720,12 +720,12 @@ export default function FloorPlanAdminPage() {
         </div>
 
         {/* Tip Card: คำแนะนำการใช้งาน */}
-        <div className={`${pageTheme.card} rounded-2xl p-6 shadow-sm border hidden md:block`}>
-          <h3 className={`font-black ${pageTheme.text} text-base mb-3 flex items-center gap-2`}>
-            <Icon name="InformationCircleIcon" size={20} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
+        <div className={`${pageTheme.card} rounded-2xl p-6 shadow-sm border hidden md:block overflow-hidden`}>
+          <h3 className={`font-black ${pageTheme.text} text-base mb-3 flex items-center gap-2 whitespace-nowrap`}>
+            <Icon name="InformationCircleIcon" size={20} className={resolvedAdminTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
             {t('admin.floorPlan.tips')}
           </h3>
-          <ul className={`text-sm ${pageTheme.textSecondary} space-y-3 list-disc list-inside font-bold leading-relaxed`}>
+          <ul className={`text-sm ${pageTheme.textSecondary} space-y-3 list-disc list-outside pl-5 font-bold leading-relaxed`}>
             <li>{t('admin.floorPlan.tip1')}</li>
             <li>{t('admin.floorPlan.tip2')}</li>
             <li>{t('admin.floorPlan.tip3')}</li>
@@ -758,7 +758,7 @@ export default function FloorPlanAdminPage() {
               <Icon name="XMarkIcon" size={24} />
             </button>
             <div className="text-center mb-6">
-              <div className={`w-12 h-12 ${adminTheme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-50 text-green-600'} rounded-full flex items-center justify-center mx-auto mb-3`}>
+              <div className={`w-12 h-12 ${resolvedAdminTheme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-50 text-green-600'} rounded-full flex items-center justify-center mx-auto mb-3`}>
                 <Icon name="CalendarIcon" size={24} />
               </div>
               <h3 className={`text-xl font-bold ${pageTheme.text}`}>{t('admin.floorPlan.bookingDetails')}</h3>
@@ -778,14 +778,14 @@ export default function FloorPlanAdminPage() {
                   <span className={pageTheme.textSecondary}>{t('form.guests')}</span>
                   <span className={`font-bold ${pageTheme.text}`}>{selectedBooking.partySize} {t('common.people')}</span>
                 </div>
-                <div className={`pt-2 border-t ${adminTheme === 'dark' ? 'border-gray-700' : 'border-gray-200/50'}`}></div>
+                <div className={`pt-2 border-t ${resolvedAdminTheme === 'dark' ? 'border-gray-700' : 'border-gray-200/50'}`}></div>
                 <div className="flex justify-between text-sm">
                   <span className={pageTheme.textSecondary}>{t('form.time')}</span>
                   <span className={`font-bold ${pageTheme.text}`}>{selectedBooking.time} {locale === 'th' ? 'น.' : ''}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className={pageTheme.textSecondary}>{t('admin.floorPlan.nextAvailable')}</span>
-                  <span className={`font-bold ${adminTheme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                  <span className={`font-bold ${resolvedAdminTheme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                     {(() => {
                       const [h, m] = selectedBooking.time.split(':').map(Number);
                       const endH = h + 2;
@@ -860,7 +860,7 @@ export default function FloorPlanAdminPage() {
                       }
                     }}
                     disabled={!!updatingBookingId}
-                    className={`w-full py-3 rounded-xl font-bold border transition-all ${adminTheme === 'dark'
+                    className={`w-full py-3 rounded-xl font-bold border transition-all ${resolvedAdminTheme === 'dark'
                       ? 'border-red-900/50 text-red-400 hover:bg-red-900/20'
                       : 'border-red-100 text-red-600 hover:bg-red-50'
                       }`}

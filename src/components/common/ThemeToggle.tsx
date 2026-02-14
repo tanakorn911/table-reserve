@@ -1,8 +1,10 @@
 'use client'; // ทำงานฝั่ง Client Component
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion'; // Library สำหรับ Animation
 import { useTheme } from '@/contexts/ThemeContext'; // Context ธีม
+import { useTranslation } from '@/lib/i18n'; // i18n
+import Icon from '@/components/ui/AppIcon';
 
 interface ThemeToggleProps {
     className?: string;
@@ -10,82 +12,88 @@ interface ThemeToggleProps {
 }
 
 /**
- * Theme Toggle Button
- * ปุ่มสลับโหมด Light/Dark พร้อม Animation
+ * Theme Toggle Component
+ * ปุ่มเลือกโหมด Light, Dark, System พร้อม Adaptive Icon สำหรับโหมดระบบ
  */
 export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggleProps) {
-    const { resolvedTheme, toggleTheme } = useTheme();
+    const { theme, setTheme, resolvedTheme } = useTheme();
+    const { t } = useTranslation();
+    const [isMobile, setIsMobile] = useState(false);
 
-    // กำหนดขนาดตาม Props
+    // ตรวจสอบว่าเป็นหน้าจอ Mobile หรือไม่เพื่อปรับไอคอนโหมด System
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // กำหนดขนาดสัญลักษณ์และคอนเทนเนอร์
     const sizes = {
-        sm: { button: 'w-8 h-8', icon: 16 },
-        md: { button: 'w-10 h-10', icon: 20 },
-        lg: { button: 'w-12 h-12', icon: 24 },
+        sm: { container: 'p-1 gap-1', button: 'w-8 h-8', icon: 16 },
+        md: { container: 'p-1.5 gap-1.5', button: 'w-10 h-10', icon: 20 },
+        lg: { container: 'p-2 gap-2', button: 'w-12 h-12', icon: 24 },
     };
 
-    const { button, icon } = sizes[size];
+    const { container, button, icon } = sizes[size];
+
+    const modes = [
+        {
+            key: 'light' as const,
+            label: t('theme.light'),
+            iconName: 'SunIcon',
+            activeColor: 'text-yellow-500',
+        },
+        {
+            key: 'dark' as const,
+            label: t('theme.dark'),
+            iconName: 'MoonIcon',
+            activeColor: resolvedTheme === 'dark' ? 'text-yellow-400' : 'text-slate-400',
+        },
+        {
+            key: 'system' as const,
+            label: t('theme.system'),
+            iconName: isMobile ? 'DevicePhoneMobileIcon' : 'ComputerDesktopIcon',
+            activeColor: 'text-blue-500',
+        },
+    ];
 
     return (
-        <motion.button
-            onClick={toggleTheme}
-            // จัดสไตล์ปุ่ม
+        <div
             className={`
-        ${button} rounded-full flex items-center justify-center
-        bg-muted/50 hover:bg-muted border border-border
-        transition-colors duration-200
-        ${className}
-      `}
-            // Animation เมื่อเอาเมาส์ชี้และคลิก
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+                inline-flex items-center bg-muted/40 backdrop-blur-sm border border-border rounded-full
+                ${container} ${className}
+            `}
         >
-            {/* ส่วนไอคอนหมุน 180 องศาเมื่อเปลี่ยนโหมด */}
-            <motion.div
-                initial={false}
-                animate={{ rotate: resolvedTheme === 'dark' ? 0 : 180 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-            >
-                {resolvedTheme === 'dark' ? (
-                    // ไอคอนดวงจันทร์ (Dark Mode)
-                    <svg
-                        width={icon}
-                        height={icon}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-yellow-400"
-                    >
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                ) : (
-                    // ไอคอนดวงอาทิตย์ (Light Mode)
-                    <svg
-                        width={icon}
-                        height={icon}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-yellow-500"
-                    >
-                        <circle cx="12" cy="12" r="5" />
-                        <line x1="12" y1="1" x2="12" y2="3" />
-                        <line x1="12" y1="21" x2="12" y2="23" />
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                        <line x1="1" y1="12" x2="3" y2="12" />
-                        <line x1="21" y1="12" x2="23" y2="12" />
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                )}
-            </motion.div>
-        </motion.button>
+            {modes.map((mode) => (
+                <motion.button
+                    key={mode.key}
+                    onClick={() => setTheme(mode.key)}
+                    className={`
+                        ${button} rounded-full flex items-center justify-center transition-all duration-300 relative
+                        ${theme === mode.key
+                            ? 'bg-card shadow-sm ' + mode.activeColor
+                            : 'text-muted-foreground hover:bg-muted/60'
+                        }
+                    `}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label={`Switch to ${mode.label}`}
+                    title={mode.label}
+                >
+                    {/* Background indicator for active state */}
+                    {theme === mode.key && (
+                        <motion.div
+                            layoutId="activeTheme"
+                            className="absolute inset-0 bg-card rounded-full shadow-sm -z-10"
+                            transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                    )}
+                    <Icon name={mode.iconName} size={icon} />
+                </motion.button>
+            ))}
+        </div>
     );
 }

@@ -4,12 +4,14 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
+import { useTranslation } from '@/lib/i18n';
 
 // FeedbackContent: ส่วนเนื้อหาหลักของหน้า Feedback
 // ใช้สำหรับรับคะแนนความพึงพอใจและคอมเมนต์จากลูกค้า
 function FeedbackContent() {
     const searchParams = useSearchParams();
     const code = searchParams.get('code');
+    const { t } = useTranslation();
 
     const [reservationId, setReservationId] = useState<string | null>(null);
     const [reservationInfo, setReservationInfo] = useState<any>(null);
@@ -26,7 +28,7 @@ function FeedbackContent() {
     useEffect(() => {
         const lookupReservation = async () => {
             if (!code) {
-                setError('กรุณาระบุรหัสการจอง');
+                setError(t('feedback.error.code'));
                 setIsLoading(false);
                 return;
             }
@@ -39,29 +41,29 @@ function FeedbackContent() {
                     setReservationId(data.reservation.id);
                     setReservationInfo(data.reservation);
                 } else {
-                    setError(data.error || 'ไม่พบรหัสการจองนี้');
+                    setError(data.error || t('feedback.error.notFound'));
                 }
             } catch (err) {
-                setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+                setError(t('feedback.error.general'));
             } finally {
                 setIsLoading(false);
             }
         };
 
         lookupReservation();
-    }, [code]);
+    }, [code, t]);
 
     // บันทึกความเห็น
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!reservationId) {
-            setError('ไม่พบข้อมูลการจอง');
+            setError(t('feedback.error.notFound'));
             return;
         }
 
         if (rating === 0) {
-            setError('กรุณาให้คะแนน');
+            setError(t('feedback.error.rating'));
             return;
         }
 
@@ -86,21 +88,21 @@ function FeedbackContent() {
             if (data.success) {
                 setIsSubmitted(true);
             } else {
-                setError(data.error || 'เกิดข้อผิดพลาด');
+                setError(data.error || t('feedback.error.general'));
             }
         } catch (err) {
-            setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            setError(t('feedback.error.general'));
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const ratingLabels = [
-        { emoji: '😞', text: 'ไม่พอใจมาก' },
-        { emoji: '😕', text: 'ไม่ค่อยพอใจ' },
-        { emoji: '😐', text: 'พอใช้ได้' },
-        { emoji: '😊', text: 'พอใจ' },
-        { emoji: '🤩', text: 'ยอดเยี่ยม!' },
+        { emoji: '😞', text: t('feedback.rating.1') },
+        { emoji: '😕', text: t('feedback.rating.2') },
+        { emoji: '😐', text: t('feedback.rating.3') },
+        { emoji: '😊', text: t('feedback.rating.4') },
+        { emoji: '🤩', text: t('feedback.rating.5') },
     ];
 
     if (isLoading) {
@@ -143,7 +145,7 @@ function FeedbackContent() {
                         transition={{ delay: 0.4 }}
                         className="text-3xl font-bold text-white mb-3"
                     >
-                        ขอบคุณค่ะ/ครับ! 💖
+                        {t('feedback.success.title')}
                     </motion.h1>
 
                     <motion.p
@@ -152,8 +154,7 @@ function FeedbackContent() {
                         transition={{ delay: 0.5 }}
                         className="text-slate-400 mb-8"
                     >
-                        ความคิดเห็นของคุณมีค่ามากสำหรับเรา
-                        <br />เราจะนำไปพัฒนาบริการให้ดียิ่งขึ้น
+                        {t('feedback.success.desc')}
                     </motion.p>
 
                     <motion.a
@@ -164,7 +165,7 @@ function FeedbackContent() {
                         className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-slate-900 rounded-xl font-bold shadow-lg shadow-yellow-500/20 hover:shadow-xl transition-all hover:-translate-y-1"
                     >
                         <Icon name="HomeIcon" size={20} />
-                        กลับหน้าหลัก
+                        {t('nav.home')}
                     </motion.a>
                 </motion.div>
             </div>
@@ -184,7 +185,7 @@ function FeedbackContent() {
                         <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
                             <Icon name="BuildingStorefrontIcon" size={24} className="text-slate-900" />
                         </div>
-                        <span className="text-xl font-bold text-white">Savory Bistro</span>
+                        <span className="text-xl font-bold text-white">{t('app.title')}</span>
                     </div>
                 </motion.div>
 
@@ -209,10 +210,10 @@ function FeedbackContent() {
                                 <span className="text-5xl">⭐</span>
                             </div>
                             <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                                ให้คะแนนประสบการณ์ของคุณ
+                                {t('feedback.title')}
                             </h1>
                             <p className="text-slate-800/80 text-sm">
-                                ความคิดเห็นของคุณช่วยให้เราพัฒนาได้ดียิ่งขึ้น
+                                {t('feedback.subtitle')}
                             </p>
                         </motion.div>
                     </div>
@@ -231,21 +232,21 @@ function FeedbackContent() {
                                         <Icon name="UserIcon" size={24} className="text-slate-900" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-xs text-slate-500">ลูกค้า</p>
-                                        <p className="font-bold text-lg">{reservationInfo.guest_name || 'ลูกค้า'}</p>
+                                        <p className="text-xs text-slate-500">{t('checkStatus.label.customer')}</p>
+                                        <p className="font-bold text-lg">{reservationInfo.guest_name || t('checkStatus.label.customer')}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-3 text-center">
                                     <div>
-                                        <p className="text-xs text-slate-500">รหัสจอง</p>
+                                        <p className="text-xs text-slate-500">{t('checkStatus.label.code')}</p>
                                         <p className="font-bold text-yellow-500 text-sm">{code}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500">วันที่</p>
+                                        <p className="text-xs text-slate-500">{t('checkStatus.label.date')}</p>
                                         <p className="font-medium text-sm">{reservationInfo.reservation_date}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500">เวลา</p>
+                                        <p className="text-xs text-slate-500">{t('checkStatus.label.time')}</p>
                                         <p className="font-medium text-sm">{reservationInfo.reservation_time?.slice(0, 5) || '-'}</p>
                                     </div>
                                 </div>
@@ -275,7 +276,7 @@ function FeedbackContent() {
                         {/* Rating Stars */}
                         <div className="text-center">
                             <p className="text-slate-300 font-medium mb-6">
-                                คุณพอใจกับบริการของเราแค่ไหน?
+                                {t('feedback.label.rating')}
                             </p>
 
                             <div className="flex justify-center gap-2">
@@ -320,13 +321,13 @@ function FeedbackContent() {
                         <div>
                             <label className="flex items-center gap-2 text-slate-300 font-medium mb-3">
                                 <Icon name="ChatBubbleBottomCenterTextIcon" size={20} className="text-yellow-500" />
-                                ความคิดเห็นเพิ่มเติม
-                                <span className="text-slate-500 font-normal text-sm">(ไม่บังคับ)</span>
+                                {t('feedback.label.comment')}
+                                <span className="text-slate-500 font-normal text-sm">{t('feedback.placeholder.optional')}</span>
                             </label>
                             <textarea
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                placeholder="เล่าให้เราฟังหน่อยว่าประสบการณ์ของคุณเป็นอย่างไร..."
+                                placeholder={t('feedback.comment.placeholder')}
                                 rows={4}
                                 className="w-full px-5 py-4 bg-slate-900/50 border-2 border-slate-700 rounded-2xl text-white placeholder:text-slate-500 focus:outline-none focus:border-yellow-500 resize-none transition-all"
                             />
@@ -348,12 +349,12 @@ function FeedbackContent() {
                                     >
                                         <Icon name="ArrowPathIcon" size={24} />
                                     </motion.div>
-                                    กำลังส่ง...
+                                    {t('feedback.submitting')}
                                 </>
                             ) : (
                                 <>
                                     <Icon name="PaperAirplaneIcon" size={24} />
-                                    ส่งความคิดเห็น
+                                    {t('feedback.submit')}
                                 </>
                             )}
                         </motion.button>
@@ -367,7 +368,7 @@ function FeedbackContent() {
                     transition={{ delay: 0.5 }}
                     className="text-center text-slate-500 text-sm mt-6"
                 >
-                    ขอบคุณที่ใช้บริการ Savory Bistro 🍽️
+                    {t('feedback.thankyou')}
                 </motion.p>
             </div>
         </div>

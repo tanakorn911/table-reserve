@@ -22,7 +22,7 @@ export default function ReservationModal({
   initialData,
   isSubmitting,
 }: ReservationModalProps) {
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
   const locale = useAdminLocale();
   const { t } = useTranslation(locale);
   // State สำหรับเก็บข้อมูลในฟอร์ม
@@ -99,7 +99,7 @@ export default function ReservationModal({
   };
 
   // กำหนด Classname ตาม Theme (Light/Dark)
-  const themeClasses = adminTheme === 'dark' ? {
+  const themeClasses = resolvedAdminTheme === 'dark' ? {
     modal: 'bg-gray-800 border-gray-700',
     text: 'text-white',
     input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500',
@@ -122,9 +122,9 @@ export default function ReservationModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className={`${themeClasses.modal} rounded-xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto shadow-2xl border`}>
-        <div className={`flex justify-between items-center mb-6 pb-4 border-b ${adminTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+        <div className={`flex justify-between items-center mb-6 pb-4 border-b ${resolvedAdminTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
           <h2 className={`text-2xl font-bold ${themeClasses.text}`}>
-            {initialData ? (locale === 'th' ? 'แก้ไขข้อมูลการจอง' : 'Edit Reservation') : (locale === 'th' ? 'สร้างรายการจองใหม่' : 'New Reservation')}
+            {initialData ? t('admin.reservations.modal.edit') : t('admin.reservations.modal.new')}
           </h2>
           <button
             onClick={onClose}
@@ -149,7 +149,7 @@ export default function ReservationModal({
               </div>
               <div>
                 <label className={`block text-sm font-bold mb-1.5 ${themeClasses.label}`}>
-                  เบอร์โทรศัพท์
+                  {t('form.phone')}
                 </label>
                 <input
                   type="tel"
@@ -199,21 +199,21 @@ export default function ReservationModal({
                       setFormData({ ...formData, party_size: Number(e.target.value) })
                     }
                   />
-                  <span className={`absolute right-4 top-2.5 text-sm font-medium pointer-events-none ${adminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <span className={`absolute right-4 top-2.5 text-sm font-medium pointer-events-none ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                     {t('form.guests.label')}
                   </span>
                 </div>
               </div>
               <div>
                 <label className={`block text-sm font-bold mb-1.5 ${themeClasses.label}`}>
-                  {t('form.table')} ({locale === 'th' ? 'ไม่บังคับ' : 'Optional'})
+                  {t('form.table')} ({t('admin.reservations.table.optional')})
                 </label>
                 <select
                   className={`block w-full px-4 py-2.5 rounded-lg focus:ring-2 focus:border-transparent font-medium border ${themeClasses.input}`}
                   value={formData.table_number}
                   onChange={(e) => setFormData({ ...formData, table_number: e.target.value })}
                 >
-                  <option value="">{locale === 'th' ? 'ไม่ระบุ / จัดหน้างาน' : 'Walk-in / Assign Later'}</option>
+                  <option value="">{t('admin.reservations.table.walkin')}</option>
                   {tables.map((tableItem) => (
                     <option key={tableItem.id} value={tableItem.id}>
                       {locale === 'th' ? 'โต๊ะ' : 'Table'} {tableItem.name} ({tableItem.capacity} {t('form.guests.label')})
@@ -225,7 +225,7 @@ export default function ReservationModal({
 
             <div>
               <label className={`block text-sm font-bold mb-1.5 ${themeClasses.label}`}>
-                {t('form.requests')} ({locale === 'th' ? 'จากลูกค้า' : 'from customer'})
+                {t('form.requests')} ({t('admin.reservations.table.fromCustomer')})
               </label>
               <textarea
                 className={`block w-full px-4 py-2 rounded-lg focus:ring-2 focus:border-transparent font-medium border ${themeClasses.input} opacity-80`}
@@ -246,31 +246,31 @@ export default function ReservationModal({
                     <img
                       src={initialData.payment_slip_url}
                       alt="Payment Slip"
-                      className={`mx-auto max-h-[300px] rounded-lg shadow-sm border hover:opacity-90 transition-opacity ${adminTheme === 'dark' ? 'border-gray-600' : 'border-blue-200'}`}
+                      className={`mx-auto max-h-[300px] rounded-lg shadow-sm border hover:opacity-90 transition-opacity ${resolvedAdminTheme === 'dark' ? 'border-gray-600' : 'border-blue-200'}`}
                     />
                   </a>
-                  <p className={`mt-2 text-xs font-medium italic ${adminTheme === 'dark' ? 'text-gray-400' : 'text-blue-500'}`}>
-                    {locale === 'th' ? '* คลิกที่รูปเพื่อดูขนาดใหญ่' : '* Click to view full image'}
+                  <p className={`mt-2 text-xs font-medium italic ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-blue-500'}`}>
+                    {t('admin.reservations.table.clickFull')}
                   </p>
                 </div>
               </div>
             )}
 
-            <div className={`p-4 rounded-xl border ${adminTheme === 'dark' ? 'bg-gray-900/50 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
-              <label className={`block text-sm font-black uppercase tracking-widest mb-2 ${adminTheme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>
+            <div className={`p-4 rounded-xl border ${resolvedAdminTheme === 'dark' ? 'bg-gray-900/50 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
+              <label className={`block text-sm font-black uppercase tracking-widest mb-2 ${resolvedAdminTheme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>
                 {t('admin.reservations.table.notes')}
               </label>
               <textarea
-                className={`block w-full px-4 py-2.5 border-2 rounded-lg focus:ring-4 font-bold ${adminTheme === 'dark' ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:ring-blue-900/50' : 'bg-white border-slate-200 text-gray-900 placeholder:text-slate-400 focus:ring-primary/10 focus:border-primary'}`}
+                className={`block w-full px-4 py-2.5 border-2 rounded-lg focus:ring-4 font-bold ${resolvedAdminTheme === 'dark' ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:ring-blue-900/50' : 'bg-white border-slate-200 text-gray-900 placeholder:text-slate-400 focus:ring-primary/10 focus:border-primary'}`}
                 rows={3}
-                placeholder={locale === 'th' ? "เช่น ลูกค้าเจ้าประจำ, แพ้อาหาร, หรือประวัติ No-show..." : "e.g., VIP, Food allergies, or No-show history..."}
+                placeholder={t('admin.reservations.notes.placeholder')}
                 value={formData.admin_notes}
                 onChange={(e) => setFormData({ ...formData, admin_notes: e.target.value })}
               />
             </div>
           </div>
 
-          <div className={`flex justify-end gap-3 pt-6 border-t ${adminTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+          <div className={`flex justify-end gap-3 pt-6 border-t ${resolvedAdminTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
             <button
               type="button"
               onClick={onClose}

@@ -23,7 +23,7 @@ const STORAGE_KEY = 'savory_bistro_theme';
  * Provider สำหรับจัด Theme หลักของเว็บไซต์
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>('dark'); // State ค่าที่เลือก
+    const [theme, setThemeState] = useState<Theme>('system'); // State ค่าที่เลือก
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark'); // State ค่าที่แสดงผลจริง
     const [mounted, setMounted] = useState(false); // State รอการ Mount
 
@@ -46,7 +46,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Initial load: อ่านค่าจาก LocalStorage
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-        const initial = stored || 'dark'; // ค่าเริ่มต้นเป็น dark
+        const initial = stored || 'system'; // ค่าเริ่มต้นเป็น system
         setThemeState(initial);
 
         // คำนวณค่าที่จะแสดงผลจริง

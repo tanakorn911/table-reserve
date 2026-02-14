@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
-// กำหนดประเภท Theme สำหรับ Admin (Light หรือ Dark เท่านั้น)
-type AdminTheme = 'light' | 'dark';
+// กำหนดประเภท Theme สำหรับ Admin (Light, Dark หรือ System)
+type AdminTheme = 'light' | 'dark' | 'system';
 
 // กำหนดอินเทอร์เฟซสำหรับ Context Value
 interface AdminThemeContextType {
-    adminTheme: AdminTheme; // ธีมปัจจุบัน
+    adminTheme: AdminTheme; // ธีมที่ผู้ใช้เลือก
+    resolvedAdminTheme: 'light' | 'dark'; // ธีมที่แสดงผลจริง
     setAdminTheme: (theme: AdminTheme) => void; // ฟังก์ชันสำหรับตั้งค่าธีมแบบระบุเอง
     toggleAdminTheme: () => void; // ฟังก์ชันสำหรับสลับธีมไปมา
 }
@@ -20,44 +21,73 @@ const ADMIN_STORAGE_KEY = 'savory_bistro_admin_theme';
 
 /**
  * Provider Component สำหรับจัดการ Theme ของ Admin
- * ทำหน้าที่เก็บ State และส่งต่อฟังก์ชันต่างๆ ให้กับ Child Components
  */
 export function AdminThemeProvider({ children }: { children: React.ReactNode }) {
-    // State สำหรับเก็บค่าธีมปัจจุบัน (ค่าเริ่มต้นเป็น 'dark')
-    const [adminTheme, setAdminThemeState] = useState<AdminTheme>('dark');
-    // State สำหรับตรวจสอบว่า Component โหลดเสร็จแล้วหรือยัง (แก้ปัญหา Hydration Mismatch)
+    const [adminTheme, setAdminThemeState] = useState<AdminTheme>('system');
+    const [resolvedAdminTheme, setResolvedAdminTheme] = useState<'light' | 'dark'>('dark');
     const [mounted, setMounted] = useState(false);
 
-    // Effect ทำงานครั้งเดียวเมื่อโหลดหน้าเว็บ
-    useEffect(() => {
-        // อ่านค่าธีมจาก LocalStorage
-        const stored = localStorage.getItem(ADMIN_STORAGE_KEY) as AdminTheme | null;
-        const initial = stored || 'dark'; // ถ้าไม่มีให้ใช้ 'dark' เป็นค่าเริ่มต้น
-        setAdminThemeState(initial);
-        setMounted(true); // ระบุว่าโหลดเสร็จแล้ว
+    // ฟังก์ชันตรวจสอบธีมของระบบ
+    const getSystemTheme = useCallback((): 'light' | 'dark' => {
+        if (typeof window === 'undefined') return 'dark';
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }, []);
+
+    // ฟังก์ชันสำหรับ Apply Class ธีม
+    const applyTheme = useCallback((resolved: 'light' | 'dark') => {
+        const root = document.documentElement;
+        // หมายเหตุ: เนื่องจาก Admin มีการใช้ธีมแยก เราอาจจะไม่ไปแตะ class หลักของ html 
+        // แต่ในฐานะระบบ Admin เราจะ apply class ลงที่ html หรือ body เพื่อให้ Tailwind ใช้งานได้
+        root.classList.remove('light', 'dark');
+        root.classList.add(resolved);
+        setResolvedAdminTheme(resolved);
+    }, []);
+
+    // Initial load
+    useEffect(() => {
+        const stored = localStorage.getItem(ADMIN_STORAGE_KEY) as AdminTheme | null;
+        const initial = stored || 'system';
+        setAdminThemeState(initial);
+
+        const resolved = initial === 'system' ? getSystemTheme() : initial;
+        applyTheme(resolved as 'light' | 'dark');
+        setMounted(true);
+    }, [getSystemTheme, applyTheme]);
+
+    // Listener สำหรับ System Preference Change
+    useEffect(() => {
+        if (adminTheme !== 'system') return;
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = (e: MediaQueryListEvent) => {
+            applyTheme(e.matches ? 'dark' : 'light');
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, [adminTheme, applyTheme]);
 
     // ฟังก์ชันสำหรับตั้งค่าธีมใหม่
     const setAdminTheme = useCallback((newTheme: AdminTheme) => {
-        setAdminThemeState(newTheme); // อัปเดต State
-        localStorage.setItem(ADMIN_STORAGE_KEY, newTheme); // บันทึกลง LocalStorage
-    }, []);
+        setAdminThemeState(newTheme);
+        localStorage.setItem(ADMIN_STORAGE_KEY, newTheme);
+
+        const resolved = newTheme === 'system' ? getSystemTheme() : newTheme;
+        applyTheme(resolved as 'light' | 'dark');
+    }, [getSystemTheme, applyTheme]);
 
     // ฟังก์ชันสำหรับสลับธีม (Toggle)
     const toggleAdminTheme = useCallback(() => {
-        // เช็คว่าถ้าเป็น dark ให้เปลี่ยนเป็น light, ถ้าไม่ใช่ให้เปลี่ยนเป็น dark
-        const newTheme = adminTheme === 'dark' ? 'light' : 'dark';
+        const newTheme = resolvedAdminTheme === 'dark' ? 'light' : 'dark';
         setAdminTheme(newTheme);
-    }, [adminTheme, setAdminTheme]);
+    }, [resolvedAdminTheme, setAdminTheme]);
 
-    // ถ้ายังไม่ Mount ให้ return null ไปก่อนเพื่อป้องกันการแสดงผลผิดเพี้ยน
     if (!mounted) {
         return null;
     }
 
-    // ส่ง Context Provider ครอบส่วนของ Children
     return (
-        <AdminThemeContext.Provider value={{ adminTheme, setAdminTheme, toggleAdminTheme }}>
+        <AdminThemeContext.Provider value={{ adminTheme, resolvedAdminTheme, setAdminTheme, toggleAdminTheme }}>
             {children}
         </AdminThemeContext.Provider>
     );

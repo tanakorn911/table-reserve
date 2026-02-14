@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
+import Icon from '@/components/ui/AppIcon';
 
 interface AdminThemeToggleProps {
     className?: string;
@@ -16,80 +17,71 @@ interface AdminThemeToggleProps {
  * ทำงานแยกอิสระจาก Theme ของหน้าบ้าน (Frontend)
  */
 export default function AdminThemeToggle({ className = '', size = 'md' }: AdminThemeToggleProps) {
-    const { adminTheme, toggleAdminTheme } = useAdminTheme();
+    const { adminTheme, setAdminTheme, resolvedAdminTheme } = useAdminTheme();
+    const [isMobile, setIsMobile] = React.useState(false);
 
-    // กำหนดขนาดปุ่มและไอคอนตาม Props size
+    // ตรวจสอบขนาดหน้าจอเพื่อปรับไอคอน System
+    React.useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const modes = [
+        { id: 'light', icon: 'SunIcon', color: 'text-amber-500' },
+        { id: 'system', icon: isMobile ? 'SmartphoneIcon' : 'ComputerDesktopIcon', color: 'text-blue-500' },
+        { id: 'dark', icon: 'MoonIcon', color: 'text-indigo-400' }
+    ] as const;
+
     const sizes = {
-        sm: { button: 'w-8 h-8', icon: 16 },
-        md: { button: 'w-10 h-10', icon: 20 },
-        lg: { button: 'w-12 h-12', icon: 24 },
+        sm: { container: 'h-8 p-0.5', button: 'w-7 h-7', icon: 14 },
+        md: { container: 'h-10 p-1', button: 'w-8 h-8', icon: 16 },
+        lg: { container: 'h-12 p-1', button: 'w-10 h-10', icon: 20 },
     };
 
-    const { button, icon } = sizes[size];
+    const { container, button, icon } = sizes[size];
 
     return (
-        <motion.button
-            onClick={toggleAdminTheme}
-            className={`
-                ${button} rounded-full flex items-center justify-center
-                ${adminTheme === 'dark'
-                    ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600' // Dark Mode Style
-                    : 'bg-gray-200 hover:bg-gray-300 border border-gray-300' // Light Mode Style
-                }
-                transition-colors duration-200
-                ${className}
-            `}
-            whileHover={{ scale: 1.05 }} // Animation ตอนเอาเมาส์จี้
-            whileTap={{ scale: 0.95 }}   // Animation ตอนกด
-            aria-label={`Switch to ${adminTheme === 'dark' ? 'light' : 'dark'} mode`}
-            title={adminTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-            {/* Rotating Icon Animation */}
-            <motion.div
-                initial={false}
-                animate={{ rotate: adminTheme === 'dark' ? 0 : 180 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-            >
-                {adminTheme === 'dark' ? (
-                    // Moon icon (สำหรับ Dark Mode -> กดแล้วเปลี่ยนเป็น Light)
-                    <svg
-                        width={icon}
-                        height={icon}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-yellow-400"
+        <div className={`
+            flex items-center gap-0.5 rounded-full border
+            ${resolvedAdminTheme === 'dark' 
+                ? 'bg-gray-800/80 border-gray-700 shadow-inner' 
+                : 'bg-white border-gray-200 shadow-sm'
+            }
+            ${container} ${className}
+        `}>
+            {modes.map((mode) => {
+                const isActive = adminTheme === mode.id;
+                return (
+                    <button
+                        key={mode.id}
+                        onClick={() => setAdminTheme(mode.id)}
+                        className={`
+                            relative flex items-center justify-center rounded-full transition-all duration-300
+                            ${button}
+                            ${isActive 
+                                ? (resolvedAdminTheme === 'dark' ? 'bg-gray-700 text-white shadow-lg' : 'bg-gray-100 text-gray-900 shadow-inner') 
+                                : (resolvedAdminTheme === 'dark' ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')
+                            }
+                        `}
+                        title={mode.id.charAt(0).toUpperCase() + mode.id.slice(1)}
                     >
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                ) : (
-                    // Sun icon (สำหรับ Light Mode -> กดแล้วเปลี่ยนเป็น Dark)
-                    <svg
-                        width={icon}
-                        height={icon}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-amber-600"
-                    >
-                        <circle cx="12" cy="12" r="5" />
-                        <line x1="12" y1="1" x2="12" y2="3" />
-                        <line x1="12" y1="21" x2="12" y2="23" />
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                        <line x1="1" y1="12" x2="3" y2="12" />
-                        <line x1="21" y1="12" x2="23" y2="12" />
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                )}
-            </motion.div>
-        </motion.button>
+                        {isActive && (
+                            <motion.div
+                                layoutId="adminActiveTheme"
+                                className={`absolute inset-0 rounded-full ${resolvedAdminTheme === 'dark' ? 'bg-gray-600/30' : 'bg-white shadow-sm'}`}
+                                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                            />
+                        )}
+                        <Icon 
+                            name={mode.icon} 
+                            size={icon} 
+                            className={`relative z-10 ${isActive ? mode.color : ''} transition-colors duration-300`} 
+                        />
+                    </button>
+                );
+            })}
+        </div>
     );
 }
