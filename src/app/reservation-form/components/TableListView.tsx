@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Table } from '@/types/tables';
 import Icon from '@/components/ui/AppIcon';

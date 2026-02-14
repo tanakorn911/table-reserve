@@ -14,7 +14,7 @@ interface PasswordChangeModalProps {
 // PasswordChangeModal Component
 // คอมโพเนนต์ Modal สำหรับเปลี่ยนรหัสผ่านของผู้ดูแลระบบ
 export default function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProps) {
-    const { adminTheme } = useAdminTheme();
+    const { resolvedAdminTheme } = useAdminTheme();
     const locale = useAdminLocale();
     const supabase = createClientSupabaseClient();
     const [passwordForm, setPasswordForm] = useState({
@@ -82,7 +82,7 @@ export default function PasswordChangeModal({ isOpen, onClose }: PasswordChangeM
 
     // Helper for Theme Styles
     // ตัวช่วยกำหนดสีและสไตล์ตาม Theme
-    const themeClasses = adminTheme === 'dark' ? {
+    const themeClasses = resolvedAdminTheme === 'dark' ? {
         modal: 'bg-gray-800 border-gray-700',
         text: 'text-white',
         input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500',

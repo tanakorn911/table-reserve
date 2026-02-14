@@ -48,7 +48,7 @@ const DAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday
 // AdminSettingsPage: หน้าตั้งค่าระบบ (จัดการเวลาทำการ, พนักงาน, วันหยุด)
 export default function AdminSettingsPage() {
   const locale = useAdminLocale();
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
   const DAYS = locale === 'th' ? DAYS_TH : DAYS_EN;
   const [loading, setLoading] = useState(false);
@@ -497,7 +497,7 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
-      <h1 className={`text-3xl font-extrabold tracking-tight ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.settings.title')}</h1>
+      <h1 className={`text-3xl font-extrabold tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.settings.title')}</h1>
 
       {/* 🔐 Password Change Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -533,7 +533,6 @@ export default function AdminSettingsPage() {
       <PasswordChangeModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
-        locale={locale}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -846,7 +845,7 @@ export default function AdminSettingsPage() {
               {getGroupedHolidays().map((group, idx) => (
                 <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between hover:border-red-200 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="bg-red-100 text-red-700 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="bg-red-100 text-red-700 w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
                       <span className="text-sm font-black">{group.count}</span>
                     </div>
                     <div>

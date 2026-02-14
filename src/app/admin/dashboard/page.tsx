@@ -53,7 +53,7 @@ interface Reservation {
  */
 export default function DashboardPage() {
   const locale = useAdminLocale();
-  const { adminTheme } = useAdminTheme();
+  const { resolvedAdminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
 
   // State เก็บสถิติต่างๆ
@@ -252,7 +252,7 @@ export default function DashboardPage() {
       {/* ส่วนหัวแสดงวันที่และปุ่มจัดการ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold ${adminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.dashboard.title')}</h1>
+          <h1 className={`text-2xl font-bold ${resolvedAdminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.dashboard.title')}</h1>
           <p className="text-sm text-gray-400 mt-1">
             {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
               weekday: 'long',

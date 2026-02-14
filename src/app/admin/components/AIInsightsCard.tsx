@@ -47,7 +47,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
     const [error, setError] = useState<string | null>(null);
     const [displayedText, setDisplayedText] = useState(''); // ข้อความสำหรับ Typing Effect
     const [isTyping, setIsTyping] = useState(false); // สถานะกำลังพิมพ์
-    const { adminTheme } = useAdminTheme();
+    const { resolvedAdminTheme } = useAdminTheme();
 
     // ฟังก์ชันดึงข้อมูล Insights จาก API
     const fetchInsights = useCallback(async () => {
@@ -105,7 +105,7 @@ export default function AIInsightsCard({ locale = 'th' }: AIInsightsCardProps) {
     const isPositive = parseInt(changePercent) >= 0; // แนวโน้มบวกหรือลบ
 
     // กำหนดสีตาม Theme (Dark/Light)
-    const themeColors = adminTheme === 'dark' ? {
+    const themeColors = resolvedAdminTheme === 'dark' ? {
         container: 'bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/20 shadow-purple-500/5',
         iconBg: 'bg-purple-500/20',
         icon: 'text-purple-400',

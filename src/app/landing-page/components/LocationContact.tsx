@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useNavigation } from '@/contexts/NavigationContext';
@@ -51,7 +53,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
             {/* กล่องเบอร์โทรศัพท์ */}
             <div className="bg-background rounded-xl p-6 shadow-warm-sm border border-border hover:border-primary/30 transition-colors">
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 flex-shrink-0">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 shrink-0">
                   <Icon name="PhoneIcon" size={24} className="text-primary" />
                 </div>
                 <div>
@@ -71,7 +73,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
             {/* กล่องอีเมล */}
             <div className="bg-background rounded-xl p-6 shadow-warm-sm border border-border hover:border-primary/30 transition-colors">
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 flex-shrink-0">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 shrink-0">
                   <Icon name="EnvelopeIcon" size={24} className="text-primary" />
                 </div>
                 <div>
@@ -114,7 +116,7 @@ const LocationContact: React.FC<LocationContactProps> = ({ contact }) => {
               referrerPolicy="no-referrer-when-downgrade"
               // สร้าง URL Google Maps Embed จากพิกัดที่ได้รับ
               src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d700!2d${contact.mapLng}!3d${contact.mapLat}!2m3!1f0!2f45!3f0!3m2!1i1024!2i768!4f35!3m3!1m2!1s0x311878b9c6a9c8c7%3A0x7c8e03bf86ca13c0!2z4Lih4Lir4Liy4Lin4Li04LiX4Lii4Liy4Lil4Lix4Lii4Lie4Liw4LmA4Lii4Liy!5e1!3m2!1sth!2sth!4v1`}
-              className="border-0 grayscale-[20%] hover:grayscale-0 transition-all duration-500" // ปรับ map ให้สีจางลงนิดหน่อยเพื่อความสวยงาม
+                  className="border-0 grayscale-20 hover:grayscale-0 transition-all duration-500" // ปรับ map ให้สีจางลงนิดหน่อยเพื่อความสวยงาม
               allowFullScreen
             />
           </div>

@@ -110,20 +110,34 @@ const Header = () => {
               <span>{t('nav.reserve')}</span>
             </Link>
 
-            {/* ปุ่มสลับธีม (Light/Dark) */}
-            <ThemeToggle size="sm" className="ml-2" />
+            {/* ปุ่มสลับธีม (Light/Dark/System) */}
+            <div className="ml-4 pl-4 border-l border-border h-10 flex items-center">
+              <ThemeToggle size="sm" />
+            </div>
 
             {/* ปุ่มเปลี่ยนภาษา (TH/EN) */}
-            <div className="flex items-center ml-2 bg-muted rounded-full p-1 border border-border">
+            <div className="flex items-center ml-4 bg-muted/50 backdrop-blur-sm rounded-full p-1 border border-border shadow-sm">
               <button
                 onClick={() => setLocale('th')}
-                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${locale === 'th' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`
+                  px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
+                  ${locale === 'th'
+                    ? 'bg-card text-primary shadow-sm ring-1 ring-black/5'
+                    : 'text-muted-foreground hover:text-foreground'
+                  }
+                `}
               >
                 TH
               </button>
               <button
                 onClick={() => setLocale('en')}
-                className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${locale === 'en' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`
+                  px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
+                  ${locale === 'en'
+                    ? 'bg-card text-primary shadow-sm ring-1 ring-black/5'
+                    : 'text-muted-foreground hover:text-foreground'
+                  }
+                `}
               >
                 EN
               </button>
