@@ -1,34 +1,46 @@
-'use client'; // จำเป็นต้องใช้เพราะมีการดึง State ภาษา
+'use client';
 
 import React from 'react';
 import AdminAdvertisements from '@/app/admin/components/AdminAdvertisements';
-// เรียกใช้ Hook ภาษาที่เราเพิ่งทำไป เพื่อให้เปลี่ยนภาษาได้ทันที (Real-time)
 import { useAdminLocale, adminT } from '@/app/admin/components/LanguageSwitcher';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { MegaphoneIcon } from '@heroicons/react/24/outline';
 
 export default function Page() {
-  const locale = useAdminLocale(); // ดึงค่าภาษาปัจจุบัน (th/en)
+  const locale = useAdminLocale();
+  // แก้ไขตรงนี้เช่นกัน: ใช้ resolvedAdminTheme
+  const { adminTheme, resolvedAdminTheme } = useAdminTheme();
+  
+  // ใช้ค่า resolved ก่อน ถ้าไม่มีให้ใช้ adminTheme (fallback)
+  const currentTheme = resolvedAdminTheme || adminTheme;
+  const isDark = currentTheme === 'dark';
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900 transition-colors duration-300">
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto p-6 lg:p-8">
         
-        {/* Header Section: จัดหัวข้อให้ดูมีมิติ มีไอคอน และเส้นแบ่ง */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-2xl w-fit shadow-sm">
+        <div className={`flex flex-col md:flex-row md:items-center gap-4 mb-8 pb-6 border-b transition-colors ${
+          isDark ? 'border-gray-700' : 'border-gray-200'
+        }`}>
+          <div className={`p-3 rounded-2xl w-fit shadow-sm transition-colors ${
+            isDark ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-100 text-amber-600'
+          }`}>
             <MegaphoneIcon className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h1 className={`text-2xl md:text-3xl font-bold tracking-tight transition-colors ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               {adminT('admin.advertisements.title', locale)}
             </h1>
-            <p className="mt-1 text-sm md:text-base text-gray-500 dark:text-gray-400">
+            <p className={`mt-1 text-sm md:text-base transition-colors ${
+              isDark ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               {adminT('admin.advertisements.subtitle', locale)}
             </p>
           </div>
         </div>
 
-        {/* Content Section */}
         <div className="animate-fade-in-up">
           <AdminAdvertisements />
         </div>

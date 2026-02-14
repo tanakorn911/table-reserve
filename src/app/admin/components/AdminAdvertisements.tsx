@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { TrashIcon, PhotoIcon, LinkIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
 type Ad = {
   id: string;
@@ -14,6 +15,13 @@ type Ad = {
 };
 
 export default function AdminAdvertisements() {
+  // แก้ไขตรงนี้: ใช้ resolvedAdminTheme เพื่อรองรับโหมด System
+  const { adminTheme, resolvedAdminTheme } = useAdminTheme();
+  
+  // ใช้ค่า resolved ก่อน ถ้าไม่มีให้ใช้ adminTheme (fallback)
+  const currentTheme = resolvedAdminTheme || adminTheme;
+  const isDark = currentTheme === 'dark';
+
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
@@ -51,7 +59,6 @@ export default function AdminAdvertisements() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // ตรวจสอบขนาดไฟล์ (เช่น ไม่เกิน 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setError('ขนาดรูปภาพต้องไม่เกิน 2MB');
         return;
@@ -71,7 +78,6 @@ export default function AdminAdvertisements() {
 
     setUploading(true);
     try {
-      // 1. Upload Image
       const ext = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
       const filePath = `ads/${fileName}`;
@@ -82,10 +88,8 @@ export default function AdminAdvertisements() {
 
       if (uploadError) throw new Error('อัปโหลดรูปล้มเหลว: ' + uploadError.message);
 
-      // 2. Get URL
       const { data: { publicUrl } } = supabase.storage.from('advertisements').getPublicUrl(filePath);
 
-      // 3. Save to DB
       const res = await fetch('/api/ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,7 +98,6 @@ export default function AdminAdvertisements() {
 
       if (!res.ok) throw new Error('บันทึกข้อมูลโฆษณาล้มเหลว');
 
-      // Reset Form
       setTitle('');
       setLink('');
       setSelectedFile(null);
@@ -124,122 +127,164 @@ export default function AdminAdvertisements() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <header className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">จัดการโฆษณา (Banner)</h2>
-      </header>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto p-6 space-y-8">
+        
+        <header className="flex justify-between items-center">
+          <h2 className={`text-2xl font-bold transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
+            จัดการโฆษณา (Banner)
+          </h2>
+        </header>
 
-      {/* Form Section */}
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <PlusIcon className="w-5 h-5 text-blue-500" /> เพิ่มโฆษณาใหม่
-        </h3>
-        <form onSubmit={createAd} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">หัวข้อโฆษณา</label>
-              <input 
-                type="text"
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
-                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="เช่น โปรโมชั่นฉลองเปิดร้าน"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                <LinkIcon className="w-4 h-4" /> ลิงก์ปลายทาง (ถ้ามี)
-              </label>
-              <input 
-                type="url"
-                value={link} 
-                onChange={(e) => setLink(e.target.value)} 
-                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://example.com"
-              />
-            </div>
-            <button 
-              type="submit" 
-              disabled={uploading} 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
-            >
-              {uploading ? 'กำลังประมวลผล...' : 'ยืนยันการเพิ่มโฆษณา'}
-            </button>
-          </div>
-
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-4 transition-colors hover:border-blue-400">
-            {imagePreview ? (
-              <div className="relative w-full h-full min-h-[150px]">
-                <img src={imagePreview} alt="preview" className="w-full h-full object-cover rounded-xl" />
-                <button 
-                  type="button"
-                  onClick={() => { setSelectedFile(null); setImagePreview(null); }}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+        <section className={`p-6 rounded-2xl shadow-sm border transition-colors ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 transition-colors ${
+            isDark ? 'text-gray-100' : 'text-gray-900'
+          }`}>
+            <PlusIcon className="w-5 h-5 text-blue-500" /> เพิ่มโฆษณาใหม่
+          </h3>
+          <form onSubmit={createAd} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  หัวข้อโฆษณา
+                </label>
+                <input 
+                  type="text"
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  className={`w-full rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    isDark 
+                      ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' 
+                      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
+                  }`}
+                  placeholder="เช่น โปรโมชั่นฉลองเปิดร้าน"
+                />
               </div>
-            ) : (
-              <label className="cursor-pointer flex flex-col items-center">
-                <PhotoIcon className="w-12 h-12 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-500">คลิกเพื่ออัปโหลดรูปภาพ</span>
-                <span className="text-xs text-gray-400 mt-1">(สัดส่วนแนะนำ 16:9)</span>
-                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-              </label>
-            )}
-          </div>
-        </form>
-      </section>
+              <div>
+                <label className={`block text-sm font-medium mb-1 flex items-center gap-1 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <LinkIcon className="w-4 h-4" /> ลิงก์ปลายทาง (ถ้ามี)
+                </label>
+                <input 
+                  type="url"
+                  value={link} 
+                  onChange={(e) => setLink(e.target.value)} 
+                  className={`w-full rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    isDark 
+                      ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' 
+                      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
+                  }`}
+                  placeholder="https://example.com"
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={uploading} 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
+              >
+                {uploading ? 'กำลังประมวลผล...' : 'ยืนยันการเพิ่มโฆษณา'}
+              </button>
+            </div>
 
-      {/* Display Section */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          รายการโฆษณาปัจจุบัน {ads.length > 0 && <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">{ads.length}</span>}
-        </h3>
-
-        {error && (
-          <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm">
-            <p className="font-bold">เกิดข้อผิดพลาด</p>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="text-center py-10 text-gray-500">กำลังโหลดรายการ...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ads.map((ad) => (
-              <div key={ad.id} className="flex gap-4 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow group">
-                <div className="w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg">
-                  <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <h4 className="font-bold text-gray-800 dark:text-white truncate">{ad.title}</h4>
-                  {ad.link && (
-                    <p className="text-xs text-blue-500 truncate mt-1 underline italic">{ad.link}</p>
-                  )}
-                  <p className="text-[10px] text-gray-400 mt-1">เพิ่มเมื่อ: {new Date(ad.created_at || '').toLocaleDateString('th-TH')}</p>
-                </div>
-                <div className="flex items-center pr-2">
+            <div className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 transition-colors hover:border-blue-400 ${
+              isDark ? 'border-gray-600 bg-gray-900/50' : 'border-gray-300 bg-gray-50/50'
+            }`}>
+              {imagePreview ? (
+                <div className="relative w-full h-full min-h-[150px]">
+                  <img src={imagePreview} alt="preview" className="w-full h-full object-cover rounded-xl" />
                   <button 
-                    onClick={() => deleteAd(ad.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    title="ลบ"
+                    type="button"
+                    onClick={() => { setSelectedFile(null); setImagePreview(null); }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md transition-transform hover:scale-105 active:scale-95"
                   >
-                    <TrashIcon className="w-5 h-5" />
+                    <TrashIcon className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center">
+                  <PhotoIcon className={`w-12 h-12 mb-2 transition-colors ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <span className={`text-sm transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>คลิกเพื่ออัปโหลดรูปภาพ</span>
+                  <span className={`text-xs mt-1 transition-colors ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>(สัดส่วนแนะนำ 16:9)</span>
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                </label>
+              )}
+            </div>
+          </form>
+        </section>
 
-        {!loading && ads.length === 0 && !error && (
-          <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl text-gray-400">
-            ยังไม่มีโฆษณาในระบบ
-          </div>
-        )}
-      </section>
+        <section className="space-y-4">
+          <h3 className={`text-lg font-semibold flex items-center gap-2 transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
+            รายการโฆษณาปัจจุบัน 
+            {ads.length > 0 && (
+              <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                isDark ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'
+              }`}>
+                {ads.length}
+              </span>
+            )}
+          </h3>
+
+          {error && (
+            <div className={`p-4 border-l-4 rounded-r-lg text-sm transition-colors ${
+              isDark ? 'bg-red-900/20 border-red-500 text-red-300' : 'bg-red-50 border-red-500 text-red-700'
+            }`}>
+              <p className="font-bold">เกิดข้อผิดพลาด</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {loading ? (
+            <div className={`text-center py-10 transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              กำลังโหลดรายการ...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {ads.map((ad) => (
+                <div key={ad.id} className={`flex gap-4 p-3 rounded-xl border shadow-sm hover:shadow-md transition-all group ${
+                  isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+                }`}>
+                  <div className="w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg">
+                    <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <h4 className={`font-bold truncate transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                      {ad.title}
+                    </h4>
+                    {ad.link && (
+                      <p className="text-xs text-blue-500 truncate mt-1 underline italic">{ad.link}</p>
+                    )}
+                    <p className={`text-[10px] mt-1 transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      เพิ่มเมื่อ: {new Date(ad.created_at || '').toLocaleDateString('th-TH')}
+                    </p>
+                  </div>
+                  <div className="flex items-center pr-2">
+                    <button 
+                      onClick={() => deleteAd(ad.id)}
+                      className={`p-2 rounded-lg transition-colors active:scale-95 ${
+                        isDark 
+                          ? 'text-gray-400 hover:text-red-400 hover:bg-red-900/30' 
+                          : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                      }`}
+                      title="ลบ"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && ads.length === 0 && !error && (
+            <div className={`text-center py-12 border-2 border-dashed rounded-2xl transition-colors ${
+              isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400'
+            }`}>
+              ยังไม่มีโฆษณาในระบบ
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
