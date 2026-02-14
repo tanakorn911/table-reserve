@@ -122,7 +122,7 @@ const Header = () => {
                 className={`
                   px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
                   ${locale === 'th'
-                    ? 'bg-card text-primary shadow-sm ring-1 ring-black/5'
+                    ? 'bg-card text-yellow-500 shadow-sm ring-1 ring-black/5'
                     : 'text-muted-foreground hover:text-foreground'
                   }
                 `}
@@ -134,7 +134,7 @@ const Header = () => {
                 className={`
                   px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
                   ${locale === 'en'
-                    ? 'bg-card text-primary shadow-sm ring-1 ring-black/5'
+                    ? 'bg-card text-yellow-500 shadow-sm ring-1 ring-black/5'
                     : 'text-muted-foreground hover:text-foreground'
                   }
                 `}

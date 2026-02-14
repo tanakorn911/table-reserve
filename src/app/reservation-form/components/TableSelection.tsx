@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useNavigation } from '@/contexts/NavigationContext';
