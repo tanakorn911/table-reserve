@@ -79,10 +79,11 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2">
-        {loading ? (
-          <div className={`col-span-3 py-4 text-center text-xs ${themeColors.loading}`}>{t('common.loading')}</div>
-        ) : (
+      <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+        <div className="grid grid-cols-3 gap-2 min-w-max">
+          {loading ? (
+            <div className={`col-span-3 py-4 text-center text-xs ${themeColors.loading}`}>{t('common.loading')}</div>
+          ) : (
           timeSlots.map((slot) => {
             const isSelected = value === slot.time;
             let activityClass = themeColors.slot.default;
@@ -112,6 +113,7 @@ const AdminTimeGrid: React.FC<AdminTimeGridProps> = ({ selectedDate, value, onCh
             );
           })
         )}
+        </div>
       </div>
       <p className={`text-[10px] font-bold text-center py-1 rounded ${themeColors.tips}`}>
         {t('admin.floorPlan.timeGridTips')}

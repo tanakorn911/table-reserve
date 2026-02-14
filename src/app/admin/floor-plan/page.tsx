@@ -604,10 +604,10 @@ export default function FloorPlanAdminPage() {
           </div>
 
           {/* Mode Switcher: ปุ่มสลับระหว่างโหมดแก้ไขกับโหมดตรวจสอบ */}
-          <div className={`flex ${pageTheme.modeSwitch} p-1.5 rounded-2xl shadow-inner`}>
+          <div className={`flex ${pageTheme.modeSwitch} p-1.5 rounded-2xl shadow-inner overflow-x-auto whitespace-nowrap scrollbar-hide`}>
             <button
               onClick={() => setViewMode('edit')}
-              className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'edit'
+              className={`flex-1 min-w-max py-3 px-4 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'edit'
                 ? pageTheme.modeActive
                 : pageTheme.modeInactive
                 }`}
@@ -617,7 +617,7 @@ export default function FloorPlanAdminPage() {
             </button>
             <button
               onClick={() => setViewMode('check')}
-              className={`flex-1 py-3 px-2 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'check'
+              className={`flex-1 min-w-max py-3 px-4 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${viewMode === 'check'
                 ? adminTheme === 'dark' ? 'bg-gray-600 text-green-400 shadow-md' : 'bg-white text-green-600 shadow-md'
                 : pageTheme.modeInactive
                 }`}
@@ -720,16 +720,18 @@ export default function FloorPlanAdminPage() {
         </div>
 
         {/* Tip Card: คำแนะนำการใช้งาน */}
-        <div className={`${pageTheme.card} rounded-2xl p-6 shadow-sm border hidden md:block`}>
-          <h3 className={`font-black ${pageTheme.text} text-base mb-3 flex items-center gap-2`}>
+        <div className={`${pageTheme.card} rounded-2xl p-6 shadow-sm border hidden md:block overflow-hidden`}>
+          <h3 className={`font-black ${pageTheme.text} text-base mb-3 flex items-center gap-2 whitespace-nowrap`}>
             <Icon name="InformationCircleIcon" size={20} className={adminTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
             {t('admin.floorPlan.tips')}
           </h3>
-          <ul className={`text-sm ${pageTheme.textSecondary} space-y-3 list-disc list-inside font-bold leading-relaxed`}>
-            <li>{t('admin.floorPlan.tip1')}</li>
-            <li>{t('admin.floorPlan.tip2')}</li>
-            <li>{t('admin.floorPlan.tip3')}</li>
-          </ul>
+          <div className="overflow-x-auto scrollbar-hide pb-2">
+            <ul className={`text-sm ${pageTheme.textSecondary} space-y-3 list-disc list-outside pl-5 font-bold leading-relaxed whitespace-nowrap`}>
+              <li>{t('admin.floorPlan.tip1')}</li>
+              <li>{t('admin.floorPlan.tip2')}</li>
+              <li>{t('admin.floorPlan.tip3')}</li>
+            </ul>
+          </div>
         </div>
       </div>
 
