@@ -11,6 +11,7 @@ import StickyReserveButton from './StickyReserveButton';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 import HolidayAnnouncements from './HolidayAnnouncements';
+import AdvertisementBanner from './AdvertisementBanner';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 
 // ----------------------------------------------------------------------
@@ -354,6 +355,9 @@ const LandingPageInteractive: React.FC = () => {
         heroImage={landingData.heroImage}
         heroImageAlt={landingData.heroImageAlt}
       />
+
+      {/* Advertisement Banner: แสดงโฆษณาที่เปิดใช้งาน (active) */}
+      <AdvertisementBanner />
 
       {/* 2. Holiday Announcements: ประกาศวันหยุด (แสดงเฉพาะเมื่อมีข้อมูล) */}
       {holidays.length > 0 && <HolidayAnnouncements holidays={holidays} />}

@@ -306,6 +306,9 @@ export const translations = {
     'common.processing': 'กำลังประมวลผล...',
     'common.people': 'ท่าน',
 
+    // Sidebar Advertisements
+    'sidebar.advertisements': 'ลงโฆษณา',
+
     // Admin Login & Roles
     'admin.login.title': 'ลงชื่อเข้าใช้ระบบ (Admin)',
     'admin.login.email': 'อีเมลสารพัดประโยชน์',
@@ -334,6 +337,8 @@ export const translations = {
     'admin.ai.title': 'ข้อมูลเชิงลึกจาก AI',
     'admin.ai.subtitle': 'ขับเคลื่อนโดย Gemini',
     'admin.ai.analyzing': 'กำลังวิเคราะห์ข้อมูล...',
+    'admin.advertisements.title': 'จัดการโฆษณา',
+    'admin.advertisements.subtitle': 'เพิ่ม ลบ และจัดการแบนเนอร์ที่จะแสดงบนหน้าหลัก',
   },
   en: {
     // Common
@@ -665,6 +670,10 @@ export const translations = {
     'admin.ai.title': 'AI Insights',
     'admin.ai.subtitle': 'Powered by Gemini',
     'admin.ai.analyzing': 'Analyzing data...',
+    'admin.advertisements.title': 'Manage Advertisements',
+    'admin.advertisements.subtitle': 'Create, remove and manage banners shown on the homepage',
+    // Sidebar Advertisements
+    'sidebar.advertisements': 'Advertisements',
   },
 };
 

@@ -58,6 +58,36 @@ export async function DELETE(request: NextRequest) {
     const { id } = body;
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
+    // First fetch the record to get image_url
+    const { data: existing, error: fetchErr } = await supabase
+      .from('advertisements')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+
+    // Try to remove file from storage if image_url is a public storage url
+    try {
+      const imageUrl: string | undefined = (existing as any)?.image_url;
+      if (imageUrl && typeof imageUrl === 'string') {
+        // Supabase public URL pattern: <SUPABASE_URL>/storage/v1/object/public/<bucket>/<path>
+        const marker = '/storage/v1/object/public/advertisements/';
+        const idx = imageUrl.indexOf(marker);
+        if (idx !== -1) {
+          const filePath = imageUrl.substring(idx + marker.length);
+          // remove file
+          const { error: removeErr } = await supabase.storage.from('advertisements').remove([filePath]);
+          if (removeErr) {
+            // Log but don't fail deletion of DB record
+            console.error('Failed to remove storage file:', removeErr.message);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Storage deletion error', err);
+    }
+
+    // Then delete DB record
     const { data, error } = await supabase.from('advertisements').delete().eq('id', id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ data });
