@@ -140,14 +140,14 @@ const MobileMenu = () => {
           {/* ส่วนสลับ Theme สำหรับ Mobile */}
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center justify-between px-2">
-              <p className="text-sm font-medium text-muted-foreground">{locale === 'th' ? 'โหมดสี' : 'Theme'}</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('theme.mode')}</p>
               <ThemeToggle size="sm" />
             </div>
           </div>
 
           {/* ส่วนเปลี่ยนภาษา สำหรับ Mobile */}
           <div className="mt-2 pt-4 border-t border-border">
-            <p className="text-sm font-medium text-muted-foreground mb-3 px-2">Language / ภาษา</p>
+            <p className="text-sm font-medium text-muted-foreground mb-3 px-2">{t('nav.language')}</p>
             <div className="flex gap-3">
               <button
                 onClick={() => {
