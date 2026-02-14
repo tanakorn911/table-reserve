@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
+import { TrashIcon, PhotoIcon, LinkIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 type Ad = {
-  id: string | number;
+  id: string;
   title: string;
   image_url: string;
   link?: string | null;
@@ -20,10 +21,11 @@ export default function AdminAdvertisements() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [link, setLink] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const supabase = createClientSupabaseClient();
 
-  const fetchAds = async () => {
+  const fetchAds = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/ads');
@@ -36,190 +38,208 @@ export default function AdminAdvertisements() {
         setError(null);
       }
     } catch (err) {
-      console.error(err);
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      setError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAds();
-  }, []);
+  }, [fetchAds]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // ตรวจสอบขนาดไฟล์ (เช่น ไม่เกิน 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setError('ขนาดรูปภาพต้องไม่เกิน 2MB');
+        return;
+      }
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setImagePreview(url);
+    }
+  };
 
   const createAd = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!title || title.trim().length === 0) {
-      setError('กรุณากรอกหัวข้อ');
-      return;
-    }
 
-    // Need either a selected file to upload
-    if (!selectedFile) {
-      setError('กรุณาเลือกไฟล์รูปภาพสำหรับโฆษณา');
-      return;
-    }
+    if (!title.trim()) return setError('กรุณากรอกหัวข้อโฆษณา');
+    if (!selectedFile) return setError('กรุณาเลือกรูปภาพ');
 
     setUploading(true);
     try {
-      // upload file to Supabase Storage in bucket `advertisements`
+      // 1. Upload Image
       const ext = selectedFile.name.split('.').pop();
-      const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const filePath = `ads/${fileName}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('advertisements')
-        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+        .upload(filePath, selectedFile);
 
-      if (uploadError) {
-        console.error('Upload error', uploadError);
-        setError(uploadError.message || 'ไม่สามารถอัปโหลดรูปได้');
-        setUploading(false);
-        return;
-      }
+      if (uploadError) throw new Error('อัปโหลดรูปล้มเหลว: ' + uploadError.message);
 
-      // get public url
-      const { data: publicData } = await supabase.storage.from('advertisements').getPublicUrl(filePath);
-      const publicUrl = (publicData as any)?.publicUrl;
-      if (!publicUrl) {
-        setError('ไม่สามารถสร้าง URL สาธารณะสำหรับรูปได้');
-        setUploading(false);
-        return;
-      }
+      // 2. Get URL
+      const { data: { publicUrl } } = supabase.storage.from('advertisements').getPublicUrl(filePath);
 
-      // create ad record via API
+      // 3. Save to DB
       const res = await fetch('/api/ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), image_url: publicUrl, link }),
+        body: JSON.stringify({ title: title.trim(), image_url: publicUrl, link: link.trim() }),
       });
-      const json = await res.json();
-      if (res.ok) {
-        setTitle('');
-        setSelectedFile(null);
-        setImagePreview(null);
-        setLink('');
-        fetchAds();
-      } else {
-        setError(json.error || 'ไม่สามารถเพิ่มโฆษณาได้');
-      }
-    } catch (err) {
-      console.error(err);
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+
+      if (!res.ok) throw new Error('บันทึกข้อมูลโฆษณาล้มเหลว');
+
+      // Reset Form
+      setTitle('');
+      setLink('');
+      setSelectedFile(null);
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+      fetchAds();
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setUploading(false);
     }
   };
 
-  const deleteAd = async (id: string | number) => {
-    if (!confirm('ลบโฆษณาชิ้นนี้?')) return;
+  const deleteAd = async (id: string) => {
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบโฆษณาชิ้นนี้?')) return;
     try {
       const res = await fetch('/api/ads', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-      const json = await res.json();
-      if (res.ok) {
-        fetchAds();
-      } else {
-        setError(json.error || 'ไม่สามารถลบโฆษณาได้');
-      }
+      if (res.ok) fetchAds();
+      else setError('ไม่สามารถลบโฆษณาได้');
     } catch (err) {
-      console.error(err);
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      setError('เกิดข้อผิดพลาดในการลบ');
     }
   };
 
-  const [error, setError] = useState<string | null>(null);
-
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4">จัดการโฆษณา</h2>
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <header className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">จัดการโฆษณา (Banner)</h2>
+      </header>
 
-      <form onSubmit={createAd} className="mb-6 space-y-2 max-w-md">
-        <div>
-          <label className="block text-sm">หัวข้อ</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border rounded p-2" />
-        </div>
-        <div>
-          <label className="block text-sm">รูปภาพ (อัปโหลด)</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const f = e.target.files?.[0] || null;
-              setSelectedFile(f);
-              if (f) {
-                const url = URL.createObjectURL(f);
-                setImagePreview(url);
-              } else {
-                setImagePreview(null);
-              }
-            }}
-            className="w-full"
-          />
-          {imagePreview && (
-            <div className="mt-2">
-              <img src={imagePreview} alt="preview" className="w-48 h-28 object-cover rounded" />
+      {/* Form Section */}
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <PlusIcon className="w-5 h-5 text-blue-500" /> เพิ่มโฆษณาใหม่
+        </h3>
+        <form onSubmit={createAd} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">หัวข้อโฆษณา</label>
+              <input 
+                type="text"
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="เช่น โปรโมชั่นฉลองเปิดร้าน"
+              />
             </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm">ลิงก์ (ไม่บังคับ)</label>
-          <input value={link} onChange={(e) => setLink(e.target.value)} className="w-full border rounded p-2" />
-        </div>
-        <div>
-          <button type="submit" disabled={uploading} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">
-            {uploading ? 'กำลังอัปโหลด...' : 'เพิ่มโฆษณา'}
-          </button>
-        </div>
-      </form>
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                <LinkIcon className="w-4 h-4" /> ลิงก์ปลายทาง (ถ้ามี)
+              </label>
+              <input 
+                type="url"
+                value={link} 
+                onChange={(e) => setLink(e.target.value)} 
+                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://example.com"
+              />
+            </div>
+            <button 
+              type="submit" 
+              disabled={uploading} 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
+            >
+              {uploading ? 'กำลังประมวลผล...' : 'ยืนยันการเพิ่มโฆษณา'}
+            </button>
+          </div>
 
-      <div>
-        <h3 className="text-lg font-medium mb-2">รายการโฆษณา</h3>
-        {error && (
-          <div className="mb-4 p-3 bg-red-800/60 text-red-100 rounded">
-            <div className="font-bold">เกิดข้อผิดพลาด:</div>
-            <div className="text-sm mt-1">{error}</div>
-            {error.includes('Could not find the table') && (
-              <div className="mt-3 text-sm bg-yellow-900/40 p-3 rounded">
-                ตาราง `public.advertisements` ยังไม่มีในฐานข้อมูล.
-                คุณสามารถสร้างได้ด้วย SQL ต่อไปนี้ (รันที่ฐานข้อมูลของคุณ):
-                <pre className="mt-2 p-2 bg-black/20 rounded overflow-auto text-xs">
-CREATE TABLE public.advertisements (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text NOT NULL,
-  image_url text NOT NULL,
-  link text,
-  active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-                </pre>
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-4 transition-colors hover:border-blue-400">
+            {imagePreview ? (
+              <div className="relative w-full h-full min-h-[150px]">
+                <img src={imagePreview} alt="preview" className="w-full h-full object-cover rounded-xl" />
+                <button 
+                  type="button"
+                  onClick={() => { setSelectedFile(null); setImagePreview(null); }}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </button>
               </div>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center">
+                <PhotoIcon className="w-12 h-12 text-gray-400 mb-2" />
+                <span className="text-sm text-gray-500">คลิกเพื่ออัปโหลดรูปภาพ</span>
+                <span className="text-xs text-gray-400 mt-1">(สัดส่วนแนะนำ 16:9)</span>
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              </label>
             )}
+          </div>
+        </form>
+      </section>
+
+      {/* Display Section */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          รายการโฆษณาปัจจุบัน {ads.length > 0 && <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">{ads.length}</span>}
+        </h3>
+
+        {error && (
+          <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm">
+            <p className="font-bold">เกิดข้อผิดพลาด</p>
+            <p>{error}</p>
           </div>
         )}
 
-        {loading && <div>กำลังโหลด...</div>}
-        {!loading && ads.length === 0 && !error && <div>ยังไม่มีโฆษณา</div>}
-        <ul className="space-y-4">
-          {ads.map((ad) => (
-            <li key={String(ad.id)} className="flex items-center gap-4 border p-3 rounded bg-gray-900/20">
-              <img src={ad.image_url} alt={ad.title} className="w-32 h-20 object-cover rounded" />
-              <div className="flex-1">
-                <div className="font-semibold">{ad.title}</div>
-                {ad.link && (
-                  <a href={ad.link} target="_blank" rel="noreferrer" className="text-sm text-yellow-400">{ad.link}</a>
-                )}
+        {loading ? (
+          <div className="text-center py-10 text-gray-500">กำลังโหลดรายการ...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ads.map((ad) => (
+              <div key={ad.id} className="flex gap-4 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg">
+                  <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <h4 className="font-bold text-gray-800 dark:text-white truncate">{ad.title}</h4>
+                  {ad.link && (
+                    <p className="text-xs text-blue-500 truncate mt-1 underline italic">{ad.link}</p>
+                  )}
+                  <p className="text-[10px] text-gray-400 mt-1">เพิ่มเมื่อ: {new Date(ad.created_at || '').toLocaleDateString('th-TH')}</p>
+                </div>
+                <div className="flex items-center pr-2">
+                  <button 
+                    onClick={() => deleteAd(ad.id)}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    title="ลบ"
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div>
-                <button onClick={() => deleteAd(ad.id)} className="text-red-500 hover:underline">ลบ</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && ads.length === 0 && !error && (
+          <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl text-gray-400">
+            ยังไม่มีโฆษณาในระบบ
+          </div>
+        )}
+      </section>
     </div>
   );
 }
