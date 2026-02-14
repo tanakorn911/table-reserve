@@ -261,7 +261,7 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
  */
 export default function FloorPlanAdminPage() {
   const locale = useAdminLocale();
-  const { adminTheme } = useAdminTheme();
+  const { adminTheme, resolvedAdminTheme } = useAdminTheme();
   const { t } = useTranslation(locale);
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -580,7 +580,7 @@ export default function FloorPlanAdminPage() {
                 onTableEdit={setEditingTable}
                 bookedTables={bookedTables}
                 locale={locale}
-                theme={adminTheme}
+                theme={resolvedAdminTheme}
                 onTableSelect={(id) => {
                   if (viewMode === 'check') {
                     const booking = bookedTables.find((b) => b.id === id);
