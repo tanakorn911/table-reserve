@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { TrashIcon, PhotoIcon, LinkIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { useAdminTheme } from '@/contexts/AdminThemeContext';
+import { useTranslation } from '@/lib/i18n';
 
 type Ad = {
-  id: string;
+  id: string | number;
   title: string;
   image_url: string;
   link?: string | null;
@@ -15,13 +14,7 @@ type Ad = {
 };
 
 export default function AdminAdvertisements() {
-  // แก้ไขตรงนี้: ใช้ resolvedAdminTheme เพื่อรองรับโหมด System
-  const { adminTheme, resolvedAdminTheme } = useAdminTheme();
-  
-  // ใช้ค่า resolved ก่อน ถ้าไม่มีให้ใช้ adminTheme (fallback)
-  const currentTheme = resolvedAdminTheme || adminTheme;
-  const isDark = currentTheme === 'dark';
-
+  const { t } = useTranslation();
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
@@ -29,11 +22,10 @@ export default function AdminAdvertisements() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [link, setLink] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const supabase = createClientSupabaseClient();
 
-  const fetchAds = useCallback(async () => {
+  const fetchAds = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/ads');
@@ -46,244 +38,245 @@ export default function AdminAdvertisements() {
         setError(null);
       }
     } catch (err) {
-      setError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+      console.error(err);
+      setError(t('admin.advertisements.error.connect'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchAds();
-  }, [fetchAds]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setError('ขนาดรูปภาพต้องไม่เกิน 2MB');
-        return;
-      }
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
-    }
-  };
+  }, []);
 
   const createAd = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!title || title.trim().length === 0) {
+      setError(t('admin.advertisements.error.fill'));
+      return;
+    }
 
-    if (!title.trim()) return setError('กรุณากรอกหัวข้อโฆษณา');
-    if (!selectedFile) return setError('กรุณาเลือกรูปภาพ');
+    if (!selectedFile) {
+      setError(t('admin.advertisements.error.file'));
+      return;
+    }
 
     setUploading(true);
     try {
       const ext = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
-      const filePath = `ads/${fileName}`;
+      const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('advertisements')
-        .upload(filePath, selectedFile);
+        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
 
-      if (uploadError) throw new Error('อัปโหลดรูปล้มเหลว: ' + uploadError.message);
+      if (uploadError) {
+        console.error('Upload error', uploadError);
+        setError(uploadError.message || t('alert.uploadFailed'));
+        setUploading(false);
+        return;
+      }
 
-      const { data: { publicUrl } } = supabase.storage.from('advertisements').getPublicUrl(filePath);
+      const { data: publicData } = await supabase.storage.from('advertisements').getPublicUrl(filePath);
+      const publicUrl = (publicData as any)?.publicUrl;
+      if (!publicUrl) {
+        setError(t('alert.uploadFailed'));
+        setUploading(false);
+        return;
+      }
 
       const res = await fetch('/api/ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), image_url: publicUrl, link: link.trim() }),
+        body: JSON.stringify({ title: title.trim(), image_url: publicUrl, link }),
       });
-
-      if (!res.ok) throw new Error('บันทึกข้อมูลโฆษณาล้มเหลว');
-
-      setTitle('');
-      setLink('');
-      setSelectedFile(null);
-      if (imagePreview) URL.revokeObjectURL(imagePreview);
-      setImagePreview(null);
-      fetchAds();
-    } catch (err: any) {
-      setError(err.message);
+      const json = await res.json();
+      if (res.ok) {
+        setTitle('');
+        setSelectedFile(null);
+        setImagePreview(null);
+        setLink('');
+        fetchAds();
+      } else {
+        setError(json.error || t('alert.failed'));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(t('admin.advertisements.error.connect'));
     } finally {
       setUploading(false);
     }
   };
 
-  const deleteAd = async (id: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบโฆษณาชิ้นนี้?')) return;
+  const deleteAd = async (id: string | number) => {
+    if (!confirm(t('admin.advertisements.confirm.delete'))) return;
     try {
       const res = await fetch('/api/ads', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-      if (res.ok) fetchAds();
-      else setError('ไม่สามารถลบโฆษณาได้');
+      const json = await res.json();
+      if (res.ok) {
+        fetchAds();
+      } else {
+        setError(json.error || t('alert.failed'));
+      }
     } catch (err) {
-      setError('เกิดข้อผิดพลาดในการลบ');
+      console.error(err);
+      setError(t('admin.advertisements.error.connect'));
     }
   };
 
+  const [error, setError] = useState<string | null>(null);
+
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-5xl mx-auto p-6 space-y-8">
-        
-        <header className="flex justify-between items-center">
-          <h2 className={`text-2xl font-bold transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            จัดการโฆษณา (Banner)
-          </h2>
-        </header>
+    <div className="space-y-8">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <h2 className="text-xl font-black text-primary uppercase tracking-tight mb-6">
+          {t('admin.advertisements.title')}
+        </h2>
 
-        <section className={`p-6 rounded-2xl shadow-sm border transition-colors ${
-          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        }`}>
-          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 transition-colors ${
-            isDark ? 'text-gray-100' : 'text-gray-900'
-          }`}>
-            <PlusIcon className="w-5 h-5 text-blue-500" /> เพิ่มโฆษณาใหม่
-          </h3>
-          <form onSubmit={createAd} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  หัวข้อโฆษณา
+        <form onSubmit={createAd} className="space-y-4 max-w-xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                {t('admin.advertisements.form.title')}
+              </label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t('admin.advertisements.form.title')}
+                className="w-full bg-muted border border-border rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                {t('admin.advertisements.form.link')}
+              </label>
+              <input
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://..."
+                className="w-full bg-muted border border-border rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
+                {t('admin.advertisements.form.image')}
+              </label>
+              <div className="flex items-center gap-4">
+                <label className="cursor-pointer bg-primary/10 text-primary border border-primary/20 px-6 py-3 rounded-xl font-bold hover:bg-primary/20 transition-all flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      setSelectedFile(f);
+                      if (f) {
+                        const url = URL.createObjectURL(f);
+                        setImagePreview(url);
+                      } else {
+                        setImagePreview(null);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <span>{selectedFile ? selectedFile.name : t('admin.advertisements.form.selectFile')}</span>
                 </label>
-                <input 
-                  type="text"
-                  value={title} 
-                  onChange={(e) => setTitle(e.target.value)} 
-                  className={`w-full rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                    isDark 
-                      ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' 
-                      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
-                  }`}
-                  placeholder="เช่น โปรโมชั่นฉลองเปิดร้าน"
-                />
               </div>
-              <div>
-                <label className={`block text-sm font-medium mb-1 flex items-center gap-1 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  <LinkIcon className="w-4 h-4" /> ลิงก์ปลายทาง (ถ้ามี)
-                </label>
-                <input 
-                  type="url"
-                  value={link} 
-                  onChange={(e) => setLink(e.target.value)} 
-                  className={`w-full rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                    isDark 
-                      ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' 
-                      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
-                  }`}
-                  placeholder="https://example.com"
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={uploading} 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
-              >
-                {uploading ? 'กำลังประมวลผล...' : 'ยืนยันการเพิ่มโฆษณา'}
-              </button>
             </div>
 
-            <div className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 transition-colors hover:border-blue-400 ${
-              isDark ? 'border-gray-600 bg-gray-900/50' : 'border-gray-300 bg-gray-50/50'
-            }`}>
-              {imagePreview ? (
-                <div className="relative w-full h-full min-h-[150px]">
-                  <img src={imagePreview} alt="preview" className="w-full h-full object-cover rounded-xl" />
-                  <button 
-                    type="button"
-                    onClick={() => { setSelectedFile(null); setImagePreview(null); }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md transition-transform hover:scale-105 active:scale-95"
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className="cursor-pointer flex flex-col items-center">
-                  <PhotoIcon className={`w-12 h-12 mb-2 transition-colors ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                  <span className={`text-sm transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>คลิกเพื่ออัปโหลดรูปภาพ</span>
-                  <span className={`text-xs mt-1 transition-colors ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>(สัดส่วนแนะนำ 16:9)</span>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                </label>
-              )}
-            </div>
-          </form>
-        </section>
-
-        <section className="space-y-4">
-          <h3 className={`text-lg font-semibold flex items-center gap-2 transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            รายการโฆษณาปัจจุบัน 
-            {ads.length > 0 && (
-              <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                isDark ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'
-              }`}>
-                {ads.length}
-              </span>
+            {imagePreview && (
+              <div className="relative w-full aspect-video md:w-80 overflow-hidden rounded-2xl border-4 border-muted shadow-lg">
+                <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => { setSelectedFile(null); setImagePreview(null); }}
+                  className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full hover:bg-black transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             )}
-          </h3>
+          </div>
 
-          {error && (
-            <div className={`p-4 border-l-4 rounded-r-lg text-sm transition-colors ${
-              isDark ? 'bg-red-900/20 border-red-500 text-red-300' : 'bg-red-50 border-red-500 text-red-700'
-            }`}>
-              <p className="font-bold">เกิดข้อผิดพลาด</p>
-              <p>{error}</p>
-            </div>
-          )}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={uploading}
+              className="w-full md:w-auto bg-primary text-primary-foreground px-10 py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {uploading ? t('admin.advertisements.form.uploading') : t('admin.advertisements.form.submit')}
+            </button>
+          </div>
+        </form>
+      </div>
 
-          {loading ? (
-            <div className={`text-center py-10 transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              กำลังโหลดรายการ...
+      <div className="space-y-4">
+        <h3 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-2">
+          {t('admin.advertisements.list.title')}
+          <span className="text-xs font-normal text-muted-foreground lowercase">({ads.length})</span>
+        </h3>
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-2xl flex flex-col gap-2">
+            <div className="font-bold flex items-center gap-2 text-sm uppercase">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {t('admin.advertisements.error.title')}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ads.map((ad) => (
-                <div key={ad.id} className={`flex gap-4 p-3 rounded-xl border shadow-sm hover:shadow-md transition-all group ${
-                  isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
-                }`}>
-                  <div className="w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg">
-                    <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <h4 className={`font-bold truncate transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                      {ad.title}
-                    </h4>
-                    {ad.link && (
-                      <p className="text-xs text-blue-500 truncate mt-1 underline italic">{ad.link}</p>
-                    )}
-                    <p className={`text-[10px] mt-1 transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      เพิ่มเมื่อ: {new Date(ad.created_at || '').toLocaleDateString('th-TH')}
-                    </p>
-                  </div>
-                  <div className="flex items-center pr-2">
-                    <button 
-                      onClick={() => deleteAd(ad.id)}
-                      className={`p-2 rounded-lg transition-colors active:scale-95 ${
-                        isDark 
-                          ? 'text-gray-400 hover:text-red-400 hover:bg-red-900/30' 
-                          : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                      }`}
-                      title="ลบ"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </div>
+            <div className="text-sm">{error}</div>
+          </div>
+        )}
+
+        {loading && <div className="text-center py-12 text-muted-foreground animate-pulse">{t('common.loading')}</div>}
+
+        {!loading && ads.length === 0 && !error && (
+          <div className="text-center py-20 bg-muted/30 border border-dashed border-border rounded-3xl text-muted-foreground">
+            {t('admin.advertisements.list.empty')}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ads.map((ad) => (
+            <div key={String(ad.id)} className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+              <div className="relative aspect-video overflow-hidden">
+                <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                  <div className="text-white font-bold truncate w-full">{ad.title}</div>
                 </div>
-              ))}
+              </div>
+              <div className="p-4 flex items-center justify-between gap-4">
+                <div className="flex-1 truncate">
+                  {ad.link ? (
+                    <a href={ad.link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 100-2H5z" />
+                      </svg>
+                      {ad.link}
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">No link</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => deleteAd(ad.id)}
+                  className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg transition-all"
+                >
+                  {t('admin.advertisements.list.delete')}
+                </button>
+              </div>
             </div>
-          )}
-
-          {!loading && ads.length === 0 && !error && (
-            <div className={`text-center py-12 border-2 border-dashed rounded-2xl transition-colors ${
-              isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400'
-            }`}>
-              ยังไม่มีโฆษณาในระบบ
-            </div>
-          )}
-        </section>
+          ))}
+        </div>
       </div>
     </div>
   );
