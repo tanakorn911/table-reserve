@@ -98,6 +98,7 @@ export const adminT = (key: string, locale: Locale): string => {
         // Sidebar
         'sidebar.dashboard': { th: 'แดชบอร์ด', en: 'Dashboard' },
         'sidebar.reservations': { th: 'รายการจอง', en: 'Reservations' },
+        'sidebar.advertisements': { th: 'จัดการโฆษณา', en: 'Advertisements' },
         'sidebar.checkStatus': { th: 'เช็คสถานะจอง', en: 'Check Status' },
         'sidebar.floorPlan': { th: 'จัดการผังร้าน', en: 'Floor Plan' },
         'sidebar.settings': { th: 'ตั้งค่าระบบ', en: 'Settings' },
@@ -220,6 +221,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'admin.advertisements.form.title': { th: 'หัวข้อ', en: 'Title' },
         'admin.advertisements.form.titlePlaceholder': { th: 'ระบุหัวข้อโฆษณา', en: 'Enter advertisement title' },
         'admin.advertisements.form.image': { th: 'รูปภาพ', en: 'Image' },
+        'admin.advertisements.form.selectFile': { th: 'คลิกเพื่อเลือกรูปภาพโฆษณา', en: 'Click to select advertisement image' },
         'admin.advertisements.form.imageHint': { th: 'รองรับไฟล์รูปภาพ ขนาดไม่เกิน 5MB', en: 'Supports image files, maximum size 5MB' },
         'admin.advertisements.form.previewAlt': { th: 'ตัวอย่าง', en: 'Preview' },
         'admin.advertisements.form.link': { th: 'ลิงก์ (ไม่บังคับ)', en: 'Link (Optional)' },
