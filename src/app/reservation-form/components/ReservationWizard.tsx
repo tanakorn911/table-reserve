@@ -676,7 +676,7 @@ const ReservationWizard = () => {
                                                 <div className="text-center">
                                                     <p className="text-sm font-bold text-foreground mb-1">{t('payment.scan')}</p>
                                                     <p className="text-3xl font-black text-primary">
-                                                        ฿200.00
+                                                        {t('payment.amountValue')}
                                                     </p>
                                                     <div className="mt-2 flex flex-col items-center gap-1">
                                                         <p className="text-sm text-foreground flex items-center justify-center gap-2 font-bold">
@@ -717,7 +717,7 @@ const ReservationWizard = () => {
                                                             </div>
                                                             {t('payment.ready')}
                                                             <span className="text-xs font-normal text-muted-foreground">
-                                                                คลิกเพื่อเปลี่ยนรูป
+                                                                {t('payment.upload.click')}
                                                             </span>
                                                         </div>
                                                     ) : (
