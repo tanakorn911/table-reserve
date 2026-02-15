@@ -146,12 +146,19 @@ export const translations = {
     'success.backHome': 'กลับสู่หน้าหลัก',
     'success.screenshot': 'กรุณาแคปหน้าจอเพื่อใช้เป็นหลักฐานการจอง',
 
-    // Admin
     'admin.dashboard': 'แดชบอร์ด',
     'admin.reservations': 'รายการจอง',
     'admin.tables': 'จัดการโต๊ะ',
     'admin.settings': 'ตั้งค่าระบบ',
     'admin.logout': 'ออกจากระบบ',
+    'sidebar.dashboard': 'แดชบอร์ด',
+    'sidebar.reservations': 'รายการจอง',
+    'sidebar.advertisements': 'จัดการโฆษณา',
+    'sidebar.floorPlan': 'แผนผังร้าน',
+    'sidebar.settings': 'ตั้งค่าระบบ',
+    'sidebar.logout': 'ออกจากระบบ',
+    'sidebar.admin': 'ผู้ดูแลระบบ',
+    'sidebar.staff': 'พนักงาน',
 
     // Check Status
     'checkStatus.title': 'ตรวจสอบสถานะการจอง',
@@ -512,12 +519,19 @@ export const translations = {
     'success.backHome': 'Back to Home',
     'success.screenshot': 'Please take a screenshot for your reference',
 
-    // Admin
     'admin.dashboard': 'Dashboard',
     'admin.reservations': 'Reservations',
     'admin.tables': 'Manage Tables',
     'admin.settings': 'Settings',
     'admin.logout': 'Logout',
+    'sidebar.dashboard': 'Dashboard',
+    'sidebar.reservations': 'Reservations',
+    'sidebar.advertisements': 'Advertisements',
+    'sidebar.floorPlan': 'Floor Plan',
+    'sidebar.settings': 'Settings',
+    'sidebar.logout': 'Logout',
+    'sidebar.admin': 'Administrator',
+    'sidebar.staff': 'Staff',
 
     // Check Status
     'checkStatus.title': 'Check Booking Status',
