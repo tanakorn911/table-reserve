@@ -103,17 +103,17 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     }
     : {
       overlay: 'bg-black/50',
-      sidebar: 'bg-white border-gray-200 shadow-xl shadow-gray-200/50',
-      header: 'bg-white border-gray-200',
-      headerTitle: 'text-gray-900',
-      headerSubtitle: 'text-gray-500',
-      closeBtn: 'text-gray-400 hover:text-gray-600',
-      navActive: 'bg-gray-100 text-gray-900 shadow-sm border-gray-200',
-      navInactive: 'text-gray-500 hover:bg-gray-50 hover:text-gray-900',
-      navIcon: 'text-gray-400 group-hover:text-gray-600',
-      navIconActive: 'text-gray-900',
-      logoutBorder: 'border-gray-100',
-      logout: 'text-red-600 hover:bg-red-50 hover:border-red-100',
+      sidebar: 'bg-background border-border shadow-xl shadow-stone-200/40',
+      header: 'bg-gradient-to-r from-accent/10 to-transparent border-border',
+      headerTitle: 'text-primary',
+      headerSubtitle: 'text-accent',
+      closeBtn: 'text-muted-foreground hover:text-foreground',
+      navActive: 'bg-accent/10 text-accent shadow-sm border-accent/20',
+      navInactive: 'text-muted-foreground hover:bg-accent/5 hover:text-primary',
+      navIcon: 'text-muted-foreground group-hover:text-accent',
+      navIconActive: 'text-accent',
+      logoutBorder: 'border-border',
+      logout: 'text-error hover:bg-error/10 hover:border-error/30',
     };
 
   return (
@@ -135,11 +135,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         {/* Header ส่วนบนของ Sidebar */}
         <div className={`relative flex items-center justify-between h-16 px-6 border-b ${themeClasses.header}`}>
           <div>
-            <span className={`text-lg font-bold ${themeClasses.headerTitle} leading-tight`}>
+            <span className={`text-xl font-black ${themeClasses.headerTitle} leading-tight tracking-tight`}>
               {adminT('login.title', locale)}
-            </span>
-            <span className={`${themeClasses.headerSubtitle} text-xs block uppercase tracking-wider font-bold`}>
-              ({adminT(role === 'admin' ? 'sidebar.admin' : 'sidebar.staff', locale)})
             </span>
           </div>
           {/* ปุ่มปิด (เฉพาะ Mobile) */}

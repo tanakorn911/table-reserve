@@ -104,14 +104,31 @@ const MobileMenu = () => {
         aria-hidden="true"
       />
 
-      {/* ตัวเมนู Slide ลงมาจากด้านบน (ใต้ Header) */}
+      {/* ตัวเมนู Slide ลงมาจากด้านบน */}
       <div
         className="
-          fixed top-[80px] left-0 right-0 bottom-0 z-200 bg-card
+          fixed top-0 left-0 right-0 bottom-0 z-200 bg-card
           md:hidden overflow-y-auto transition-smooth
           animate-in slide-in-from-top-4 duration-250
         "
       >
+        {/* Header ภายในเมนู พร้อมปุ่มปิด */}
+        <div className="flex items-center justify-between p-5 border-b border-border bg-card sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+              <Icon name="BuildingStorefrontIcon" size={24} className="text-primary-foreground" />
+            </div>
+            <span className="font-bold text-lg text-foreground">{t('app.title')}</span>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-muted text-foreground hover:bg-muted/80 transition-all border border-border"
+            aria-label="Close menu"
+          >
+            <Icon name="XMarkIcon" size={24} />
+          </button>
+        </div>
+
         <nav className="flex flex-col p-5 gap-1.5">
           {/* วนลูปแสดงเมนู */}
           {filteredNavItems.map((item, index) => (
