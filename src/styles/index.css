@@ -35,9 +35,9 @@
   --radius-xl: var(--radius-xl);
 
   /* Fonts */
-  --font-heading: Sarabun, serif;
-  --font-body: Sarabun, sans-serif;
-  --font-caption: Sarabun, sans-serif;
+  --font-heading: var(--font-ibm-plex-thai), sans-serif;
+  --font-body: var(--font-ibm-plex-thai), sans-serif;
+  --font-caption: var(--font-ibm-plex-thai), sans-serif;
   --font-data: 'JetBrains Mono', monospace;
 
   /* Spacing */
@@ -140,31 +140,31 @@
   }
 
   .light {
-    /* Light theme - warm white with brown/tan accents (Bistro style) */
-    --color-primary: #c96a2b; /* warm terracotta orange */
+    /* Modern Bistro Look - Warm & Clean */
+    --color-primary: #ea580c; /* cognac / deep wood */
     --color-primary-foreground: #ffffff;
-    --color-secondary: #8b5a2b; /* saddle brown */
+    --color-secondary: #44403c; /* stone 700 */
     --color-secondary-foreground: #ffffff;
-    --color-accent: #d4a574; /* light tan/caramel */
-    --color-accent-foreground: #3d2914;
-    --color-background: #faf8f5; /* warm off-white */
-    --color-foreground: #3d2914; /* dark brown */
+    --color-accent: #ea580c; /* bistro orange */
+    --color-accent-foreground: #ffffff;
+    --color-background: #fffdfa; /* warm parchment */
+    --color-foreground: #1c1917; /* stone 900 */
     --color-card: #ffffff;
-    --color-card-foreground: #3d2914;
+    --color-card-foreground: #1c1917;
     --color-popover: #ffffff;
-    --color-popover-foreground: #3d2914;
-    --color-muted: #f5f0e8; /* cream */
-    --color-muted-foreground: #6b5344; /* medium brown */
-    --color-border: rgba(139, 90, 43, 0.2); /* brown tinted border */
+    --color-popover-foreground: #1c1917;
+    --color-muted: #f5f5f4; /* stone 100 */
+    --color-muted-foreground: #78716c; /* stone 500 */
+    --color-border: #e7e5e4; /* stone 200 */
     --color-input: #ffffff;
-    --color-ring: #c96a2b;
-    --color-success: #5d8c4a; /* olive green */
+    --color-ring: #ea580c;
+    --color-success: #15803d;
     --color-success-foreground: #ffffff;
-    --color-warning: #d4872c; /* amber */
+    --color-warning: #b45309;
     --color-warning-foreground: #ffffff;
-    --color-error: #c24a4a; /* muted red */
+    --color-error: #b91c1c;
     --color-error-foreground: #ffffff;
-    --color-destructive: #c24a4a;
+    --color-destructive: #b91c1c;
     --color-destructive-foreground: #ffffff;
   }
 
