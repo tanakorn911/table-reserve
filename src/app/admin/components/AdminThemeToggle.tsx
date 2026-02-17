@@ -30,7 +30,7 @@ export default function AdminThemeToggle({ className = '', size = 'md' }: AdminT
 
     const modes = [
         { id: 'light', icon: 'SunIcon', color: 'text-amber-500' },
-        { id: 'system', icon: isMobile ? 'SmartphoneIcon' : 'ComputerDesktopIcon', color: 'text-blue-500' },
+        { id: 'system', icon: isMobile ? 'DevicePhoneMobileIcon' : 'ComputerDesktopIcon', color: 'text-blue-500' },
         { id: 'dark', icon: 'MoonIcon', color: 'text-indigo-400' }
     ] as const;
 
@@ -45,8 +45,8 @@ export default function AdminThemeToggle({ className = '', size = 'md' }: AdminT
     return (
         <div className={`
             flex items-center gap-0.5 rounded-full border
-            ${resolvedAdminTheme === 'dark' 
-                ? 'bg-gray-800/80 border-gray-700 shadow-inner' 
+            ${resolvedAdminTheme === 'dark'
+                ? 'bg-gray-800/80 border-gray-700 shadow-inner'
                 : 'bg-white border-gray-200 shadow-sm'
             }
             ${container} ${className}
@@ -60,8 +60,8 @@ export default function AdminThemeToggle({ className = '', size = 'md' }: AdminT
                         className={`
                             relative flex items-center justify-center rounded-full transition-all duration-300
                             ${button}
-                            ${isActive 
-                                ? (resolvedAdminTheme === 'dark' ? 'bg-gray-700 text-white shadow-lg' : 'bg-gray-100 text-gray-900 shadow-inner') 
+                            ${isActive
+                                ? (resolvedAdminTheme === 'dark' ? 'bg-gray-700 text-white shadow-lg' : 'bg-gray-100 text-gray-900 shadow-inner')
                                 : (resolvedAdminTheme === 'dark' ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')
                             }
                         `}
@@ -74,10 +74,10 @@ export default function AdminThemeToggle({ className = '', size = 'md' }: AdminT
                                 transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                             />
                         )}
-                        <Icon 
-                            name={mode.icon} 
-                            size={icon} 
-                            className={`relative z-10 ${isActive ? mode.color : ''} transition-colors duration-300`} 
+                        <Icon
+                            name={mode.icon}
+                            size={icon}
+                            className={`relative z-10 ${isActive ? mode.color : ''} transition-colors duration-300`}
                         />
                     </button>
                 );
