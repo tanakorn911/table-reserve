@@ -93,7 +93,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'login.processing': { th: 'กำลังดำเนินการ...', en: 'Processing...' },
         'login.error.invalid': { th: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', en: 'Invalid email or password' },
         'login.error.unexpected': { th: 'เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่', en: 'Unexpected error occurred. Please try again' },
-        'login.footer': { th: 'ระบบจัดการร้านอาหาร BookingX Admin Panel', en: 'BookingX Restaurant Management System' },
+        'login.footer': { th: 'Powered by Savory Bistro', en: 'Powered by Savory Bistro' },
 
         // Sidebar
         'sidebar.dashboard': { th: 'แดชบอร์ด', en: 'Dashboard' },
