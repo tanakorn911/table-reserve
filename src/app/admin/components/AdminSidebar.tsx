@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   HomeIcon,
@@ -77,7 +78,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       icon: CalendarDaysIcon,
       roles: ['admin', 'staff'],
     },
-    { name: 'sidebar.advertisements', href: '/admin/advertisements', icon: SpeakerWaveIcon, roles: ['admin'] },
+    { name: 'sidebar.advertisements', href: '/admin/advertisements', icon: SpeakerWaveIcon, roles: ['admin'] }, // เฉพาะ Admin
     { name: 'sidebar.floorPlan', href: '/admin/floor-plan', icon: MapIcon, roles: ['admin'] }, // เฉพาะ Admin
     { name: 'sidebar.settings', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['admin'] }, // เฉพาะ Admin
   ];
@@ -128,13 +129,14 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Sidebar Container */}
       <div
         className={`
-                fixed inset-y-0 left-0 w-64 ${themeClasses.sidebar} backdrop-blur-sm border-r z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col
+                fixed inset-y-0 left-0 w-64 ${themeClasses.sidebar} backdrop-blur-sm border-r z-50 transform transition-transform duration-300 ease-in-out flex flex-col
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
       >
         {/* Header ส่วนบนของ Sidebar */}
         <div className={`relative flex items-center justify-between h-16 px-6 border-b ${themeClasses.header}`}>
-          <div>
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Logo" width={40} height={40} className="w-11 h-10 rounded-md object-cover aspect-square" />
             <span className={`text-xl font-black ${themeClasses.headerTitle} leading-tight tracking-tight`}>
               {adminT('login.title', locale)}
             </span>

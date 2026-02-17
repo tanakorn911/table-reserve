@@ -93,7 +93,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'login.processing': { th: 'กำลังดำเนินการ...', en: 'Processing...' },
         'login.error.invalid': { th: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', en: 'Invalid email or password' },
         'login.error.unexpected': { th: 'เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่', en: 'Unexpected error occurred. Please try again' },
-        'login.footer': { th: 'ระบบจัดการร้านอาหาร BookingX Admin Panel', en: 'BookingX Restaurant Management System' },
+        'login.footer': { th: 'Powered by Savory Bistro', en: 'Powered by Savory Bistro' },
 
         // Sidebar
         'sidebar.dashboard': { th: 'แดชบอร์ด', en: 'Dashboard' },
@@ -113,6 +113,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'header.tables': { th: 'จัดการข้อมูลโต๊ะ', en: 'Table Management' },
         'header.settings': { th: 'ตั้งค่าระบบ', en: 'Settings' },
         'header.floorPlan': { th: 'จัดการผังร้าน', en: 'Floor Plan Management' },
+        'header.advertisements': { th: 'จัดการโฆษณา', en: 'Advertisements' },
         'header.checkStatus': { th: 'เช็คสถานะจอง', en: 'Check Booking Status' },
         'header.loading': { th: 'กำลังตรวจสอบสิทธิ์...', en: 'Checking permissions...' },
         'header.role.admin': { th: 'ผู้ดูแลระบบ', en: 'Administrator' },
