@@ -113,6 +113,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'header.tables': { th: 'จัดการข้อมูลโต๊ะ', en: 'Table Management' },
         'header.settings': { th: 'ตั้งค่าระบบ', en: 'Settings' },
         'header.floorPlan': { th: 'จัดการผังร้าน', en: 'Floor Plan Management' },
+        'header.advertisements': { th: 'จัดการโฆษณา', en: 'Advertisements' },
         'header.checkStatus': { th: 'เช็คสถานะจอง', en: 'Check Booking Status' },
         'header.loading': { th: 'กำลังตรวจสอบสิทธิ์...', en: 'Checking permissions...' },
         'header.role.admin': { th: 'ผู้ดูแลระบบ', en: 'Administrator' },
