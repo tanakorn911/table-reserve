@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   MagnifyingGlassIcon,
@@ -11,12 +11,15 @@ import {
   PlusIcon,
   PrinterIcon,
   PencilSquareIcon,
+  CalendarIcon,
 } from '@heroicons/react/24/outline';
 import ReservationModal from './components/ReservationModal';
 import { BookingSlip } from './components/BookingSlip';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { useTranslation } from '@/lib/i18n';
+import { createClientSupabaseClient } from '@/lib/supabase/client';
+import { useDraggableScroll } from '@/hooks/useDraggableScroll';
 
 export default function AdminReservationsPage() {
   const locale = useAdminLocale();
@@ -45,6 +48,12 @@ export default function AdminReservationsPage() {
   const [printReservation, setPrintReservation] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Draggable Scroll Hook
+  const { ref: scrollRef, events } = useDraggableScroll();
+
+  // Ref เพื่อเช็คว่าโหลดครั้งแรกหรือยัง (ป้องกันการกระพริบเมื่อข้อมูลอัปเดต)
+  const isInitialLoad = useRef(true);
+
   // Hook สำหรับจัดการการพิมพ์
   const handlePrint = useReactToPrint({
     contentRef: printRef, // Use contentRef instead of content
@@ -60,18 +69,11 @@ export default function AdminReservationsPage() {
     }
   }, [printReservation, handlePrint]);
 
-  useEffect(() => {
-    fetchReservations();
-
-    // 🆕 Auto-update every 60 seconds
-    // ตั้งเวลาอัปเดตข้อมูลอัตโนมัติทุก 60 วินาที
-    const interval = setInterval(fetchReservations, 60000);
-    return () => clearInterval(interval);
-  }, [filterStatus, filterDate]);
-
   // ฟังก์ชันดึงข้อมูลการจองจาก API
-  const fetchReservations = async () => {
-    if (reservations.length === 0) setLoading(true);
+  // แสดง loading เฉพาะครั้งแรก, ครั้งต่อไปจะ update แบบ background (ไม่กระพริบ)
+  const fetchReservations = useCallback(async () => {
+    // แสดง loading spinner เฉพาะครั้งแรก
+    if (isInitialLoad.current) setLoading(true);
 
     try {
       const params = new URLSearchParams();
@@ -85,7 +87,7 @@ export default function AdminReservationsPage() {
         // 🆕 Custom Sorting:
         // 1. Cancelled goes to the bottom (รายการที่ยกเลิกอยู่ล่างสุด)
         // 2. Others sorted by newest (created_at) first (รายการอื่นๆ เรียงตามเวลาที่สร้างล่าสุด)
-        const sortedData = [...data].sort((a, b) => {
+        const sortedData = [...data].sort((a: any, b: any) => {
           // Priority 1: Status (Cancelled at the bottom)
           if (a.status === 'cancelled' && b.status !== 'cancelled') return 1;
           if (a.status !== 'cancelled' && b.status === 'cancelled') return -1;
@@ -99,9 +101,41 @@ export default function AdminReservationsPage() {
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
-      setLoading(false);
+      if (isInitialLoad.current) {
+        setLoading(false);
+        isInitialLoad.current = false;
+      }
     }
-  };
+  }, [filterStatus, filterDate]);
+
+  useEffect(() => {
+    // รีเซ็ต initial load เมื่อเปลี่ยน filter
+    isInitialLoad.current = true;
+    fetchReservations();
+
+    // 🆕 Real-time Update using Supabase
+    // เชื่อมต่อ Supabase Realtime เพื่ออัปเดตข้อมูลทันทีเมื่อ DB เปลี่ยนแปลง
+    const supabase = createClientSupabaseClient();
+    const channel = supabase
+      .channel('admin_reservations_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // ดักจับทุกเหตุการณ์ (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'reservations'
+        },
+        () => {
+          // เมื่อมีการเปลี่ยนแปลง ให้ดึงข้อมูลใหม่แบบ background (ไม่กระพริบเพราะ fetchReservations จัดการไว้แล้ว)
+          fetchReservations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [filterStatus, filterDate, fetchReservations]); // เพิ่ม fetchReservations ใน deps เพราะใช้ useCallback แล้ว
 
   // ฟังก์ชันอัปเดตสถานะการจอง (Approve, Complete, Cancel)
   const updateStatus = async (id: string, newStatus: string) => {
@@ -234,8 +268,21 @@ export default function AdminReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-        <h1 className={`text-2xl font-bold ${resolvedAdminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.reservations.title')}</h1>
+      {/* ส่วนหัวของหน้า (Page Header) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-2xl border transition-all duration-300 ${resolvedAdminTheme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-amber-100 border-amber-200'}`}>
+            <CalendarIcon className={`w-8 h-8 ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-600'}`} />
+          </div>
+          <div>
+            <h1 className={`text-2xl font-black tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-700'}`}>
+              {t('admin.reservations.title')}
+            </h1>
+            <p className={`text-sm mt-0.5 font-medium ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              {t('admin.reservations.subtitle')}
+            </p>
+          </div>
+        </div>
 
         {/* Action Bar */}
         {/* ส่วนปุ่มดำเนินการ: Export CSV และ Create Reservation */}
@@ -342,7 +389,11 @@ export default function AdminReservationsPage() {
       {/* Desktop Table View */}
       {/* ตารางแสดงข้อมูลการจองสำหรับ Desktop */}
       <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
+        <div
+          ref={scrollRef}
+          {...events}
+          className="overflow-x-auto cursor-grab active:cursor-grabbing"
+        >
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
               <tr>

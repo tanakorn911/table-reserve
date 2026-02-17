@@ -12,6 +12,7 @@ import {
   MapIcon,
   XMarkIcon,
   SpeakerWaveIcon,
+  ChatBubbleBottomCenterTextIcon,
 } from '@heroicons/react/24/outline';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminLocale, adminT } from './LanguageSwitcher';
@@ -37,13 +38,16 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const locale = useAdminLocale();
   const { resolvedAdminTheme } = useAdminTheme();
 
-  // ตรวจสอบ Role ของผู้ใช้เพื่อกรองเมนู
+  // Check user role to filter menu items
+  // ตรวจสอบ Role ของผู้ใช้เพื่อกรองเมนู (แสดงเฉพาะเมนูที่ผู้ใช้นั้นมีสิทธิ์)
   useEffect(() => {
     const checkRole = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
+        // Try to get role from 'profiles' table first
+        // พยายามดึง Role จากตาราง profiles ก่อน
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -53,6 +57,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         if (profile) {
           setRole(profile.role as 'admin' | 'staff');
         } else {
+          // Fallback to user_metadata if profile not found
+          // ถ้าไม่เจอใน profiles ให้ใช้จาก user_metadata (กรณีพึ่งสมัคร)
           setRole((user.user_metadata?.role as any) || 'admin');
         }
       }
@@ -76,6 +82,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: 'sidebar.reservations',
       href: '/admin/reservations',
       icon: CalendarDaysIcon,
+      roles: ['admin', 'staff'],
+    },
+    {
+      name: 'sidebar.feedback',
+      href: '/admin/feedback',
+      icon: ChatBubbleBottomCenterTextIcon,
       roles: ['admin', 'staff'],
     },
     { name: 'sidebar.advertisements', href: '/admin/advertisements', icon: SpeakerWaveIcon, roles: ['admin'] }, // เฉพาะ Admin

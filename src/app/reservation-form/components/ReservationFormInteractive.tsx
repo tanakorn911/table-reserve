@@ -216,42 +216,48 @@ const ReservationFormInteractive = () => {
     })),
   ];
 
-  // ฟังก์ชันตรวจสอบความถูกต้องของแต่ละ Field (Validation)
+  // ฟังก์ชันตรวจสอบความถูกต้องของแต่ละ Field (Validation Logic)
+  // ตรวจสอบข้อมูลนำเข้าตามกฎทางธุรกิจ (Business Rules)
   const validateField = (name: keyof FormData, value: string): string | undefined => {
     switch (name) {
       case 'fullName':
         if (!value.trim()) return t('validation.name.required');
-        if (!value.trim().includes(' ')) return t('validation.name.invalid'); // ต้องมีชื่อและนามสกุล (เว้นวรรค)
+        // ต้องมีทั้งชื่อและนามสกุล (ตรวจสอบจากการเว้นวรรค)
+        if (!value.trim().includes(' ')) return t('validation.name.invalid');
         if (value.trim().length < 2) return t('validation.name.short');
         return undefined;
 
       case 'phone': {
         if (!value.trim()) return t('validation.phone.required');
+        // รองรับเบอร์โทรศัพท์หลากรูปแบบ (0xx-xxx-xxxx, 0xxxxxxxxx)
         const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
         if (!phoneRegex.test(value.replace(/\s/g, ''))) return t('validation.phone.invalid');
         return undefined;
       }
 
       case 'email':
+        // อีเมลเป็น Optional แต่ถ้ากรอกต้องถูกต้องตามรูปแบบ
         if (value.trim() && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(value))
           return t('validation.email.invalid');
         return undefined;
 
       case 'guests':
         if (!value) return t('validation.guests.required');
-        if (parseInt(value) > 10) return t('validation.guests.invalid'); // Added explicit check
+        // จำกัดจำนวนแขกสูงสุด 10 ท่านต่อการจองผ่านเว็บ
+        if (parseInt(value) > 10) return t('validation.guests.invalid');
         return undefined;
 
       case 'date':
         if (!value) return t('validation.date.required');
         if (isHydrated) {
+          // ตรวจสอบห้ามเลือกวันที่ผ่านมาแล้ว (Past Date Check)
           const selectedDate = new Date(value + 'T00:00:00');
           const today = new Date();
           const thailandOffset = 7 * 60;
           const localOffset = today.getTimezoneOffset();
           const thailandTime = new Date(today.getTime() + (thailandOffset + localOffset) * 60000);
           thailandTime.setHours(0, 0, 0, 0);
-          if (selectedDate < thailandTime) return t('validation.date.past'); // ห้ามเลือกอดีต
+          if (selectedDate < thailandTime) return t('validation.date.past');
         }
         return undefined;
 
@@ -268,20 +274,22 @@ const ReservationFormInteractive = () => {
     }
   };
 
-  // จัดการเมื่อมีการเปลี่ยนแปลงข้อมูลใน Input
+  // จัดการเมื่อมีการเปลี่ยนแปลงข้อมูลใน Input (On Change)
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
+    // Real-time validation: ตรวจสอบความถูกต้องทันทีถ้าเคยสัมผัส field นั้นแล้ว
     if (touched[name as keyof FormTouched]) {
       const error = validateField(name as keyof FormData, value);
       setErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
 
-  // จัดการเมื่อ Input เสีย Focus (Blur)
+  // จัดการเมื่อ Input เสีย Focus (On Blur)
+  // เริ่มนับว่า field นี้ถูกใช้งานแล้ว (Touched) และทำการตรวจสอบความถูกต้อง
   const handleBlur = (
     e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -291,11 +299,12 @@ const ReservationFormInteractive = () => {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  // ตรวจสอบความถูกต้องของฟอร์มทั้งหมดก่อน Submit
+  // ตรวจสอบความถูกต้องของฟอร์มทั้งหมดก่อน Submit (Final Validation)
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     let isValid = true;
 
+    // วนลูปตรวจสอบทุก field
     (Object.keys(formData) as Array<keyof FormData>).forEach((key) => {
       if (key !== 'specialRequests') {
         const value = formData[key];
@@ -309,6 +318,7 @@ const ReservationFormInteractive = () => {
     });
 
     setErrors(newErrors);
+    // Mark fields as touched to show errors under inputs
     setTouched({
       fullName: true,
       phone: true,
@@ -322,14 +332,18 @@ const ReservationFormInteractive = () => {
     return isValid;
   };
 
-  // ส่งข้อมูลการจอง (Submit Handler)
+  // ฟังก์ชันส่งข้อมูลการจอง (Submit Handler)
+  // 1. ตรวจสอบความถูกต้อง
+  // 2. อัปโหลดสลิป (ถ้ามี)
+  // 3. ส่งข้อมูลการจองไปยัง API
+  // 4. จัดการผลลัพธ์ (Success/Error)
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
 
     let payment_slip_url = '';
-    // อัปโหลดสลิปโอนเงินถ่้ามี
+    // ตรวจสอบและอัปโหลดสลิปโอนเงิน (Image Upload)
     if (slipFile) {
       setUploading(true);
       const fileName = `${Date.now()}_${slipFile.name}`;
@@ -345,6 +359,7 @@ const ReservationFormInteractive = () => {
         return;
       }
 
+      // ดึง Public URL สำหรับไฟล์ที่อัปโหลด
       const {
         data: { publicUrl },
       } = supabase.storage.from('payment-slips').getPublicUrl(fileName);
@@ -353,6 +368,7 @@ const ReservationFormInteractive = () => {
     }
 
     try {
+      // เรียกใช้ API เพื่อสร้างการจองใหม่
       const response = await fetch('/api/reservations', {
         method: 'POST',
         headers: {
@@ -377,10 +393,10 @@ const ReservationFormInteractive = () => {
       if (!response.ok) {
         console.error('Reservation failed:', result.error);
 
-        // กรณีโต๊ะถูกแย่งจองตัดหน้า (Conflict)
+        // กรณีโต๊ะถูกแย่งจองตัดหน้า (Conflict Error 409)
         if (response.status === 409) {
           alert(result.error || t('alert.tableTaken'));
-          fetchBookedTables(); // Refresh the booked tables list
+          fetchBookedTables(); // รีเฟรชข้อมูลโต๊ะทันที
           setIsLoading(false);
           return;
         }
@@ -390,7 +406,7 @@ const ReservationFormInteractive = () => {
         return;
       }
 
-      // สร้างข้อมูลสำหรับแสดง Success Modal
+      // เตรียมข้อมูลสำหรับแสดงใน Modal ยืนยันผล (Success State)
       const reservationId = result.data?.id || `RES${Date.now().toString().slice(-8)}`;
       const details: ReservationDetails = {
         id: result.data?.id,
@@ -415,10 +431,10 @@ const ReservationFormInteractive = () => {
 
   const handleCloseSuccess = () => {
     setShowSuccess(false);
-    router.push('/landing-page');
+    router.push('/landing-page'); // กลับไปหน้าแรกหลังจากจองเสร็จ
   };
 
-  // ตรวจสอบสถานะ Form Valid เพื่อเปิด/ปิดปุ่ม Submit
+  // ตรวจสอบสถานะ Form Valid เพื่อเปิด/ปิดปุ่ม Submit (Button State)
   const isFormValid =
     !errors.fullName &&
     !errors.phone &&
@@ -432,7 +448,7 @@ const ReservationFormInteractive = () => {
     formData.tableId !== undefined &&
     slipFile !== null;
 
-  // Placeholder ตอน Loading (Skeleton Mode)
+  // Placeholder ตอน Loading Scripts (Skeleton UI)
   if (!isHydrated) {
     return (
       <div className="min-h-screen bg-background pt-20">
@@ -461,7 +477,7 @@ const ReservationFormInteractive = () => {
         <div className="container mx-auto px-4 py-8 lg:py-12">
           <div className="max-w-2xl mx-auto">
             <div className="bg-card rounded-lg shadow-warm p-6 lg:p-8">
-              {/* Header */}
+              {/* Header: ส่วนหัวของฟอร์ม */}
               <div className="mb-8">
                 <h1 className="text-3xl lg:text-4xl font-heading font-bold text-foreground mb-3">
                   {t('form.title')}
@@ -469,9 +485,9 @@ const ReservationFormInteractive = () => {
                 <p className="text-base text-muted-foreground">{t('form.subtitle')}</p>
               </div>
 
-              {/* Form Content */}
+              {/* Form Content: ส่วนกรอกข้อมูลหลัก */}
               <form className="space-y-6">
-                {/* 1. Name */}
+                {/* 1. Name Input */}
                 <FormField
                   label={t('form.name')}
                   required
@@ -495,7 +511,7 @@ const ReservationFormInteractive = () => {
                   />
                 </FormField>
 
-                {/* 2. Phone */}
+                {/* 2. Phone Input */}
                 <FormField
                   label={t('form.phone')}
                   required
@@ -517,7 +533,7 @@ const ReservationFormInteractive = () => {
                   />
                 </FormField>
 
-                {/* 3. Email (Optional) */}
+                {/* 3. Email Input (Optional) */}
                 <FormField
                   label={t('form.email')}
                   error={touched.email ? errors.email : undefined}
@@ -537,7 +553,7 @@ const ReservationFormInteractive = () => {
                   />
                 </FormField>
 
-                {/* 4. Guests */}
+                {/* 4. Guests Selection */}
                 <FormField
                   label={
                     <span className="flex items-center gap-2">
@@ -563,7 +579,7 @@ const ReservationFormInteractive = () => {
                   />
                 </FormField>
 
-                {/* 5. Date */}
+                {/* 5. Date Selection */}
                 <FormField
                   label={t('form.date')}
                   required
@@ -576,7 +592,7 @@ const ReservationFormInteractive = () => {
                     name="date"
                     value={formData.date}
                     onChange={(value) => {
-                      console.log('Date changed to:', value);
+                      // Reset เวลาและโต๊ะเมื่อเปลี่ยนวัน
                       setFormData((prev) => ({
                         ...prev,
                         date: value,
@@ -588,7 +604,6 @@ const ReservationFormInteractive = () => {
                       setErrors((prev) => ({ ...prev, date: error }));
                     }}
                     onBlur={() => {
-                      console.log('Date Picker blurred');
                       setTouched((prev) => ({ ...prev, date: true }));
                     }}
                     minDate={minDate}
@@ -597,7 +612,7 @@ const ReservationFormInteractive = () => {
                   />
                 </FormField>
 
-                {/* 6. Time */}
+                {/* 6. Time Selection */}
                 <FormField
                   label={t('form.time')}
                   required
@@ -611,6 +626,7 @@ const ReservationFormInteractive = () => {
                     value={formData.time}
                     selectedDate={formData.date}
                     onChange={(value) => {
+                      // Reset โต๊ะเมื่อเปลี่ยนเวลา
                       setFormData((prev) => ({ ...prev, time: value, tableId: undefined }));
                       setTouched((prev) => ({ ...prev, time: true }));
                       const error = validateField('time', value);
@@ -626,7 +642,7 @@ const ReservationFormInteractive = () => {
                   />
                 </FormField>
 
-                {/* 7. Table Selection */}
+                {/* 7. Table Selection (เชื่อมต่อกับ AI Recommendation) */}
                 <FormField
                   label={t('form.table')}
                   required

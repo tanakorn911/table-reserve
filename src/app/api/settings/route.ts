@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import { withRetry } from '@/lib/supabase/retry';
+import { getCache, setCache, invalidateCacheByPrefix } from '@/lib/cache';
+
+const CACHE_PREFIX = 'api:settings';
+const CACHE_TTL = 5 * 60 * 1000; // 5 นาที
 
 // GET: Fetch Settings
 // GET: ดึงค่าตั้งค่าระบบ
@@ -8,13 +13,24 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
+    const cacheKey = `${CACHE_PREFIX}:${key || 'all'}`;
+
+    // ดึงจาก cache ก่อน (เฉพาะ public request: business_hours)
+    if (key === 'business_hours') {
+      const cached = getCache<any>(cacheKey, CACHE_TTL);
+      if (cached) {
+        return NextResponse.json({ data: cached }, {
+          headers: { 'X-Cache': 'HIT' },
+        });
+      }
+    }
 
     const supabase = await createServerSupabaseClient();
 
     // 🔒 Authentication required (except for business hours)
     // 🔒 ตรวจสอบสิทธิ์ (ยกเว้น business_hours ที่เปิดเป็น Public)
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session && key !== 'business_hours') {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user && key !== 'business_hours') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,7 +40,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('key', key);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await withRetry(async () => await query);
 
     if (error) {
       console.error('Supabase error:', error);
@@ -33,7 +49,10 @@ export async function GET(request: NextRequest) {
 
     // Transform array to object if fetching all, or return single item if key specified
     if (key && data && data.length > 0) {
-      return NextResponse.json({ data: data[0] });
+      setCache(cacheKey, data[0]); // บันทึกลง cache
+      return NextResponse.json({ data: data[0] }, {
+        headers: { 'X-Cache': 'MISS' },
+      });
     }
 
     return NextResponse.json({ data });
@@ -50,8 +69,8 @@ export async function POST(request: NextRequest) {
 
     // 🔒 Authentication required
     // 🔒 ตรวจสอบสิทธิ์การใช้งาน
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -80,6 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    invalidateCacheByPrefix(CACHE_PREFIX); // ล้าง cache เมื่ออัปเดต
     return NextResponse.json({ data });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

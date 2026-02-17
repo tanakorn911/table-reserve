@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import { withRetry } from '@/lib/supabase/retry';
+import { getCache, setCache, invalidateCache } from '@/lib/cache';
+
+const CACHE_KEY = 'api:tables';
+const CACHE_TTL = 60 * 1000; // 60 วินาที
 
 // GET /api/tables - Get all tables
 // GET: ดึงข้อมูลโต๊ะทั้งหมด
 export async function GET(request: NextRequest) {
   try {
+    // ดึงจาก cache ก่อน
+    const cached = getCache<any>(CACHE_KEY, CACHE_TTL);
+    if (cached) {
+      return NextResponse.json({ data: cached }, {
+        headers: { 'X-Cache': 'HIT' },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
 
     // Since we are moving to a database-driven table system,
@@ -15,10 +28,12 @@ export async function GET(request: NextRequest) {
     // For this step, I will assume we are creating a new table in Supabase
     // called 'tables'.
 
-    const { data, error } = await supabase
-      .from('tables')
-      .select('*')
-      .order('id', { ascending: true });
+    const { data, error } = await withRetry(async () =>
+      await supabase
+        .from('tables')
+        .select('*')
+        .order('id', { ascending: true })
+    );
 
     if (error) {
       // If table doesn't exist, we might want to return the hardcoded constants
@@ -27,7 +42,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    // บันทึกลง cache
+    setCache(CACHE_KEY, data);
+    return NextResponse.json({ data }, {
+      headers: { 'X-Cache': 'MISS' },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -39,12 +58,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
 
-    // Check Auth
+    // Check Auth (getUser แทน getSession เพื่อ verify JWT)
     // ตรวจสอบสิทธิ์ Admin
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -100,6 +119,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create table' }, { status: 500 });
     }
 
+    invalidateCache(CACHE_KEY); // ล้าง cache เมื่อเพิ่มโต๊ะใหม่
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
     console.error('Server error:', error);

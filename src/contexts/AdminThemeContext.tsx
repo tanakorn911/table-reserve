@@ -100,7 +100,21 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
 export function useAdminTheme() {
     const context = useContext(AdminThemeContext);
     if (context === undefined) {
-        throw new Error('useAdminTheme must be used within an AdminThemeProvider');
+        // Safe fallback เมื่อใช้นอก AdminThemeProvider (เช่น หน้า Login)
+        // อ่านค่าจาก localStorage โดยตรง
+        const stored = typeof window !== 'undefined'
+            ? localStorage.getItem(ADMIN_STORAGE_KEY) as AdminTheme | null
+            : null;
+        const fallbackTheme = stored || 'dark';
+        const resolved: 'light' | 'dark' = fallbackTheme === 'system'
+            ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : fallbackTheme as 'light' | 'dark';
+        return {
+            adminTheme: fallbackTheme as AdminTheme,
+            resolvedAdminTheme: resolved,
+            setAdminTheme: () => { },
+            toggleAdminTheme: () => { },
+        };
     }
     return context;
 }

@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { CreateReservationInput } from '@/types/database.types';
 import { sendLineNotification, sendEmailConfirmation } from '@/lib/notifications';
 import { reservationRateLimiter, checkRateLimit, getClientIp } from '@/lib/ratelimit';
+import { withRetry } from '@/lib/supabase/retry';
 
 // GET /api/reservations - Get reservations (Public/Protected hybrid)
 // GET: ดึงข้อมูลการจอง (ใช้ร่วมกันทั้ง Public และ Admin)
@@ -11,12 +12,12 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
 
-    // Check Auth
+    // Check Auth (ใช้ getUser แทน getSession เพื่อ verify JWT กับ Supabase server)
     // ตรวจสอบสิทธิ์การใช้งาน
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const isAdmin = !!session;
+      data: { user },
+    } = await supabase.auth.getUser();
+    const isAdmin = !!user;
 
     const { searchParams } = new URL(request.url);
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       query = query.in('status', ['confirmed', 'pending']);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await withRetry(async () => await query);
 
     if (error) {
       console.error('Supabase error:', error);

@@ -2,143 +2,155 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 /**
- * Middleware สำหรับจัดการ Request ทั้งหมดที่เข้ามายัง Server
- * ทำหน้าที่ตรวจสอบสิทธิ์ (Authentication & Authorization) และจัดการ Cookie
+ * Middleware: ด่านหน้าสำหรับจัดการ Request ทั้งหมดของ Server
+ * 
+ * หน้าที่หลัก:
+ * 1. 🔐 Authentication: ตรวจสอบว่าผู้ใช้ล็อกอินหรือยัง (ผ่าน Supabase Auth)
+ * 2. 🛡️ Security: ป้องกันไม่ให้เข้าถึงหน้า Admin หรือ API สำคัญโดยไม่ได้รับอนุญาต
+ * 3. 🍪 Cookie Management: จัดการ Refresh Token ของ Supabase เพื่อให้ Session ไม่หมดอายุ
+ * 4. 👮 Role-Based Access Control (RBAC): แยกสิทธิ์การเข้าถึงระหว่าง Admin (เจ้าของร้าน) กับ Staff (พนักงาน)
  */
 export async function middleware(request: NextRequest) {
-    // สร้าง Response แบื้องต้นเพื่อใช้จัดการ Header และ Cookie
+    // 1. เตรียม Response เริ่มต้น:
+    // เราสร้าง Response ว่างๆ ขึ้นมาก่อน เพื่อให้สามารถจัดการ Header และ Cookie ได้ในภายหลัง
     let response = NextResponse.next({
         request: {
             headers: request.headers,
         },
     });
 
-    // สร้าง Supabase Client สำหรับฝั่ง Server เพื่อตรวจสอบ Session ผู้ใช้
+    // 2. สร้าง Supabase Client (Server-Side):
+    // จำเป็นต้องสร้าง Client ใหม่ทุกครั้งที่ Request เข้ามา เพื่อความปลอดภัยและการจัดการ Cookie ที่ถูกต้อง
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!, // URL ของ Supabase Project
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // Key สำหรับ Anonymous (Public)
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                // ฟังก์ชันสำหรับอ่าน Cookie ทั้งหมด
+                // อ่าน Cookie ทั้งหมดจาก Request ที่ส่งมาจาก Browser
                 getAll() {
                     return request.cookies.getAll();
                 },
-                // ฟังก์ชันสำหรับเขียน Cookie ทั้งหมด (จัดการทั้ง Request และ Response)
+                // เขียน Cookie กลับไป (ใช้สำหรับ Update Session / Refresh Token)
                 setAll(cookiesToSet) {
-                    // วนลูปตั้งค่า Cookie ใน Request
                     cookiesToSet.forEach(({ name, value, options }) => {
-                        request.cookies.set(name, value);
+                        request.cookies.set(name, value); // ตั้งค่าใน Request ปัจจุบัน (เพื่อให้ backend อ่านได้ทันที)
                     });
-                    // อัปเดต Response object
                     response = NextResponse.next({
                         request,
                     });
-                    // วนลูปตั้งค่า Cookie ใน Response
                     cookiesToSet.forEach(({ name, value, options }) => {
-                        response.cookies.set(name, value, options);
+                        response.cookies.set(name, value, options); // ตั้งค่าใน Response ที่จะส่งกลับ Browser
                     });
                 },
             },
         }
     );
 
-    // ดึงข้อมูลผู้ใช้ปัจจุบันจาก Supabase Auth
-    // ใช้ getUser() เพื่อความปลอดภัยกว่า getSession() ในฝั่ง Server
+    // 3. ตรวจสอบสถานะการล็อกอิน:
+    // ดึงข้อมูล User จาก Supabase Auth (ปลอดภัยกว่าการเช็ค Cookie เอง เพราะมีการ verify signature)
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // --- ส่วนการป้องกันเส้นทาง (Route Protection) ---
+    // ============================================
+    // 🚦 Route Protection Rules (กฎการป้องกันเส้นทาง)
+    // ============================================
 
-    // 1. การป้องกันหน้า Admin (Admin Pages Protection)
+    // กฎที่ 1: การเข้าถึงหน้า Admin Panel (`/admin/*`)
     if (request.nextUrl.pathname.startsWith('/admin')) {
-        // หากเข้าหน้า Login
+
+        // กรณี: เข้าหน้า Login (`/admin/login`)
         if (request.nextUrl.pathname === '/admin/login') {
-            // ถ้ามี User ล็อกอินอยู่แล้ว ให้เด้งไปหน้า Dashboard เลย
+            // ถ้ามี User ล็อกอินอยู่แล้ว -> ไม่ต้อง Login ซ้ำ ให้เด้งไป Dashboard เลย
             if (user) {
                 return NextResponse.redirect(new URL('/admin/dashboard', request.url));
             }
-            // ถ้ายังไม่ล็อกอิน ก็ให้เข้าหน้า Login ได้ตามปกติ
+            // ถ้ายังไม่ล็อกอิน -> อนุญาตให้เข้าหน้า Login ได้
             return response;
         }
 
-        // หากเข้าหน้า Admin อื่นๆ แล้วยังไม่ล็อกอิน
+        // กรณี: เข้าหน้า Admin อื่นๆ แต่ยังไม่ได้ล็อกอิน
         if (!user) {
-            // ให้เด้งกลับไปหน้า Login
+            // ส่งกลับไปหน้า Login พร้อม Redirect กลับมาหน้านี้เมื่อล็อกอินสำเร็จ
             return NextResponse.redirect(new URL('/admin/login', request.url));
         }
 
-        // --- การควบคุมสิทธิ์ตามบทบาท (RBAC - Role-Based Access Control) ---
-        // ดึง role จาก metadata ของ user, ถ้าไม่มีให้ถือว่าเป็น admin ไปก่อน
-        const role = user.user_metadata?.role || 'admin';
-        // รายชื่อเส้นทางที่ต้องห้ามสำหรับ Staff
-        const restrictedPaths = ['/admin/tables', '/admin/settings'];
+        // --- Role-Based Access Control (RBAC) ---
+        // ตรวจสอบสิทธิ์: Admin vs Staff
+        const role = user.user_metadata?.role || 'admin'; // ค่า default คือ admin
 
-        // ถ้าเป็น Staff และพยายามเข้าหน้าที่ห้ามเข้า
+        // หน้าที่ "Staff" (พนักงานทั่วไป) ห้ามเข้า
+        const restrictedPathsForStaff = ['/admin/tables', '/admin/settings', '/admin/advertisements'];
+
         if (
             role === 'staff' &&
-            restrictedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+            restrictedPathsForStaff.some((path) => request.nextUrl.pathname.startsWith(path))
         ) {
-            // ให้เด้งกลับไปหน้า Dashboard แทน
+            // ถ้า Staff พยายามเข้า -> เด้งกลับไป Dashboard
+            console.warn(`Unauthorized Access: Staff attempted to access ${request.nextUrl.pathname}`);
             return NextResponse.redirect(new URL('/admin/dashboard', request.url));
         }
     }
 
-    // 2. การป้องกัน API (API Protection)
+    // กฎที่ 2: การป้องกัน API Routes (`/api/*`)
     const isApi = request.nextUrl.pathname.startsWith('/api');
     if (isApi) {
-        const method = request.method; // ดึง HTTP Method (GET, POST, PUT, DELETE)
-        const path = request.nextUrl.pathname; // ดึง Path
-        const role = user?.user_metadata?.role || 'admin'; // ดึง Role
-        const isWrite = ['POST', 'PUT', 'DELETE'].includes(method); // ตรวจสอบว่าเป็นคำสั่งแก้ไขข้อมูลหรือไม่
+        const method = request.method; // GET, POST, PUT, DELETE
+        const path = request.nextUrl.pathname;
+        const role = user?.user_metadata?.role || 'admin';
 
-        // อนุญาต: POST /api/reservations (สาธารณะ - สำหรับลูกค้าจองโต๊ะ)
-        if (path === '/api/reservations' && method === 'POST') {
-            return response;
+        // ตรวจสอบว่าเป็นคำสั่ง "เขียนข้อมูล" (Write Operation) หรือไม่?
+        // GET = อ่าน (ปลอดภัยกว่า), POST/PUT/DELETE = แก้ไข (ต้องระวัง)
+        const isWriteOperation = ['POST', 'PUT', 'DELETE'].includes(method);
+
+        // --- ข้อยกเว้น: API สาธารณะ (Public APIs) ---
+        // อนุญาตให้ใครก็ได้เรียกใช้โดยไม่ต้องล็อกอิน
+
+        // 1. ลูกค้าสร้างการจองใหม่ (Booking)
+        if (path === '/api/reservations' && method === 'POST') return response;
+
+        // 2. เรียกดู Time Slots ที่ว่าง
+        if (path === '/api/timeslots') return response;
+
+        // 3. ขอคำแนะนำโต๊ะจาก AI
+        if (path === '/api/ai/recommend-table') return response;
+
+        // 4. ตรวจสอบสถานะการจอง (Check Booking Status)
+        if (path.startsWith('/api/public')) return response;
+
+        // --- กฎความปลอดภัยเข้มงวด ---
+
+        // 1. ห้ามแก้ไขข้อมูล (Write) ถ้าไม่ได้ล็อกอิน
+        if (isWriteOperation && !user) {
+            return NextResponse.json({ error: 'Unauthorized: Please login first' }, { status: 401 });
         }
 
-        // อนุญาต: POST /api/timeslots (สาธารณะ - สำหรับตรวจสอบ/จองสล็อตเวลา)
-        if (path === '/api/timeslots') {
-            return response;
-        }
+        // 2. จำกัดสิทธิ์ Staff (พนักงาน)
+        if (role === 'staff' && isWriteOperation) {
+            // Staff ทำอะไรได้บ้าง?
+            // ✅ อนุญาต: จัดการการจอง (Confirm/Cancel/Check-in)
+            if (path.startsWith('/api/reservations')) return response;
 
-        // อนุญาต: POST /api/ai/recommend-table (สาธารณะ - AI แนะนำโต๊ะ)
-        if (path === '/api/ai/recommend-table') {
-            return response;
-        }
-
-        // บล็อกการแก้ไขข้อมูลทั้งหมดหากไม่ได้ล็อกอิน (ยกเว้นข้อยกเว้นด้านบน)
-        if (isWrite && !user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        // บล็อก Staff จากการแก้ไขข้อมูลที่สำคัญ
-        if (role === 'staff' && isWrite) {
-            // Staff อนุญาตให้แก้ไขการจองได้ (เช่น ยืนยัน, ยกเลิก)
-            if (path.startsWith('/api/reservations') && (method === 'PUT' || method === 'POST')) {
-                return response;
-            }
-            // Staff ห้ามแก้ไขโต๊ะ หรือ การตั้งค่าร้าน
-            if (path.startsWith('/api/tables') || path.startsWith('/api/settings')) {
-                return NextResponse.json({ error: 'Permission Denied: Admin only' }, { status: 403 });
+            // ❌ ห้าม: แก้ไขผังโต๊ะ, ตั้งค่าร้าน, หรือจัดการโฆษณา
+            if (path.startsWith('/api/tables') || path.startsWith('/api/settings') || path.startsWith('/api/advertisements')) {
+                return NextResponse.json({ error: 'Permission Denied: Admin role required' }, { status: 403 });
             }
         }
     }
 
-    // หากไม่มีเงื่อนไขใดขัดข้อง ให้ดำเนินการต่อตามปกติ
+    // ผ่านการตรวจสอบทั้งหมด -> อนุญาตให้ทำงานต่อ
     return response;
 }
 
-// การตั้งค่า Config สำหรับ Middleware
+// Config: กำหนด Scope การทำงานของ Middleware
 export const config = {
     matcher: [
         /*
-         * กำหนด Path ที่จะให้ Middleware ทำงาน
-         * Match ทุก Path ยกเว้น:
-         * - _next/static (ไฟล์ Static ของ Next.js)
-         * - _next/image (ไฟล์รูปภาพที่ผ่านการ Optimize)
-         * - favicon.ico (ไอคอนเว็บไซต์)
-         * - รูปภาพต่างๆ .svg, .png, .jpg, .jpeg, .gif, .webp
+         * Regex เพื่อบอกว่า Middleware นี้จะทำงานกับทุก Path ยกเว้น:
+         * - /_next/static (ไฟล์ Static ของ Next.js)
+         * - /_next/image (ไฟล์รูปภาพที่ผ่าน Image Optimization)
+         * - /favicon.ico (Icon เว็บ)
+         * - ไฟล์นามสกุล .svg, .png, .jpg, .jpeg, .gif, .webp
          */
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],

@@ -3,6 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const CRON_SECRET = process.env.CRON_SECRET;
+
+/**
+ * HTML Escape — ป้องกัน HTML Injection ใน email templates
+ */
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 /**
  * Email Reminder API
@@ -10,8 +23,21 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  * Also notifies admin about upcoming reservations
  * This endpoint should be called by a cron job every 30 minutes
  * API สำหรับส่งอีเมลแจ้งเตือนล่วงหน้า 2 ชั่วโมง (ทำงานผ่าน Cron Job)
+ * 
+ * ⚠️ ต้องส่ง Authorization: Bearer <CRON_SECRET> header มาด้วย
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // ตรวจสอบ CRON_SECRET เพื่อป้องกันการเรียกจากภายนอก
+    if (CRON_SECRET) {
+        const authHeader = request.headers.get('authorization');
+        if (authHeader !== `Bearer ${CRON_SECRET}`) {
+            return NextResponse.json(
+                { success: false, error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+    }
+
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -203,13 +229,13 @@ function generateCustomerReminderEmail(reservation: any): string {
       <p style="margin: 10px 0 0 0; opacity: 0.9;">อีก 2 ชั่วโมงถึงเวลาจองโต๊ะแล้ว!</p>
     </div>
     <div class="content">
-      <p>สวัสดีครับ/ค่ะ คุณ${reservation.guest_name}</p>
+      <p>สวัสดีครับ/ค่ะ คุณ${escapeHtml(reservation.guest_name)}</p>
       <p>นี่คือการเตือนความจำสำหรับการจองโต๊ะของคุณ:</p>
       
       <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin: 20px 0;">
-        <div class="detail"><span class="label">รหัสจอง:</span><span class="value">${reservation.booking_code}</span></div>
-        <div class="detail"><span class="label">วันที่:</span><span class="value">${reservation.reservation_date}</span></div>
-        <div class="detail"><span class="label">เวลา:</span><span class="value">${reservation.reservation_time}</span></div>
+        <div class="detail"><span class="label">รหัสจอง:</span><span class="value">${escapeHtml(reservation.booking_code)}</span></div>
+        <div class="detail"><span class="label">วันที่:</span><span class="value">${escapeHtml(reservation.reservation_date)}</span></div>
+        <div class="detail"><span class="label">เวลา:</span><span class="value">${escapeHtml(reservation.reservation_time)}</span></div>
         <div class="detail"><span class="label">จำนวน:</span><span class="value">${reservation.party_size} คน</span></div>
       </div>
       
@@ -240,12 +266,12 @@ function generateAdminNotificationEmail(reservation: any): string {
     <strong>📋 ลูกค้ากำลังจะมาในอีก 2 ชั่วโมง</strong>
   </div>
   
-  <div class="detail"><strong>ชื่อ:</strong> ${reservation.guest_name}</div>
-  <div class="detail"><strong>เบอร์โทร:</strong> ${reservation.guest_phone}</div>
-  <div class="detail"><strong>เวลา:</strong> ${reservation.reservation_time}</div>
+  <div class="detail"><strong>ชื่อ:</strong> ${escapeHtml(reservation.guest_name)}</div>
+  <div class="detail"><strong>เบอร์โทร:</strong> ${escapeHtml(reservation.guest_phone || '')}</div>
+  <div class="detail"><strong>เวลา:</strong> ${escapeHtml(reservation.reservation_time)}</div>
   <div class="detail"><strong>จำนวน:</strong> ${reservation.party_size} คน</div>
-  <div class="detail"><strong>โต๊ะ:</strong> ${reservation.table_name || 'ยังไม่ระบุ'}</div>
-  ${reservation.special_requests ? `<div class="detail"><strong>หมายเหตุ:</strong> ${reservation.special_requests}</div>` : ''}
+  <div class="detail"><strong>โต๊ะ:</strong> ${escapeHtml(reservation.table_name || 'ยังไม่ระบุ')}</div>
+  ${reservation.special_requests ? `<div class="detail"><strong>หมายเหตุ:</strong> ${escapeHtml(reservation.special_requests)}</div>` : ''}
   
   <p style="margin-top: 20px; color: #666;">
     <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/reservations/${reservation.id}">ดูรายละเอียด</a>

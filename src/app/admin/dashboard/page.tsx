@@ -12,6 +12,7 @@ import {
   Cog6ToothIcon,
   ArrowDownTrayIcon,
   TrashIcon,
+  HomeIcon,
 } from '@heroicons/react/24/outline';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
@@ -248,19 +249,26 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* ส่วนหัวแสดงวันที่และปุ่มจัดการ */}
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* ส่วนหัวแสดงวันที่และปุ่มจัดการ (Page Header) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className={`text-2xl font-bold ${resolvedAdminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.dashboard.title')}</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-2xl border transition-all duration-300 ${resolvedAdminTheme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-amber-100 border-amber-200'}`}>
+            <HomeIcon className={`w-8 h-8 ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-600'}`} />
+          </div>
+          <div>
+            <h1 className={`text-2xl font-black tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-700'}`}>
+              {t('admin.dashboard.title')}
+            </h1>
+            <p className={`text-sm mt-0.5 font-medium ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </p>
+          </div>
         </div>
 
         {/* Action Buttons: Export CSV & Clear Data */}

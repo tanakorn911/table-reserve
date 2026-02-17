@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import AdminTimeGrid from '../components/AdminTimeGrid';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
+import { useDraggableScroll } from '@/hooks/useDraggableScroll';
 
 // Props สำหรับ Modal แก้ไขโต๊ะ
 interface EditModalProps {
@@ -270,6 +271,9 @@ export default function FloorPlanAdminPage() {
   const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
   const [checkTime, setCheckTime] = useState('18:00');
   const [bookedTables, setBookedTables] = useState<any[]>([]);
+
+  // Draggable Scroll Hook
+  const { ref: scrollRef, events } = useDraggableScroll();
 
   // โหลดข้อมูลโต๊ะเมื่อเข้าหน้านี้
   useEffect(() => {
@@ -561,7 +565,12 @@ export default function FloorPlanAdminPage() {
           </div>
         </div>
 
-        <div className={`flex-1 overflow-auto ${pageTheme.cardBg}`}>
+        <div
+          ref={scrollRef}
+          {...events}
+          className={`flex-1 overflow-auto cursor-grab active:cursor-grabbing ${pageTheme.cardBg} select-none`}
+          style={{ touchAction: 'none' }}
+        >
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <div className="flex flex-col items-center gap-3">
@@ -572,7 +581,7 @@ export default function FloorPlanAdminPage() {
               </div>
             </div>
           ) : (
-            <div className="min-w-[800px] h-full p-4 md:p-8 pb-32">
+            <div className="min-w-[1200px] h-full p-4 md:p-8 pb-32">
               <FloorPlan
                 mode={viewMode === 'edit' ? 'edit' : 'view'}
                 tables={tables}
@@ -597,11 +606,16 @@ export default function FloorPlanAdminPage() {
       {/* Sidebar / Toolbar ด้านซ้าย (หรือล่างในมือถือ) */}
       <div className="w-full md:w-[400px] flex flex-col gap-4 order-2 md:order-1 md:overflow-y-auto md:pr-2">
         <div className={`${pageTheme.card} rounded-2xl shadow-sm border p-6 flex flex-col gap-6`}>
-          <div>
-            <h1 className={`text-2xl font-black ${pageTheme.text} tracking-tight`}>
-              {t('admin.floorPlan.title')}
-            </h1>
-            <p className={`text-sm ${pageTheme.textSecondary} mt-1`}>{t('admin.floorPlan.subtitle')}</p>
+          <div className="flex items-center gap-4 mb-6">
+            <div className={`p-3 rounded-2xl border transition-all duration-300 ${resolvedAdminTheme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-amber-100 border-amber-200'}`}>
+              <Icon name="MapIcon" size={32} className={resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-600'} />
+            </div>
+            <div>
+              <h1 className={`text-2xl font-black ${pageTheme.text} tracking-tight`}>
+                {t('admin.floorPlan.title')}
+              </h1>
+              <p className={`text-sm ${pageTheme.textSecondary} mt-0.5 font-medium`}>{t('admin.floorPlan.subtitle')}</p>
+            </div>
           </div>
 
           {/* Mode Switcher: ปุ่มสลับระหว่างโหมดแก้ไขกับโหมดตรวจสอบ */}

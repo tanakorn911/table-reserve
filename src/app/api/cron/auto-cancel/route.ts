@@ -1,16 +1,30 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const CRON_SECRET = process.env.CRON_SECRET;
 
 /**
  * Auto-Cancel Expired Reservations
  * This endpoint should be called by a cron job every 30 minutes
  * It cancels pending reservations that are older than 30 minutes
  * API สำหรับยกเลิกการจองที่ค้างสถานะ Pending เกิน 30 นาที (ทำงานผ่าน Cron Job)
+ * 
+ * ⚠️ ต้องส่ง Authorization: Bearer <CRON_SECRET> header มาด้วย
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // ตรวจสอบ CRON_SECRET เพื่อป้องกันการเรียกจากภายนอก
+    if (CRON_SECRET) {
+        const authHeader = request.headers.get('authorization');
+        if (authHeader !== `Bearer ${CRON_SECRET}`) {
+            return NextResponse.json(
+                { success: false, error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+    }
+
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

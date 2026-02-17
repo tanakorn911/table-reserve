@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Copy the rest of the application
+COPY . .
+
+# Expose the dev server port
+EXPOSE 4028
+
+# Run the Next.js dev server
+CMD ["npm", "run", "dev"]
