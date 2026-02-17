@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from './components/AdminSidebar';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import LanguageSwitcher, { useAdminLocale, adminT } from './components/LanguageSwitcher';
-import AdminBottomNav from './components/AdminBottomNav';
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext';
 import AdminThemeToggle from './components/AdminThemeToggle';
 
@@ -77,21 +76,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <main className="min-h-screen bg-gray-900">{children}</main>;
   }
 
-  // ฟังก์ชันหาชื่อ Title ของหน้าปัจจุบันจาก Pathname
-  const getTitle = (path: string) => {
-    const segments = path.split('/');
-    const lastSegment = segments[segments.length - 1];
-
-    const titleMap: Record<string, string> = {
-      dashboard: 'header.dashboard',
-      reservations: 'header.reservations',
-      tables: 'header.tables',
-      settings: 'header.settings',
-      'floor-plan': 'header.floorPlan',
-    };
-
-    return adminT(titleMap[lastSegment] || lastSegment, locale);
-  };
 
   // กำหนด Class CSS ตาม Theme ที่เลือก (Light/Dark)
   const themeClasses = resolvedAdminTheme === 'dark'
@@ -117,12 +101,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Sidebar: เมนูด้านซ้าย (ซ่อนใน Mobile Application) */}
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'md:pl-64' : 'md:pl-0'}`}>
         {/* Header: แถบด้านบน */}
         <header className={`flex items-center justify-between px-4 md:px-6 h-16 backdrop-blur-sm border-b ${themeClasses.header}`}>
-          <div className="flex items-center gap-4">
-            {/* ชื่อหน้าปัจจุบัน */}
-            <h2 className={`text-base md:text-lg font-bold ${themeClasses.title}`}>{getTitle(pathname)}</h2>
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* ปุ่ม Hamburger ด้านซ้าย */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`p-2 rounded-lg transition-all border ${resolvedAdminTheme === 'dark'
+                ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/20'
+                : 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-200'
+                }`}
+              title={isSidebarOpen ? "ปิดเมนู" : "เปิดเมนู"}
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
           </div>
 
           {/* ขวา: Role, Theme, Language, Logout */}
@@ -157,7 +150,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main Content: พื้นที่แสดงเนื้อหาหลัก */}
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto ${themeClasses.main} p-4 md:p-6 pb-24 md:pb-6 relative`}>
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto ${themeClasses.main} p-4 md:p-6 pb-6 relative`}>
           {/* Loading Overlay */}
           {isLoading && (
             <div className={`absolute inset-0 ${themeClasses.loading} backdrop-blur-sm z-50 flex items-center justify-center`}>
@@ -171,9 +164,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           {/* เนื้อหา Page */}
           {!isLoading && children}
         </main>
-
-        {/* Bottom Navigation: เมนูด้านล่าง (เฉพาะ Mobile) */}
-        <AdminBottomNav />
       </div>
     </div>
   );
