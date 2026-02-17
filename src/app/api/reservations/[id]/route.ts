@@ -10,12 +10,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
-    // Check Auth
+    // Check Auth (getUser แทน getSession เพื่อ verify JWT)
     // ตรวจสอบสิทธิ์การใช้งาน (ต้องล็อกอินก่อน)
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -49,9 +49,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check Auth
     // ตรวจสอบสิทธิ์การใช้งาน
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -128,7 +128,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         // Get staff details from profiles table for up-to-date info
         // ดึงข้อมูลพนักงานที่ทำการแก้ไข
-        const { user } = session;
         let staffName = user.email?.split('@')[0] || 'Admin';
         let staffPosition = 'Staff';
         let staffId = `ST-${user.id.substring(0, 4).toUpperCase()}`;
@@ -173,9 +172,9 @@ export async function DELETE(
     // Check Auth
     // ตรวจสอบสิทธิ์การใช้งาน
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -209,7 +208,6 @@ export async function DELETE(
     (async () => {
       try {
         // Get staff details from profiles table for up-to-date info
-        const { user } = session;
         let staffName = user.email?.split('@')[0] || 'Admin';
         let staffPosition = 'Staff';
         let staffId = `ST-${user.id.substring(0, 4).toUpperCase()}`;

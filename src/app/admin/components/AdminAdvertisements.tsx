@@ -15,6 +15,8 @@ type Ad = {
 
 export default function AdminAdvertisements() {
   const { t } = useTranslation();
+  // State variables for managing ads and form inputs
+  // ตัวแปร State สำหรับจัดการรายการโฆษณาและข้อมูลฟอร์ม
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
@@ -25,6 +27,8 @@ export default function AdminAdvertisements() {
 
   const supabase = createClientSupabaseClient();
 
+  // Fetch advertisements from the API
+  // ฟังก์ชันดึงข้อมูลโฆษณาทั้งหมดจาก API
   const fetchAds = async () => {
     setLoading(true);
     try {
@@ -49,9 +53,13 @@ export default function AdminAdvertisements() {
     fetchAds();
   }, []);
 
+  // Handle form submission to create a new ad
+  // ฟังก์ชันสร้างโฆษณาใหม่ (Upload รูปภาพ -> ได้ URL -> บันทึกข้อมูลลง DB)
   const createAd = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validation: ตรวจสอบความถูกต้องของข้อมูล
     if (!title || title.trim().length === 0) {
       setError(t('admin.advertisements.error.fill'));
       return;
@@ -64,6 +72,8 @@ export default function AdminAdvertisements() {
 
     setUploading(true);
     try {
+      // 1. Upload image to Supabase Storage
+      // 1. อัปโหลดรูปภาพไปยัง Supabase Storage
       const ext = selectedFile.name.split('.').pop();
       const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
@@ -78,6 +88,8 @@ export default function AdminAdvertisements() {
         return;
       }
 
+      // 2. Get Public URL
+      // 2. ขอ URL สาธารณะของรูปภาพ
       const { data: publicData } = await supabase.storage.from('advertisements').getPublicUrl(filePath);
       const publicUrl = (publicData as any)?.publicUrl;
       if (!publicUrl) {
@@ -86,6 +98,8 @@ export default function AdminAdvertisements() {
         return;
       }
 
+      // 3. Save ad data to Database via API
+      // 3. บันทึกข้อมูลโฆษณาผ่าน API
       const res = await fetch('/api/ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,6 +107,8 @@ export default function AdminAdvertisements() {
       });
       const json = await res.json();
       if (res.ok) {
+        // Reset form on success
+        // ล้างค่าฟอร์มเมื่อสำเร็จ
         setTitle('');
         setSelectedFile(null);
         setImagePreview(null);
@@ -109,6 +125,8 @@ export default function AdminAdvertisements() {
     }
   };
 
+  // Handle ad deletion
+  // ฟังก์ชันลบโฆษณา (ลบจาก DB และ Storage ผ่าน API)
   const deleteAd = async (id: string | number) => {
     if (!confirm(t('admin.advertisements.confirm.delete'))) return;
     try {

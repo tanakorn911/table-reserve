@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useNavigation } from '@/contexts/NavigationContext'; // Context สำหรับจัดการสถานะ Navigation
 import Icon from '@/components/ui/AppIcon'; // Components ไอคอน
 import { useTranslation } from '@/lib/i18n'; // Hook แปลภาษา
@@ -165,37 +166,33 @@ const MobileMenu = () => {
           {/* ส่วนเปลี่ยนภาษา สำหรับ Mobile */}
           <div className="mt-2 pt-4 border-t border-border">
             <p className="text-sm font-medium text-muted-foreground mb-3 px-2">{t('nav.language')}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setLocale('th');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`
-                  flex-1 py-3 rounded-lg text-sm font-bold transition-all border
-                  ${locale === 'th'
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-foreground border-border hover:bg-muted'
-                  }
-                `}
-              >
-                ไทย (TH)
-              </button>
-              <button
-                onClick={() => {
-                  setLocale('en');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`
-                  flex-1 py-3 rounded-lg text-sm font-bold transition-all border
-                  ${locale === 'en'
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-foreground border-border hover:bg-muted'
-                  }
-                `}
-              >
-                English (EN)
-              </button>
+            <div className="flex gap-2">
+              {([{ key: 'th' as const, label: 'ไทย (TH)' }, { key: 'en' as const, label: 'English (EN)' }]).map((lang) => (
+                <motion.button
+                  key={lang.key}
+                  onClick={() => {
+                    setLocale(lang.key);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`
+                    relative flex-1 py-3 rounded-lg text-sm font-bold transition-colors border
+                    ${locale === lang.key
+                      ? 'text-primary-foreground border-primary'
+                      : 'bg-background text-foreground border-border hover:bg-muted'
+                    }
+                  `}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {locale === lang.key && (
+                    <motion.div
+                      layoutId="mobileActiveLocale"
+                      className="absolute inset-0 rounded-lg bg-primary -z-10"
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  {lang.label}
+                </motion.button>
+              ))}
             </div>
           </div>
         </nav>

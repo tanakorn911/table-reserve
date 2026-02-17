@@ -62,6 +62,15 @@ export async function GET(request: NextRequest) {
 
         const reservationData: any = data;
 
+        // Check for existing feedback
+        const { data: feedbackData } = await supabase
+            .from('feedback')
+            .select('id')
+            .eq('reservation_id', reservationData.id)
+            .maybeSingle();
+
+        reservationData.has_feedback = !!feedbackData;
+
         // Fetch table name if table_number exists
         // ดึงชื่อโต๊ะมาแสดง (ถ้ามี)
         if (reservationData.table_number) {

@@ -1,9 +1,8 @@
 'use client'; // ใช้ Client Component
 
 import React, { useState, useEffect } from 'react';
-import { LanguageIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
-import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
 type Locale = 'th' | 'en'; // กำหนด Type ภาษา (ไทย/อังกฤษ)
@@ -15,8 +14,8 @@ interface LanguageSwitcherProps {
 /**
  * LanguageSwitcher Component
  * 
- * ปุ่มสลับภาษา (TH/EN) เฉพาะส่วนของ Admin Panel
- * เก็บค่าภาษาลงใน localStorage แยกกับหน้าบ้าน (Frontend)
+ * ปุ่มสลับภาษา (TH/EN) แบบ Pill Toggle สำหรับ Admin Panel
+ * มี Animation เมื่อสลับภาษา
  */
 export default function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
     const [locale, setLocale] = useState<Locale>('th');
@@ -30,27 +29,45 @@ export default function LanguageSwitcher({ className = '' }: LanguageSwitcherPro
         }
     }, []);
 
-    // ฟังก์ชันสลับภาษา และบันทึกลง localStorage
-    const toggleLanguage = () => {
-        const newLocale: Locale = locale === 'th' ? 'en' : 'th';
+    // ฟังก์ชันเปลี่ยนภาษา และบันทึกลง localStorage
+    const changeLocale = (newLocale: Locale) => {
         setLocale(newLocale);
         localStorage.setItem('admin-locale', newLocale);
         // Dispatch Custom Event เพื่อแจ้งให้ Component อื่นๆ ทราบว่ามีการเปลี่ยนภาษา
         window.dispatchEvent(new CustomEvent('locale-change', { detail: newLocale }));
     };
 
+    const isDark = resolvedAdminTheme === 'dark';
+
     return (
-        <button
-            onClick={toggleLanguage}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-sm transition-all border ${resolvedAdminTheme === 'dark'
-                ? 'bg-primary/10 text-yellow-400 hover:bg-primary/20 border-primary/20'
-                : 'bg-gray-100 text-slate-700 hover:bg-gray-200 border-gray-200'
-                } ${className}`}
-            title={locale === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
-        >
-            <LanguageIcon className="w-5 h-5" />
-            <span className="uppercase tracking-wider">{locale}</span>
-        </button>
+        <div className={`inline-flex items-center rounded-full p-1 gap-1 backdrop-blur-sm border ${isDark
+            ? 'bg-white/5 border-white/10'
+            : 'bg-gray-100 border-gray-200'
+            } ${className}`}>
+            {([{ key: 'th' as const, label: 'TH' }, { key: 'en' as const, label: 'EN' }]).map((lang) => (
+                <motion.button
+                    key={lang.key}
+                    onClick={() => changeLocale(lang.key)}
+                    className={`relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ${locale === lang.key
+                        ? isDark ? 'text-yellow-400' : 'text-amber-700'
+                        : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={lang.key === 'th' ? 'ภาษาไทย' : 'English'}
+                >
+                    {locale === lang.key && (
+                        <motion.div
+                            layoutId="adminActiveLocale"
+                            className={`absolute inset-0 rounded-full -z-10 ${isDark ? 'bg-white/10' : 'bg-white shadow-sm'
+                                }`}
+                            transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                    )}
+                    {lang.label}
+                </motion.button>
+            ))}
+        </div>
     );
 }
 
@@ -98,6 +115,7 @@ export const adminT = (key: string, locale: Locale): string => {
         // Sidebar
         'sidebar.dashboard': { th: 'แดชบอร์ด', en: 'Dashboard' },
         'sidebar.reservations': { th: 'รายการจอง', en: 'Reservations' },
+        'sidebar.feedback': { th: 'ความคิดเห็นลูกค้า', en: 'Customer Feedback' },
         'sidebar.advertisements': { th: 'จัดการโฆษณา', en: 'Advertisements' },
         'sidebar.checkStatus': { th: 'เช็คสถานะจอง', en: 'Check Status' },
         'sidebar.floorPlan': { th: 'จัดการผังร้าน', en: 'Floor Plan' },
@@ -169,6 +187,9 @@ export const adminT = (key: string, locale: Locale): string => {
         'reservations.noSlip': { th: 'ไม่มีสลิป', en: 'No Slip' },
         'reservations.guests': { th: 'ท่าน', en: 'guests' },
         'reservations.timeAt': { th: 'เวลา', en: 'Time' },
+        'admin.feedback.delete.confirm': { th: 'คุณแน่ใจหรือไม่ว่าต้องการลบความคิดเห็นนี้? การกระทำนี้ไม่สามารถย้อนกลับได้', en: 'Are you sure you want to delete this feedback? This action cannot be undone.' },
+        'admin.feedback.delete.success': { th: 'ลบความคิดเห็นสำเร็จ', en: 'Feedback deleted successfully' },
+        'admin.feedback.delete.error': { th: 'ไม่สามารถลบความคิดเห็นได้ กรุณาลองใหม่', en: 'Failed to delete feedback. Please try again.' },
 
         // Floor Plan
         'floorplan.title': { th: 'จัดการผังร้าน', en: 'Floor Plan Management' },
@@ -248,6 +269,17 @@ export const adminT = (key: string, locale: Locale): string => {
         'admin.advertisements.errors.tableNotFound.message': { th: 'ตาราง public.advertisements ยังไม่มีในฐานข้อมูล', en: 'The table public.advertisements does not exist in the database' },
         'admin.advertisements.errors.tableNotFound.createTable': { th: 'สร้างตารางด้วย SQL นี้:', en: 'Create the table with this SQL:' },
         'admin.advertisements.confirmDelete': { th: 'คุณแน่ใจหรือไม่ที่จะลบโฆษณาชิ้นนี้?', en: 'Are you sure you want to delete this advertisement?' },
+
+        // Feedback
+        'admin.feedback.title': { th: 'จัดการความคิดเห็นลูกค้า', en: 'Manage Customer Feedback' },
+        'admin.feedback.subtitle': { th: 'ดูความคิดเห็นและคำติชมจากลูกค้าที่ใช้บริการ', en: 'View feedback and suggestions from your customers' },
+        'admin.feedback.list.name': { th: 'ชื่อลูกค้า', en: 'Customer Name' },
+        'admin.feedback.list.email': { th: 'อีเมล', en: 'Email' },
+        'admin.feedback.list.rating': { th: 'คะแนน', en: 'Rating' },
+        'admin.feedback.list.comment': { th: 'ความคิดเห็น', en: 'Comment' },
+        'admin.feedback.list.date': { th: 'วันที่ส่ง', en: 'Date Submitted' },
+        'admin.feedback.list.empty': { th: 'ยังไม่มีความคิดเห็น', en: 'No feedback yet' },
+        'admin.feedback.list.error': { th: 'ไม่สามารถโหลดข้อมูลได้', en: 'Failed to load feedback' },
     };
 
     return translations[key]?.[locale] || key;

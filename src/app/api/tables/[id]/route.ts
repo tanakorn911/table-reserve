@@ -8,12 +8,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
-    // Check Auth
+    // Check Auth (getUser แทน getSession เพื่อ verify JWT)
     // ตรวจสอบสิทธิ์ Admin
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -49,9 +49,9 @@ export async function DELETE(
     // Check Auth
     // ตรวจสอบสิทธิ์ Admin
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

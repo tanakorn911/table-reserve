@@ -12,6 +12,7 @@ import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 import HolidayAnnouncements from './HolidayAnnouncements';
 import AdvertisementBanner from './AdvertisementBanner';
+import Testimonials from './Testimonials';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 
 // ----------------------------------------------------------------------
@@ -208,30 +209,54 @@ const LandingPageInteractive: React.FC = () => {
 
         setSchedule(newSchedule); // อัปเดต State
       } catch (error) {
-        console.error('Failed to fetch hours:', error);
+        console.warn('[LandingPage] Failed to fetch hours, using cache/fallback');
 
-        // กรณี Error ให้ใช้ Fallback Schedule
+        // กรณี Error: ลองอ่านจาก localStorage cache ก่อน
         if (isMounted) {
+          let cachedHours = null;
+          try {
+            const cached = localStorage.getItem('cache_business_hours');
+            if (cached) cachedHours = JSON.parse(cached);
+          } catch { }
+
           const thailandTime = getThailandTime();
           const currentDayIndex = thailandTime.getDay();
 
-          const fallbackSchedule = [
-            { id: 0, open: '10:00', close: '21:00' },
-            { id: 1, open: '11:00', close: '22:00' },
-            { id: 2, open: '11:00', close: '22:00' },
-            { id: 3, open: '11:00', close: '22:00' },
-            { id: 4, open: '11:00', close: '23:00' },
-            // ข้ามวันศุกร์ (id 5)
-            { id: 6, open: '10:00', close: '23:00' },
-          ].map((item) => {
-            const hoursStr = `${item.open} - ${item.close}`;
-            return {
-              day: dayNames[item.id],
-              hours: locale === 'th' ? `${hoursStr} น.` : hoursStr,
-              isToday: item.id === currentDayIndex,
-            };
-          });
-          setSchedule(fallbackSchedule);
+          if (cachedHours) {
+            // ใช้ cached data จาก localStorage
+            const displayOrder = [0, 1, 2, 3, 4, 5, 6];
+            const cachedSchedule = displayOrder.map((dayIndex) => {
+              let timeRange = t('hours.closed');
+              if (dayIndex !== 5) {
+                const dayConfig = cachedHours[String(dayIndex)];
+                if (dayConfig) {
+                  timeRange = locale === 'th'
+                    ? `${dayConfig.open} - ${dayConfig.close} น.`
+                    : `${dayConfig.open} - ${dayConfig.close}`;
+                }
+              }
+              return { day: dayNames[dayIndex], hours: timeRange, isToday: dayIndex === currentDayIndex };
+            });
+            setSchedule(cachedSchedule);
+          } else {
+            // ถ้าไม่มี cache ให้ใช้ Fallback Schedule
+            const fallbackSchedule = [
+              { id: 0, open: '10:00', close: '21:00' },
+              { id: 1, open: '11:00', close: '22:00' },
+              { id: 2, open: '11:00', close: '22:00' },
+              { id: 3, open: '11:00', close: '22:00' },
+              { id: 4, open: '11:00', close: '23:00' },
+              { id: 6, open: '10:00', close: '23:00' },
+            ].map((item) => {
+              const hoursStr = `${item.open} - ${item.close}`;
+              return {
+                day: dayNames[item.id],
+                hours: locale === 'th' ? `${hoursStr} น.` : hoursStr,
+                isToday: item.id === currentDayIndex,
+              };
+            });
+            setSchedule(fallbackSchedule);
+          }
         }
       }
     };
@@ -259,11 +284,11 @@ const LandingPageInteractive: React.FC = () => {
     fetchHours();
     fetchHolidays();
 
-    // ตั้งเวลาให้เรียกซ้ำทุก 30 วินาที (Polling) เพื่ออัปเดตข้อมูลให้เป็น Real-time
+    // ตั้งเวลาให้เรียกซ้ำทุก 60 วินาที (ลดจาก 30s เพื่อลดภาระ Supabase free tier)
     const interval = setInterval(() => {
       fetchHours();
       fetchHolidays();
-    }, 30000);
+    }, 60000);
 
     // Cleanup: ยกเลิก interval และ set flag เมื่อ unmount
     return () => {
@@ -370,6 +395,9 @@ const LandingPageInteractive: React.FC = () => {
 
       {/* 5. Trust Signals: สัญลักษณ์ความน่าเชื่อถือ */}
       <TrustSignals badges={landingData.trustBadges} />
+
+      {/* 5.5 Testimonials: ความประทับใจจากลูกค้า */}
+      <Testimonials locale={locale} />
 
       {/* 6. Location & Contact: แผนที่และข้อมูลติดต่อ */}
       <LocationContact contact={landingData.contact} />

@@ -11,6 +11,7 @@ import {
   CalendarDaysIcon,
   TrashIcon,
   PencilIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
@@ -496,8 +497,23 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-12">
-      <h1 className={`text-3xl font-extrabold tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('admin.settings.title')}</h1>
+    <div className="space-y-8 max-w-5xl mx-auto pb-12 animate-in fade-in duration-500">
+      {/* ส่วนหัวของหน้า (Page Header) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-2xl border transition-all duration-300 ${resolvedAdminTheme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-amber-100 border-amber-200'}`}>
+            <Cog6ToothIcon className={`w-8 h-8 ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-600'}`} />
+          </div>
+          <div>
+            <h1 className={`text-2xl font-black tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-700'}`}>
+              {t('admin.settings.title')}
+            </h1>
+            <p className={`text-sm mt-0.5 font-medium ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              {t('admin.settings.subtitle')}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* 🔐 Password Change Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

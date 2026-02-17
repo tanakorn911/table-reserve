@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useNavigation } from '@/contexts/NavigationContext'; // Context สำหรับจัดการสถานะ Navigation
 import Icon from '@/components/ui/AppIcon'; // Component ไอคอนของแอป
 import { useTranslation } from '@/lib/i18n'; // Hook สำหรับการแปลภาษา
@@ -115,32 +116,32 @@ const Header = () => {
               <ThemeToggle size="sm" />
             </div>
 
-            {/* ปุ่มเปลี่ยนภาษา (TH/EN) */}
+            {/* ปุ่มเปลี่ยนภาษา (TH/EN) แบบ Pill Toggle พร้อม Animation */}
             <div className="flex items-center ml-4 bg-muted/50 backdrop-blur-sm rounded-full p-1 border border-border shadow-sm">
-              <button
-                onClick={() => setLocale('th')}
-                className={`
-                  px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
-                  ${locale === 'th'
-                    ? 'bg-card text-yellow-500 shadow-sm ring-1 ring-black/5'
-                    : 'text-muted-foreground hover:text-foreground'
-                  }
-                `}
-              >
-                TH
-              </button>
-              <button
-                onClick={() => setLocale('en')}
-                className={`
-                  px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
-                  ${locale === 'en'
-                    ? 'bg-card text-yellow-500 shadow-sm ring-1 ring-black/5'
-                    : 'text-muted-foreground hover:text-foreground'
-                  }
-                `}
-              >
-                EN
-              </button>
+              {([{ key: 'th' as const, label: 'TH' }, { key: 'en' as const, label: 'EN' }]).map((lang) => (
+                <motion.button
+                  key={lang.key}
+                  onClick={() => setLocale(lang.key)}
+                  className={`
+                    relative px-3 py-1.5 text-xs font-bold rounded-full transition-colors duration-200
+                    ${locale === lang.key
+                      ? 'text-yellow-500'
+                      : 'text-muted-foreground hover:text-foreground'
+                    }
+                  `}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {locale === lang.key && (
+                    <motion.div
+                      layoutId="headerActiveLocale"
+                      className="absolute inset-0 bg-card rounded-full shadow-sm ring-1 ring-black/5 -z-10"
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  {lang.label}
+                </motion.button>
+              ))}
             </div>
           </nav>
 

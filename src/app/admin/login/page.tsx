@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import LanguageSwitcher, { useAdminLocale, adminT } from '../components/LanguageSwitcher';
 
 // Login page has its own theme state since it's outside the AdminThemeProvider
 // หน้า Login มี state ของ theme แยกต่างหาก เนื่องจากอยู่นอก AdminThemeProvider
-type LoginTheme = 'light' | 'dark';
+type LoginTheme = 'light' | 'dark' | 'system';
 
 export default function AdminLoginPage() {
   // State สำหรับเก็บข้อมูลการเข้าสู่ระบบ
@@ -17,9 +18,19 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<LoginTheme>('dark');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
   const router = useRouter();
   const supabase = createClientSupabaseClient();
   const locale = useAdminLocale();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // ตรวจสอบขนาดหน้าจอเพื่อปรับไอคอน System
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Initialize theme from storage
   // ดึงค่า theme ที่บันทึกไว้ใน localStorage มาใช้งาน
@@ -28,9 +39,22 @@ export default function AdminLoginPage() {
     if (stored) setTheme(stored);
   }, []);
 
-  // ฟังก์ชันสลับ Theme (Light/Dark)
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+  // Resolve system theme
+  // ตรวจสอบ theme ของระบบ (system preference)
+  useEffect(() => {
+    if (theme === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      setResolvedTheme(mq.matches ? 'dark' : 'light');
+      const handler = (e: MediaQueryListEvent) => setResolvedTheme(e.matches ? 'dark' : 'light');
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
+    } else {
+      setResolvedTheme(theme);
+    }
+  }, [theme]);
+
+  // เปลี่ยน Theme
+  const changeTheme = (newTheme: LoginTheme) => {
     setTheme(newTheme);
     localStorage.setItem('savory_bistro_admin_theme', newTheme);
   };
@@ -67,7 +91,7 @@ export default function AdminLoginPage() {
 
   // Theme-aware colors — clean & premium
   // กำหนดสีต่างๆ ตาม Theme ที่เลือก (ปรับให้ดูหรูและคลีนขึ้น)
-  const themeColors = theme === 'dark' ? {
+  const themeColors = resolvedTheme === 'dark' ? {
     bg: 'from-[#0f1115] via-[#141820] to-[#0f1115]',
     card: 'bg-[#1a1e27]/90 border-yellow-500/10 shadow-2xl shadow-black/40',
     logoGlow: 'shadow-[0_0_40px_rgba(234,179,8,0.15)]',
@@ -83,20 +107,20 @@ export default function AdminLoginPage() {
     toggleBtn: 'bg-white/5 hover:bg-white/10 border-white/10 text-yellow-400',
     button: 'text-[#0f1115] bg-yellow-500 hover:bg-yellow-400 focus:ring-yellow-500 shadow-yellow-500/15',
   } : {
-    bg: 'from-stone-100 via-amber-50/50 to-stone-100',
-    card: 'bg-white/80 border-stone-200/80 shadow-2xl shadow-stone-300/20',
-    logoGlow: 'shadow-[0_0_40px_rgba(120,53,15,0.08)]',
-    title: 'text-stone-800',
-    subtitle: 'text-stone-400',
-    label: 'text-stone-600',
-    input: 'text-stone-900 bg-stone-50/80 border-stone-200 focus:ring-amber-600/30 focus:border-amber-600/40 placeholder-stone-300',
-    divider: 'border-stone-100',
-    footer: 'text-stone-400',
-    loading: 'bg-white/95',
-    loadingSpinner: 'border-amber-600/20 border-t-amber-600',
-    loadingText: 'text-amber-700',
-    toggleBtn: 'bg-stone-100 hover:bg-stone-200 border-stone-200 text-stone-600',
-    button: 'text-white bg-stone-800 hover:bg-stone-900 focus:ring-stone-800 shadow-stone-800/15',
+    bg: 'from-amber-50 via-orange-50 to-amber-100',
+    card: 'bg-white/90 border-amber-200 shadow-2xl shadow-amber-200/30',
+    logoGlow: 'shadow-[0_0_40px_rgba(180,83,9,0.1)]',
+    title: 'text-amber-700',
+    subtitle: 'text-gray-600',
+    label: 'text-gray-700',
+    input: 'text-gray-900 bg-gray-50 border-amber-200 focus:ring-amber-500/50 focus:border-amber-500 placeholder-gray-400',
+    divider: 'border-amber-100',
+    footer: 'text-gray-500',
+    loading: 'bg-white/90',
+    loadingSpinner: 'border-amber-500/30 border-t-amber-500',
+    loadingText: 'text-amber-600',
+    toggleBtn: 'bg-gray-200 hover:bg-gray-300 border-gray-300 text-amber-600',
+    button: 'text-white bg-amber-700 hover:bg-amber-800 focus:ring-amber-700 shadow-amber-700/20',
   };
 
   return (
@@ -105,29 +129,65 @@ export default function AdminLoginPage() {
       {/* Top right controls */}
       {/* ปุ่มควบคุมมุมขวาบน (Theme Toggle และ Language Switcher) */}
       <div className="absolute top-5 right-5 z-10 flex items-center gap-2">
-        <button
-          onClick={toggleTheme}
-          className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-all ${themeColors.toggleBtn}`}
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          {theme === 'dark' ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="5" />
-              <line x1="12" y1="1" x2="12" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="23" />
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-              <line x1="1" y1="12" x2="3" y2="12" />
-              <line x1="21" y1="12" x2="23" y2="12" />
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-          )}
-        </button>
+        {/* Theme Toggle - 3 modes: Light / System / Dark */}
+        <div className={`inline-flex items-center rounded-full p-1 gap-1 backdrop-blur-sm border ${resolvedTheme === 'dark'
+          ? 'bg-white/5 border-white/10'
+          : 'bg-gray-100 border-gray-200'
+          }`}>
+          {[
+            {
+              key: 'light' as const, label: 'Light', icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ), activeColor: 'text-amber-700'
+            },
+            {
+              key: 'system' as const, label: 'System', icon: isMobile ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+              ), activeColor: 'text-blue-500'
+            },
+            {
+              key: 'dark' as const, label: 'Dark', icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              ), activeColor: resolvedTheme === 'dark' ? 'text-yellow-400' : 'text-slate-600'
+            },
+          ].map((mode) => (
+            <motion.button
+              key={mode.key}
+              onClick={() => changeTheme(mode.key)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 relative ${theme === mode.key
+                ? mode.activeColor
+                : resolvedTheme === 'dark' ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              title={mode.label}
+            >
+              {theme === mode.key && (
+                <motion.div
+                  layoutId="loginActiveTheme"
+                  className={`absolute inset-0 rounded-full -z-10 ${resolvedTheme === 'dark' ? 'bg-white/10' : 'bg-white shadow-sm'
+                    }`}
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              {mode.icon}
+            </motion.button>
+          ))}
+        </div>
         <LanguageSwitcher />
       </div>
 

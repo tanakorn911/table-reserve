@@ -178,7 +178,7 @@ export const translations = {
 
     // Check Status
     'checkStatus.title': 'ตรวจสอบสถานะการจอง',
-    'checkStatus.subtitle': 'กรุณากรอกรหัสการจอง BX-XXXXXX เพื่อตรวจสอบสถานะ',
+    'checkStatus.subtitle': 'กรุณากรอกรหัสการจอง BX-XXXXXX เพื่อตรวจสอบสถานะและเขียนรีวิวการบริการ',
     'checkStatus.placeholder': 'เช่น BX-123456',
     'checkStatus.button': 'ค้นหาข้อมูล',
     'checkStatus.error.notFound': 'ไม่พบข้อมูลการจอง รหัสอาจไม่ถูกต้อง',
@@ -280,6 +280,7 @@ export const translations = {
 
     // Admin Reservations
     'admin.reservations.title': 'รายการจองทั้งหมด',
+    'admin.reservations.subtitle': 'จัดการและตรวจสอบรายการจองโต๊ะทั้งหมด',
     'admin.reservations.exportCSV': 'Export CSV',
     'admin.reservations.create': 'สร้างการจอง',
     'admin.reservations.search': 'ค้นหาชื่อ หรือ เบอร์โทร...',
@@ -309,6 +310,7 @@ export const translations = {
 
     // Admin Settings
     'admin.settings.title': 'ตั้งค่าระบบ',
+    'admin.settings.subtitle': 'จัดการการตั้งค่าระบบและข้อมูลเบื้องต้น',
     'admin.settings.hours.title': 'เวลาทำการ',
     'admin.settings.hours.to': 'ถึง',
     'admin.settings.hours.save': 'บันทึกเวลาทำการ',
@@ -381,12 +383,18 @@ export const translations = {
     'feedback.error.notFound': 'ไม่พบรหัสการจองนี้',
     'feedback.error.rating': 'กรุณาให้คะแนน',
     'feedback.error.general': 'เกิดข้อผิดพลาด กรุณาลองใหม่',
-    'feedback.rating.1': 'ไม่พอใจมาก',
-    'feedback.rating.2': 'ไม่ค่อยพอใจ',
-    'feedback.rating.3': 'พอใช้ได้',
-    'feedback.rating.4': 'พอใจ',
     'feedback.rating.5': 'ยอดเยี่ยม!',
     'feedback.thankyou': 'ขอบคุณที่ใช้บริการ Savory Bistro 🍽️',
+    'feedback.error.alreadySubmitted': 'คุณได้ส่งความคิดเห็นสำหรับการจองนี้ไปแล้ว',
+
+    // Testimonials (Landing Page)
+    'testimonials.title': 'ความประทับใจจากลูกค้า',
+    'testimonials.subtitle': 'เสียงตอบรับจากลูกค้าที่มาใช้บริการจริงกับเรา',
+    'testimonials.rateUs': 'ให้คะแนนเรา',
+    'testimonials.rateUsDesc': 'ก้าวต่อไปของเรา ขึ้นอยู่กับความคิดเห็นของคุณ',
+    'testimonials.leaveReview': 'เขียนรีวิว',
+    'testimonials.writeNow': 'เขียนเดี๋ยวนี้',
+    'testimonials.defaultComment': 'ผู้ใช้ไม่ได้โพสต์ความคิดเห็นใดๆ',
 
     // Admin Modals & Extra
     'admin.reservations.modal.new': 'สร้างรายการจองใหม่',
@@ -567,7 +575,7 @@ export const translations = {
 
     // Check Status
     'checkStatus.title': 'Check Booking Status',
-    'checkStatus.subtitle': 'Please enter your booking code (BX-XXXXXX) to check.',
+    'checkStatus.subtitle': 'Enter your booking code (BX-XXXXXX) to check status and share your experience.',
     'checkStatus.placeholder': 'e.g., BX-123456',
     'checkStatus.button': 'Search',
     'checkStatus.error.notFound': 'Booking not found. Please check code.',
@@ -670,6 +678,7 @@ export const translations = {
 
     // Admin Reservations
     'admin.reservations.title': 'All Reservations',
+    'admin.reservations.subtitle': 'Manage and monitor all your table bookings',
     'admin.reservations.exportCSV': 'Export CSV',
     'admin.reservations.create': 'Create Booking',
     'admin.reservations.search': 'Search name or phone...',
@@ -699,6 +708,7 @@ export const translations = {
 
     // Admin Settings
     'admin.settings.title': 'System Settings',
+    'admin.settings.subtitle': 'Manage system settings and basic information',
     'admin.settings.hours.title': 'Business Hours',
     'admin.settings.hours.to': 'to',
     'admin.settings.hours.save': 'Save Business Hours',
@@ -777,6 +787,16 @@ export const translations = {
     'feedback.rating.4': 'Satisfied',
     'feedback.rating.5': 'Excellent!',
     'feedback.thankyou': 'Thank you for choosing Savory Bistro 🍽️',
+    'feedback.error.alreadySubmitted': 'You have already submitted feedback for this reservation',
+
+    // Testimonials (Landing Page)
+    'testimonials.title': 'Customer Testimonials',
+    'testimonials.subtitle': 'Real feedback from our valued customers',
+    'testimonials.rateUs': 'Rate Us',
+    'testimonials.rateUsDesc': 'Our next step depends on your feedback',
+    'testimonials.leaveReview': 'Leave Review',
+    'testimonials.writeNow': 'Write Now',
+    'testimonials.defaultComment': 'User did not post any comments.',
 
     // Admin Modals & Extra
     'admin.reservations.modal.new': 'New Reservation',

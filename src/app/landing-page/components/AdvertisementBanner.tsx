@@ -22,20 +22,35 @@ export default function AdvertisementBanner() {
       setLoading(true);
       try {
         const res = await fetch('/api/ads');
-        if (!res.ok) return;
+        if (!res.ok) throw new Error('Failed to fetch ads');
         const json = await res.json();
         if (!mounted) return;
         const active = (json.data || []).filter((a: Ad) => a.active !== false);
         setAds(active);
         setIndex(0);
+        // บันทึกลง localStorage เพื่อใช้เป็น cache เมื่อ Supabase ช้า/ล่ม
+        try { localStorage.setItem('cache_ads', JSON.stringify(active)); } catch { }
       } catch (err) {
-        console.error(err);
+        console.warn('[Ads] Failed to fetch, using cached data');
+        if (!mounted) return;
+        // ลองอ่านจาก localStorage cache
+        try {
+          const cached = localStorage.getItem('cache_ads');
+          if (cached) {
+            const cachedAds = JSON.parse(cached) as Ad[];
+            if (cachedAds.length > 0) {
+              setAds(cachedAds);
+              setIndex(0);
+            }
+          }
+        } catch { }
       } finally {
         setLoading(false);
       }
     };
     fetchAds();
-    const id = setInterval(fetchAds, 30000); // refresh every 30s
+    // ลด polling จาก 30s เป็น 60s เพื่อลดภาระ Supabase free tier
+    const id = setInterval(fetchAds, 60000);
     return () => {
       mounted = false;
       clearInterval(id);

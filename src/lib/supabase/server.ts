@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Server-side Supabase client (Server Components, API Routes, Server Actions)
+// Server-side Supabase client (สำหรับใช้งานใน Server Components, API Routes, Server Actions)
+// จำเป็นต้องมีการจัดการ Cookies เพื่อยืนยันตัวตน (Authentication)
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
@@ -19,9 +20,8 @@ export async function createServerSupabaseClient() {
             cookieStore.set(name, value, options);
           });
         } catch (error) {
-          // The `set` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
+          // กรณีเรียกใช้จาก Server Component อาจจะไม่สามารถ Set Cookie ได้โดยตรง
+          // แต่ปกติจะมี Middleware จัดการเรื่อง Refresh Session ให้อยู่แล้ว
         }
       },
     },

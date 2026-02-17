@@ -1,10 +1,10 @@
 'use client'; // ทำงานฝั่ง Client Component
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion'; // Library สำหรับ Animation
 import { useTheme } from '@/contexts/ThemeContext'; // Context ธีม
 import { useTranslation } from '@/lib/i18n'; // i18n
-import Icon from '@/components/ui/AppIcon';
+// import Icon from '@/components/ui/AppIcon'; // ไม่ได้ใช้แล้ว
 
 interface ThemeToggleProps {
     className?: string;
@@ -18,13 +18,11 @@ interface ThemeToggleProps {
 export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggleProps) {
     const { theme, setTheme, resolvedTheme } = useTheme();
     const { t } = useTranslation();
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = React.useState(false);
 
-    // ตรวจสอบว่าเป็นหน้าจอ Mobile หรือไม่เพื่อปรับไอคอนโหมด System
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
+    // ตรวจสอบขนาดหน้าจอเพื่อปรับไอคอน System
+    React.useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
@@ -43,20 +41,40 @@ export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggle
         {
             key: 'light' as const,
             label: t('theme.light'),
-            iconName: 'SunIcon',
-            activeColor: 'text-yellow-500',
+            icon: (
+                <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+            ),
+            activeColor: 'text-amber-700', // ปรับสีให้ตรงกับ Login page (เข้มขึ้นกว่าเดิม text-yellow-500)
         },
         {
             key: 'system' as const,
             label: t('theme.system'),
-            iconName: isMobile ? 'DevicePhoneMobileIcon' : 'ComputerDesktopIcon',
+            icon: isMobile ? (
+                <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+            ) : (
+                <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+            ),
             activeColor: 'text-blue-500',
         },
         {
             key: 'dark' as const,
             label: t('theme.dark'),
-            iconName: 'MoonIcon',
-            activeColor: resolvedTheme === 'dark' ? 'text-yellow-400' : 'text-slate-400',
+            icon: (
+                <svg width={icon} height={icon} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            ),
+            activeColor: resolvedTheme === 'dark' ? 'text-yellow-400' : 'text-slate-600',
         },
     ];
 
@@ -91,7 +109,7 @@ export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggle
                             transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                         />
                     )}
-                    <Icon name={mode.iconName} size={icon} />
+                    {mode.icon}
                 </motion.button>
             ))}
         </div>

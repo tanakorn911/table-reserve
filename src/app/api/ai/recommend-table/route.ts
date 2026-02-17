@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
             const result = await generateWithRetry();
             const responseText = result.response.text();
 
-            console.log('Gemini Response:', responseText);
+            // console.log('Gemini Response:', responseText); // Comment out for production
 
             // Clean markdown if present (Gemini sometimes adds ```json ... ```)
             // ล้าง markdown block ออกเพื่อให้ได้ JSON ที่ถูกต้อง

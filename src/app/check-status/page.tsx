@@ -13,21 +13,33 @@ import {
   HashtagIcon,
   BuildingStorefrontIcon,
   XMarkIcon,
+  StarIcon as StarOutline,
 } from '@heroicons/react/24/outline';
+import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
 
 // CheckStatusPage: หน้าตรวจสอบสถานะการจองด้วยรหัส Booking Code (BX-XXXXXX)
+// และยังรองรับการเขียนรีวิว (Feedback) หลังจากค้นพบข้อมูลการจองแล้ว
 export default function CheckStatusPage() {
-  const { locale } = useNavigation();
-  const { t } = useTranslation(locale);
-  const [inputValue, setInputValue] = useState('');
-  const [reservation, setReservation] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { locale } = useNavigation(); // ดึง locale ปัจจุบันจาก Context
+  const { t } = useTranslation(locale); // ใช้งานฟังก์ชันแปลภาษา
 
-  // แปลงเวลารูปแบบ HH:mm
+  // States สำหรับการค้นหาข้อมูล
+  const [inputValue, setInputValue] = useState(''); // เก็บค่าที่พิมพ์ในช่องค้นหา
+  const [reservation, setReservation] = useState<any>(null); // เก็บข้อมูลการจองที่ค้นพบ
+  const [loading, setLoading] = useState(false); // สถานะการโหลดขณะเรียก API
+  const [error, setError] = useState(''); // เก็บข้อความ Error กรณีค้นหาไม่พบ
+  const [isModalOpen, setIsModalOpen] = useState(false); // สถานะการเปิด/ปิด Modal แสดงผล
+
+  // Feedback State: จัดการข้อมูลการให้คะแนนและการรีวิว
+  const [rating, setRating] = useState(0); // คะแนนดาว (1-5)
+  const [comment, setComment] = useState(''); // ข้อความความคิดเห็น
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false); // สถานะกำลังส่งรีวิว
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false); // สถานะส่งรีวิวสำเร็จ
+  const [feedbackError, setFeedbackError] = useState(''); // เก็บข้อความ Error ของรีวิว
+
+  // ฟังก์ชันแปลงเวลารูปแบบ HH:mm เป็นรูปแบบที่แสดงผลสวยงาม (เช่น 18:30 น. หรือ 6:30 PM)
   const formatTime = (time: string) => {
     const cleanTime = time.substring(0, 5);
     if (locale === 'th') return `${cleanTime} น.`;
@@ -38,7 +50,7 @@ export default function CheckStatusPage() {
     return `${hour}:${m} ${ampm}`;
   };
 
-  // แปลงวันที่ขเป็นรูปแบบที่อ่านง่ายตามภาษา
+  // ฟังก์ชันแปลงวันที่ (ISO String) เป็นรูปแบบที่อ่านง่ายตามภาษา (เช่น 18 กุมภาพันธ์ 2026)
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString + 'T00:00:00');
@@ -52,7 +64,7 @@ export default function CheckStatusPage() {
     }
   };
 
-  // ฟังก์ชันค้นหาการจอง
+  // ฟังก์ชันหลักสำหรับค้นหาการจองผ่าน API
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue) return;
@@ -62,15 +74,23 @@ export default function CheckStatusPage() {
     setReservation(null);
     setIsModalOpen(false);
 
+    // รีเซ็ตสถานะรีวิวทุกครั้งที่เริ่มการค้นหาใหม่
+    setRating(0);
+    setComment('');
+    setFeedbackSuccess(false);
+    setFeedbackError('');
+
     try {
-      // Precise search by code BX-XXXXXX
-      // ค้นหาด้วยรหัสจองตรงตัว
+      // เรียก API ค้นหาการจองด้วยรหัส Booking Code แบบตรงตัว
+      // ระบบจะส่งรหัสเป็นตัวพิมพ์ใหญ่ทั้งหมด (BX-...)
       const res = await fetch(`/api/public/check-booking?code=${inputValue.trim().toUpperCase()}`);
       const json = await res.json();
 
       if (!res.ok) {
+        // หากไม่พบข้อมูล แสดงข้อความแจ้งเตือน
         setError(json.error || t('checkStatus.error.notFound'));
       } else {
+        // หากพบข้อมูล บันทึกลง state และเปิด Modal แสดงผลทันที
         setReservation(json.data);
         setIsModalOpen(true);
       }
@@ -78,6 +98,47 @@ export default function CheckStatusPage() {
       setError(t('checkStatus.error.connection'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ฟังก์ชันสำหรับส่งรีวิว (Feedback)
+  const handleSubmitFeedback = async () => {
+    // ตรวจสอบว่าต้องเลือกดาวอย่างน้อย 1 ดวง
+    if (rating === 0) {
+      setFeedbackError(t('feedback.error.rating'));
+      return;
+    }
+
+    setFeedbackSubmitting(true);
+    setFeedbackError('');
+
+    try {
+      // ส่งข้อมูลไปยัง API Feedback
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservation_id: reservation.id, // ผูกกับ ID ของการจอง
+          rating,
+          comment: comment.trim(),
+          // ใช้ชื่อต้นฉบับจากการจองเพื่อความถูกต้อง
+          customer_name: reservation.guest_name_original || reservation.guest_name,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setFeedbackError(json.error || t('feedback.error.general'));
+      } else {
+        // เมื่อส่งสำเร็จ แสดงผลสถานะ Success และซ่อนฟอร์มในฝั่ง UI
+        setFeedbackSuccess(true);
+        // ทำเครื่องหมายว่าการจองนี้มีรีวิวแล้ว เพื่อไม่ให้แสดงฟอร์มซ้ำ
+        setReservation({ ...reservation, has_feedback: true });
+      }
+    } catch (err) {
+      setFeedbackError(t('feedback.error.general'));
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -206,6 +267,26 @@ export default function CheckStatusPage() {
               )}
               {t('checkStatus.button')}
             </button>
+
+            {/* Premium Review Hint */}
+            <div className="mt-6 flex items-center gap-3.5 p-4 rounded-2xl bg-accent/[0.03] border border-accent/10 transition-all hover:bg-accent/[0.06] group/hint border-dashed pointer-events-none">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 transition-all group-hover/hint:scale-110 shadow-sm">
+                <StarSolid className="w-5 h-5 text-accent" />
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+                  <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em] leading-none">
+                    {locale === 'th' ? 'เกร็ดน่ารู้' : 'Dining Insight'}
+                  </p>
+                </div>
+                <p className="text-[12px] font-bold text-foreground/80 leading-snug">
+                  {locale === 'th'
+                    ? 'คุณสามารถแบ่งปันความประทับใจได้ทันทีหลังจากค้นหาการจอง'
+                    : 'Share your dining experience immediately after finding your booking.'}
+                </p>
+              </div>
+            </div>
           </form>
 
           {error && (
@@ -294,6 +375,69 @@ export default function CheckStatusPage() {
                       <div className="px-3 py-1 bg-primary/10 rounded border border-primary/20 text-[10px] font-black text-primary uppercase tracking-wider">
                         Ready
                       </div>
+                    </div>
+                  )}
+
+                  {/* Feedback Section (How was your experience?) */}
+                  {!reservation.has_feedback && (reservation.status === 'confirmed' || reservation.status === 'completed') && (
+                    <div className="w-full mt-10 p-6 rounded-3xl bg-amber-500/5 border border-amber-500/20 text-left animate-in slide-in-from-top-4 duration-500">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-amber-500 rounded-xl">
+                          <StarSolid className="w-5 h-5 text-white" />
+                        </div>
+                        <h4 className="font-black text-foreground">{t('feedback.title')}</h4>
+                      </div>
+
+                      {feedbackSuccess ? (
+                        <div className="py-4 text-center animate-in zoom-in-95 duration-300">
+                          <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                          <p className="font-bold text-green-600">{t('feedback.success.title')}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t('feedback.success.desc')}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* Rating Stars */}
+                          <div className="flex justify-center gap-2 py-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                onClick={() => setRating(star)}
+                                className="transition-transform active:scale-90 hover:scale-110"
+                                type="button"
+                              >
+                                {star <= rating ? (
+                                  <StarSolid className="w-10 h-10 text-yellow-400 drop-shadow-sm" />
+                                ) : (
+                                  <StarOutline className="w-10 h-10 text-gray-300" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Comment box */}
+                          <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder={t('feedback.comment.placeholder')}
+                            className="w-full bg-white dark:bg-gray-900 border border-border rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none min-h-[80px] resize-none transition-all placeholder:text-muted-foreground/50"
+                          />
+
+                          {feedbackError && (
+                            <p className="text-xs text-red-500 font-bold flex items-center gap-1">
+                              <ExclamationCircleIcon className="w-3 h-3" />
+                              {feedbackError}
+                            </p>
+                          )}
+
+                          <button
+                            onClick={handleSubmitFeedback}
+                            disabled={feedbackSubmitting || rating === 0}
+                            className="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-3 rounded-xl shadow-lg shadow-amber-500/10 transition-all active:scale-95 disabled:opacity-30 disabled:hover:translate-y-0"
+                          >
+                            {feedbackSubmitting ? t('feedback.submitting') : t('feedback.submit')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
