@@ -47,16 +47,16 @@ export default function ThemeToggle({ className = '', size = 'md' }: ThemeToggle
             activeColor: 'text-yellow-500',
         },
         {
-            key: 'dark' as const,
-            label: t('theme.dark'),
-            iconName: 'MoonIcon',
-            activeColor: resolvedTheme === 'dark' ? 'text-yellow-400' : 'text-slate-400',
-        },
-        {
             key: 'system' as const,
             label: t('theme.system'),
             iconName: isMobile ? 'DevicePhoneMobileIcon' : 'ComputerDesktopIcon',
             activeColor: 'text-blue-500',
+        },
+        {
+            key: 'dark' as const,
+            label: t('theme.dark'),
+            iconName: 'MoonIcon',
+            activeColor: resolvedTheme === 'dark' ? 'text-yellow-400' : 'text-slate-400',
         },
     ];
 
