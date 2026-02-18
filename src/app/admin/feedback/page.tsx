@@ -80,11 +80,15 @@ export default function FeedbackPage() {
                 setPagination(result.pagination);
                 setStats(result.stats || { averageRating: 0, totalFeedback: 0 });
             } else {
-                setError(result.error || adminT('admin.feedback.list.error', locale));
+                const errorMsg = result.error || adminT('admin.feedback.list.error', locale);
+                alert(errorMsg);
+                setError(errorMsg);
             }
         } catch (err) {
             console.error('Fetch feedback error:', err);
-            setError(adminT('admin.feedback.list.error', locale));
+            const errorMsg = adminT('admin.feedback.list.error', locale);
+            alert(errorMsg);
+            setError(errorMsg);
         } finally {
             if (isInitialLoad.current) {
                 setIsLoading(false);
@@ -120,6 +124,16 @@ export default function FeedbackPage() {
             supabase.removeChannel(channel);
         };
     }, [fetchFeedback, pagination.offset]);
+
+    // Auto-clear error messages after 5 seconds
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
 
     // ฟังก์ชันจัดการเมื่อผู้ใช้เปลี่ยนหน้า (Pagination)
     const handlePageChange = (newOffset: number) => {
@@ -317,7 +331,7 @@ export default function FeedbackPage() {
                                             {/* ข้อมูลลูกค้าและการอ้างอิงการจอง */}
                                             <td className="px-6 py-5">
                                                 <div className={`text-sm font-bold ${themeClasses.textMain}`}>
-                                                    {item.customer_name || item.reservations?.guest_name || 'Guest'}
+                                                    {item.customer_name || item.reservations?.guest_name || adminT('admin.feedback.guest', locale)}
                                                 </div>
                                                 {item.customer_phone && (
                                                     <div className={`text-xs ${themeClasses.textMuted}`}>{item.customer_phone}</div>
@@ -368,7 +382,10 @@ export default function FeedbackPage() {
                         {pagination.total > pagination.limit && (
                             <div className={`px-6 py-4 border-t flex items-center justify-between ${isDark ? 'border-gray-700' : 'border-amber-100'}`}>
                                 <p className={`text-xs font-bold ${themeClasses.textMuted}`}>
-                                    Showing {pagination.offset + 1} - {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total}
+                                    {adminT('admin.feedback.pagination.showing', locale)
+                                        .replace('{start}', String(pagination.offset + 1))
+                                        .replace('{end}', String(Math.min(pagination.offset + pagination.limit, pagination.total)))
+                                        .replace('{total}', String(pagination.total))}
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button
