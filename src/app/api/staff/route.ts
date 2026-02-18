@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, reservationRateLimiter, getClientIp } from '@/lib/ratelimit';
 
 // Create staff member (requires service role for auth.admin)
 // POST: สร้างบัญชีพนักงานใหม่ (ต้องใช้ Service Role)
@@ -70,23 +71,45 @@ export async function POST(request: NextRequest) {
 
         // Create profile entry (using upsert in case there's a trigger already creating it)
         // สร้างข้อมูลในตาราง Profiles (ใช้ upsert กันพลาดกรณีมี Trigger)
+        const profileData = {
+            id: newUser.user.id,
+            email: email,
+            full_name: full_name || null,
+            position: position || null,
+            staff_id: staff_id || null,
+            role: role || 'staff',
+        };
+
         const { error: profileError } = await supabase
             .from('profiles')
-            .upsert({
-                id: newUser.user.id,
-                email: email,
-                full_name: full_name || null,
-                position: position || null,
-                staff_id: staff_id || null,
-                role: role || 'staff',
-            }, { onConflict: 'id' });
+            .insert([profileData]);
 
         if (profileError) {
-            console.error('Profile error:', profileError);
+            console.error('Profile creation error:', profileError);
             // Try to delete the auth user if profile creation failed
             // ถ้าสร้าง Profile ไม่สำเร็จ ให้ลบ Auth user ทิ้งเพื่อไม่ให้ข้อมูลขยะ
             await adminClient.auth.admin.deleteUser(newUser.user.id);
             return NextResponse.json({ error: profileError.message }, { status: 500 });
+        }
+
+        // 📝 Audit Log: Create Staff
+        try {
+            const clientIp = getClientIp(request);
+            await supabase.from('audit_logs').insert([{
+                user_id: user.id,
+                action: 'create_staff',
+                entity: 'profiles',
+                entity_id: newUser.user.id,
+                payload: {
+                    email: profileData.email,
+                    full_name: profileData.full_name,
+                    role: profileData.role,
+                    staff_id: profileData.staff_id
+                },
+                ip_address: clientIp
+            }]);
+        } catch (auditError) {
+            console.error('Audit log error:', auditError);
         }
 
         return NextResponse.json({
@@ -190,6 +213,24 @@ export async function PUT(request: NextRequest) {
                 console.error('Profile update error:', profileError);
                 return NextResponse.json({ error: profileError.message }, { status: 500 });
             }
+
+            // 📝 Audit Log: Update Staff
+            try {
+                const clientIp = getClientIp(request);
+                await supabase.from('audit_logs').insert([{
+                    user_id: user.id,
+                    action: 'update_staff',
+                    entity: 'profiles',
+                    entity_id: id,
+                    payload: {
+                        updates: profileUpdateData,
+                        password_changed: !!password
+                    },
+                    ip_address: clientIp
+                }]);
+            } catch (auditError) {
+                console.error('Audit log error:', auditError);
+            }
         }
 
         return NextResponse.json({ success: true });
@@ -239,9 +280,27 @@ export async function DELETE(request: NextRequest) {
 
         // Delete from Auth
         const { error: authError } = await adminClient.auth.admin.deleteUser(id);
-        if (authError) {
+        if (authError) { // Changed 'error' to 'authError'
             console.error('Auth delete error:', authError);
             return NextResponse.json({ error: authError.message }, { status: 400 });
+        }
+
+        // 📝 Audit Log: Delete Staff
+        try {
+            const clientIp = getClientIp(request);
+            // The 'user' variable already holds the admin user from the initial check
+            if (user) {
+                await supabase.from('audit_logs').insert([{
+                    user_id: user.id, // Changed 'adminUser' to 'user'
+                    action: 'delete_staff',
+                    entity: 'profiles',
+                    entity_id: id,
+                    payload: { deleted_id: id },
+                    ip_address: clientIp
+                }]);
+            }
+        } catch (auditError) {
+            console.error('Audit log error:', auditError);
         }
 
         return NextResponse.json({ success: true });
