@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { withRetry } from '@/lib/supabase/retry';
 import { getCache, setCache, invalidateCacheByPrefix } from '@/lib/cache';
+import { getClientIp } from '@/lib/ratelimit';
 
 const CACHE_PREFIX = 'api:settings';
 const CACHE_TTL = 5 * 60 * 1000; // 5 นาที
@@ -100,6 +101,22 @@ export async function POST(request: NextRequest) {
     }
 
     invalidateCacheByPrefix(CACHE_PREFIX); // ล้าง cache เมื่ออัปเดต
+
+    // 🛡️ Log Audit Event
+    try {
+      const ip = getClientIp(request);
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'upsert_setting',
+        entity: 'settings',
+        entity_id: key,
+        payload: { value, description: description || null },
+        ip_address: ip
+      });
+    } catch (auditError) {
+      console.error('Audit logging failed:', auditError);
+    }
+
     return NextResponse.json({ data });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -154,6 +171,21 @@ export async function PUT(request: NextRequest) {
     if (error) {
       console.error('Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // 🛡️ Log Audit Event
+    try {
+      const ip = getClientIp(request);
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'update_staff_profile',
+        entity: 'profiles',
+        entity_id: userId,
+        payload: { ...data },
+        ip_address: ip
+      });
+    } catch (auditError) {
+      console.error('Audit logging failed:', auditError);
     }
 
     return NextResponse.json({ success: true });
