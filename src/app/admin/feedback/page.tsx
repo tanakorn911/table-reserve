@@ -6,8 +6,9 @@ import {
     StarIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
-    ExclamationCircleIcon,
     TrashIcon,
+    UsersIcon,
+    TrophyIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useAdminLocale, adminT } from '../components/LanguageSwitcher';
@@ -39,7 +40,7 @@ interface Pagination {
 
 // อินเทอร์เฟซสำหรับข้อมูลสถิติภาพรวม
 interface Stats {
-    averageRating: number | null;
+    averageRating: number;
     totalFeedback: number;
 }
 
@@ -52,13 +53,14 @@ interface Stats {
 export default function FeedbackPage() {
     const locale = useAdminLocale(); // ดึงภาษาที่แอดมินเลือก
     const { resolvedAdminTheme } = useAdminTheme(); // ดึง Theme ปัจจุบัน (light/dark)
+    const isDark = resolvedAdminTheme === 'dark';
 
     // State สำหรับจัดการข้อมูลในหน้าจอ
     const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [pagination, setPagination] = useState<Pagination>({ total: 0, limit: 10, offset: 0 });
-    const [stats, setStats] = useState<Stats>({ averageRating: null, totalFeedback: 0 });
+    const [stats, setStats] = useState<Stats>({ averageRating: 0, totalFeedback: 0 });
 
     // Ref เพื่อเช็คว่าโหลดครั้งแรกหรือยัง (ป้องกันการกระพริบเมื่อข้อมูลอัปเดต)
     const isInitialLoad = useRef(true);
@@ -76,7 +78,7 @@ export default function FeedbackPage() {
             if (result.success) {
                 setFeedback(result.data);
                 setPagination(result.pagination);
-                setStats(result.stats);
+                setStats(result.stats || { averageRating: 0, totalFeedback: 0 });
             } else {
                 setError(result.error || adminT('admin.feedback.list.error', locale));
             }
@@ -152,8 +154,6 @@ export default function FeedbackPage() {
         }
     };
 
-    const isDark = resolvedAdminTheme === 'dark';
-
     // ฟังก์ชันช่วยในการ Render ดาวตามคะแนน (Rating)
     const renderStars = (rating: number) => {
         return (
@@ -178,8 +178,10 @@ export default function FeedbackPage() {
         tableRow: 'border-gray-700/50 hover:bg-white/5',
         textMain: 'text-gray-100',
         textMuted: 'text-gray-400',
-        statCard: 'bg-gray-800/80 border-yellow-500/20',
+        statCard: 'bg-gray-800/80 border-gray-700',
         paginationBtn: 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 disabled:opacity-30',
+        iconBg: 'bg-yellow-500/10 border-yellow-500/20',
+        iconColor: 'text-yellow-400',
     } : {
         card: 'bg-white border-amber-200 shadow-sm',
         title: 'text-amber-700',
@@ -188,33 +190,93 @@ export default function FeedbackPage() {
         tableRow: 'border-gray-100 hover:bg-amber-50/30',
         textMain: 'text-gray-900',
         textMuted: 'text-gray-500',
-        statCard: 'bg-white border-amber-200 shadow-sm',
+        statCard: 'bg-white border-amber-100 shadow-sm',
         paginationBtn: 'bg-white border-amber-200 text-gray-700 hover:bg-amber-50 disabled:opacity-30',
+        iconBg: 'bg-amber-100 border-amber-200',
+        iconColor: 'text-amber-600',
     };
 
     // ใช้ Hook สำหรับ Scroll แบบ Drag
     const { ref: scrollRef, events: scrollEvents, isDragging } = useDraggableScroll();
 
+    if (isLoading && isInitialLoad.current) {
+        return (
+            <div className="p-6 space-y-6">
+                {/* Skeleton Header */}
+                <div className="flex items-center gap-4 animate-pulse">
+                    <div className="w-16 h-16 bg-gray-700/50 rounded-2xl"></div>
+                    <div className="space-y-2">
+                        <div className="w-48 h-8 bg-gray-700/50 rounded-lg"></div>
+                        <div className="w-32 h-4 bg-gray-700/30 rounded-lg"></div>
+                    </div>
+                </div>
+                {/* Skeleton Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
+                    <div className="h-32 bg-gray-700/30 rounded-2xl"></div>
+                    <div className="h-32 bg-gray-700/30 rounded-2xl"></div>
+                </div>
+                {/* Skeleton Table */}
+                <div className="h-96 bg-gray-700/20 rounded-2xl animate-pulse"></div>
+            </div>
+        )
+    }
+
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* ... (Header) ... */}
+        <div className="p-6 space-y-6 animate-in fade-in duration-500">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                {/* ... */}
-                <div>
-                    <h1 className={`text-2xl font-black tracking-tight ${themeClasses.title}`}>
-                        {adminT('admin.feedback.title', locale)}
-                    </h1>
-                    {/* ... */}
+                <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-2xl border transition-all duration-300 ${themeClasses.iconBg}`}>
+                        <ChatBubbleBottomCenterTextIcon className={`w-8 h-8 ${themeClasses.iconColor}`} />
+                    </div>
+                    <div>
+                        <h1 className={`text-2xl font-black tracking-tight ${themeClasses.title}`}>
+                            {adminT('admin.feedback.title', locale)}
+                        </h1>
+                        <p className={`text-sm mt-0.5 font-medium ${themeClasses.subtitle}`}>
+                            {adminT('admin.feedback.subtitle', locale) || 'Manage customer reviews and ratings'}
+                        </p>
+                    </div>
                 </div>
             </div>
 
-
-            {/* ... (Stats) ... */}
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`p-6 rounded-2xl border flex items-center gap-4 ${themeClasses.statCard}`}>
+                    <div className={`p-3 rounded-full ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                        <UsersIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className={`text-sm font-medium ${themeClasses.textMuted}`}>
+                            {adminT('admin.feedback.stats.total', locale) || 'Total Feedback'}
+                        </p>
+                        <p className={`text-2xl font-black ${themeClasses.textMain}`}>
+                            {stats.totalFeedback}
+                        </p>
+                    </div>
+                </div>
+                <div className={`p-6 rounded-2xl border flex items-center gap-4 ${themeClasses.statCard}`}>
+                    <div className={`p-3 rounded-full ${isDark ? 'bg-yellow-500/10 text-yellow-400' : 'bg-amber-50 text-amber-600'}`}>
+                        <TrophyIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className={`text-sm font-medium ${themeClasses.textMuted}`}>
+                            {adminT('admin.feedback.stats.rating', locale) || 'Average Rating'}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <p className={`text-2xl font-black ${themeClasses.textMain}`}>
+                                {stats.averageRating ? stats.averageRating.toFixed(1) : '0.0'}
+                            </p>
+                            <div className="flex">
+                                <StarIconSolid className="w-5 h-5 text-yellow-500" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* ตารางแสดงรายการ Feedback */}
             <div className={`rounded-2xl border overflow-hidden ${themeClasses.card}`}>
-                {/* ... (Loading/Error/Empty states) ... */}
-
                 {!isLoading && !error && feedback.length > 0 && (
                     <>
                         {/* Wrapper สำหรับ Table ที่รองรับ Drag Scroll */}
@@ -327,6 +389,20 @@ export default function FeedbackPage() {
                             </div>
                         )}
                     </>
+                )}
+                {/* Empty State */}
+                {!isLoading && !error && feedback.length === 0 && (
+                    <div className="p-12 text-center">
+                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-gray-800 text-gray-600' : 'bg-gray-100 text-gray-400'}`}>
+                            <ChatBubbleBottomCenterTextIcon className="w-8 h-8" />
+                        </div>
+                        <h3 className={`text-lg font-bold mb-1 ${themeClasses.title}`}>
+                            {adminT('admin.feedback.empty.title', locale) || 'No feedback yet'}
+                        </h3>
+                        <p className={`text-sm ${themeClasses.subtitle}`}>
+                            {adminT('admin.feedback.empty.desc', locale) || 'Customer reviews will appear here.'}
+                        </p>
+                    </div>
                 )}
             </div>
         </div >
