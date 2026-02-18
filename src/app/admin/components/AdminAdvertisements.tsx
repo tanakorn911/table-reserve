@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/lib/i18n';
 
@@ -15,8 +15,6 @@ type Ad = {
 
 export default function AdminAdvertisements() {
   const { t } = useTranslation();
-  // State variables for managing ads and form inputs
-  // ตัวแปร State สำหรับจัดการรายการโฆษณาและข้อมูลฟอร์ม
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
@@ -24,11 +22,20 @@ export default function AdminAdvertisements() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [link, setLink] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClientSupabaseClient();
+  // Edit Modal State
+  const [editingAd, setEditingAd] = useState<Ad | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editLink, setEditLink] = useState('');
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editPreview, setEditPreview] = useState<string | null>(null);
+  const [editUploading, setEditUploading] = useState(false);
 
-  // Fetch advertisements from the API
-  // ฟังก์ชันดึงข้อมูลโฆษณาทั้งหมดจาก API
+  // ใช้ useRef เพื่อให้ supabase client ไม่ถูกสร้างใหม่ทุก render
+  const supabaseRef = useRef(createClientSupabaseClient());
+  const supabase = supabaseRef.current;
+
   const fetchAds = async () => {
     setLoading(true);
     try {
@@ -50,46 +57,62 @@ export default function AdminAdvertisements() {
   };
 
   useEffect(() => {
+    // โหลดข้อมูลครั้งแรก
     fetchAds();
-  }, []);
 
-  // Handle form submission to create a new ad
-  // ฟังก์ชันสร้างโฆษณาใหม่ (Upload รูปภาพ -> ได้ URL -> บันทึกข้อมูลลง DB)
+    // Subscribe Realtime จาก Supabase
+    const channel = supabase
+      .channel('advertisements-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'advertisements' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setAds((prev) => [payload.new as Ad, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setAds((prev) =>
+              prev.map((ad) =>
+                String(ad.id) === String((payload.new as Ad).id) ? (payload.new as Ad) : ad
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setAds((prev) =>
+              prev.filter((ad) => String(ad.id) !== String((payload.old as Ad).id))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup เมื่อ Component ถูก Unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []); // [] ทำให้รันแค่ครั้งเดียว
+
   const createAd = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    // Validation: ตรวจสอบความถูกต้องของข้อมูล
     if (!title || title.trim().length === 0) {
       setError(t('admin.advertisements.error.fill'));
       return;
     }
-
     if (!selectedFile) {
       setError(t('admin.advertisements.error.file'));
       return;
     }
-
     setUploading(true);
     try {
-      // 1. Upload image to Supabase Storage
-      // 1. อัปโหลดรูปภาพไปยัง Supabase Storage
       const ext = selectedFile.name.split('.').pop();
       const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('advertisements')
         .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
-
       if (uploadError) {
-        console.error('Upload error', uploadError);
         setError(uploadError.message || t('alert.uploadFailed'));
         setUploading(false);
         return;
       }
-
-      // 2. Get Public URL
-      // 2. ขอ URL สาธารณะของรูปภาพ
       const { data: publicData } = await supabase.storage.from('advertisements').getPublicUrl(filePath);
       const publicUrl = (publicData as any)?.publicUrl;
       if (!publicUrl) {
@@ -97,9 +120,6 @@ export default function AdminAdvertisements() {
         setUploading(false);
         return;
       }
-
-      // 3. Save ad data to Database via API
-      // 3. บันทึกข้อมูลโฆษณาผ่าน API
       const res = await fetch('/api/ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,13 +127,11 @@ export default function AdminAdvertisements() {
       });
       const json = await res.json();
       if (res.ok) {
-        // Reset form on success
-        // ล้างค่าฟอร์มเมื่อสำเร็จ
+        // ล้างฟอร์ม (Realtime จะอัปเดต list เองอัตโนมัติ)
         setTitle('');
         setSelectedFile(null);
         setImagePreview(null);
         setLink('');
-        fetchAds();
       } else {
         setError(json.error || t('alert.failed'));
       }
@@ -125,8 +143,6 @@ export default function AdminAdvertisements() {
     }
   };
 
-  // Handle ad deletion
-  // ฟังก์ชันลบโฆษณา (ลบจาก DB และ Storage ผ่าน API)
   const deleteAd = async (id: string | number) => {
     if (!confirm(t('admin.advertisements.confirm.delete'))) return;
     try {
@@ -136,9 +152,7 @@ export default function AdminAdvertisements() {
         body: JSON.stringify({ id }),
       });
       const json = await res.json();
-      if (res.ok) {
-        fetchAds();
-      } else {
+      if (!res.ok) {
         setError(json.error || t('alert.failed'));
       }
     } catch (err) {
@@ -147,15 +161,155 @@ export default function AdminAdvertisements() {
     }
   };
 
-  const [error, setError] = useState<string | null>(null);
+  const openEdit = (ad: Ad) => {
+    setEditingAd(ad);
+    setEditTitle(ad.title);
+    setEditLink(ad.link || '');
+    setEditFile(null);
+    setEditPreview(ad.image_url);
+  };
+
+  const closeEdit = () => {
+    setEditingAd(null);
+    setEditTitle('');
+    setEditLink('');
+    setEditFile(null);
+    setEditPreview(null);
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAd) return;
+    if (!editTitle || editTitle.trim().length === 0) {
+      setError(t('admin.advertisements.error.fill'));
+      return;
+    }
+    setEditUploading(true);
+    try {
+      let imageUrl = editingAd.image_url;
+      if (editFile) {
+        const ext = editFile.name.split('.').pop();
+        const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('advertisements')
+          .upload(filePath, editFile, { cacheControl: '3600', upsert: false });
+        if (uploadError) {
+          setError(uploadError.message || t('alert.uploadFailed'));
+          setEditUploading(false);
+          return;
+        }
+        const { data: publicData } = await supabase.storage.from('advertisements').getPublicUrl(filePath);
+        imageUrl = (publicData as any)?.publicUrl || imageUrl;
+      }
+      const res = await fetch('/api/ads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingAd.id,
+          title: editTitle.trim(),
+          image_url: imageUrl,
+          link: editLink,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        closeEdit();
+      } else {
+        setError(json.error || t('alert.failed'));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(t('admin.advertisements.error.connect'));
+    } finally {
+      setEditUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
+      {/* Edit Modal */}
+      {editingAd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h3 className="text-lg font-black text-primary uppercase tracking-tight">แก้ไขโฆษณา</h3>
+              <button onClick={closeEdit} className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={saveEdit} className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                  {t('admin.advertisements.form.title')}
+                </label>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full bg-muted border border-border rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                  {t('admin.advertisements.form.link')}
+                </label>
+                <input
+                  value={editLink}
+                  onChange={(e) => setEditLink(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-muted border border-border rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                  {t('admin.advertisements.form.image')}
+                </label>
+                {editPreview && (
+                  <div className="relative w-full aspect-video overflow-hidden rounded-xl border border-border mb-2">
+                    <img src={editPreview} alt="preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <label className="cursor-pointer bg-primary/10 text-primary border border-primary/20 px-6 py-3 rounded-xl font-bold hover:bg-primary/20 transition-all flex items-center gap-2 w-fit">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      setEditFile(f);
+                      if (f) setEditPreview(URL.createObjectURL(f));
+                    }}
+                    className="hidden"
+                  />
+                  <span>{editFile ? editFile.name : 'เปลี่ยนรูปภาพ'}</span>
+                </label>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={editUploading}
+                  className="flex-1 bg-primary text-primary-foreground py-3 rounded-xl font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {editUploading ? 'กำลังบันทึก...' : 'บันทึก'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeEdit}
+                  className="flex-1 bg-muted text-muted-foreground py-3 rounded-xl font-black uppercase tracking-widest hover:bg-muted/80 transition-all"
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Form */}
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
         <h2 className="text-xl font-black text-primary uppercase tracking-tight mb-6">
           {t('admin.advertisements.title')}
         </h2>
-
         <form onSubmit={createAd} className="space-y-4 max-w-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -181,7 +335,6 @@ export default function AdminAdvertisements() {
               />
             </div>
           </div>
-
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
@@ -196,8 +349,7 @@ export default function AdminAdvertisements() {
                       const f = e.target.files?.[0] || null;
                       setSelectedFile(f);
                       if (f) {
-                        const url = URL.createObjectURL(f);
-                        setImagePreview(url);
+                        setImagePreview(URL.createObjectURL(f));
                       } else {
                         setImagePreview(null);
                       }
@@ -208,11 +360,11 @@ export default function AdminAdvertisements() {
                 </label>
               </div>
             </div>
-
             {imagePreview && (
               <div className="relative w-full aspect-video md:w-80 overflow-hidden rounded-2xl border-4 border-muted shadow-lg">
                 <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                 <button
+                  type="button"
                   onClick={() => { setSelectedFile(null); setImagePreview(null); }}
                   className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full hover:bg-black transition-all"
                 >
@@ -223,7 +375,6 @@ export default function AdminAdvertisements() {
               </div>
             )}
           </div>
-
           <div className="pt-2">
             <button
               type="submit"
@@ -236,10 +387,15 @@ export default function AdminAdvertisements() {
         </form>
       </div>
 
+      {/* Ad List */}
       <div className="space-y-4">
         <h3 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-2">
           {t('admin.advertisements.list.title')}
           <span className="text-xs font-normal text-muted-foreground lowercase">({ads.length})</span>
+          <span className="flex items-center gap-1 text-xs font-normal text-green-500">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block"></span>
+            realtime
+          </span>
         </h3>
 
         {error && (
@@ -285,12 +441,20 @@ export default function AdminAdvertisements() {
                     <span className="text-xs text-muted-foreground italic">No link</span>
                   )}
                 </div>
-                <button
-                  onClick={() => deleteAd(ad.id)}
-                  className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg transition-all"
-                >
-                  {t('admin.advertisements.list.delete')}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEdit(ad)}
+                    className="text-xs font-bold text-blue-500 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
+                  >
+                    แก้ไข
+                  </button>
+                  <button
+                    onClick={() => deleteAd(ad.id)}
+                    className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg transition-all"
+                  >
+                    {t('admin.advertisements.list.delete')}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
