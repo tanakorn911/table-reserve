@@ -131,11 +131,9 @@ export default function AdminSettingsPage() {
         await fetchProfiles();
 
         // Fetch Holidays
-        const holidaysRes = await supabase
-          .from('holidays')
-          .select('*')
-          .order('holiday_date', { ascending: true });
-        if (holidaysRes.data) setHolidays(holidaysRes.data);
+        const holidaysRes = await fetch('/api/holidays');
+        const holidaysJson = await holidaysRes.json();
+        if (holidaysJson.data) setHolidays(holidaysJson.data);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -178,19 +176,23 @@ export default function AdminSettingsPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', profileId);
+      const response = await fetch('/api/staff', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: profileId, role: newRole })
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update role');
+      }
 
       // Refresh list
       await fetchProfiles();
       alert(locale === 'th' ? 'อัปเดตสิทธิ์เรียบร้อยแล้ว' : 'Role updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating role:', error);
-      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการอัปเดตสิทธิ์' : 'Error updating role');
+      alert((locale === 'th' ? 'เกิดข้อผิดพลาดในการอัปเดตสิทธิ์: ' : 'Error updating role: ') + error.message);
     }
   };
 
@@ -252,11 +254,15 @@ export default function AdminSettingsPage() {
         datesToInsert.push({ holiday_date: holidayDate, description: holidayDesc });
       }
 
-      const { error } = await supabase.from('holidays').insert(datesToInsert);
+      const response = await fetch('/api/holidays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dates: datesToInsert }),
+      });
 
-      if (error) {
-        if (error.code === '23505') alert(locale === 'th' ? 'บางวันในกลุ่มนี้ถูกตั้งเป็นวันหยุดอยู่แล้ว' : 'Some dates in this range are already holidays');
-        else alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + error.message);
+      if (!response.ok) {
+        const err = await response.json();
+        alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + (err.error || 'Unknown error'));
         return;
       }
 
@@ -264,14 +270,14 @@ export default function AdminSettingsPage() {
       setHolidayDate('');
       setHolidayEndDate('');
       setHolidayDesc('');
+
       // Refresh
-      const { data } = await supabase
-        .from('holidays')
-        .select('*')
-        .order('holiday_date', { ascending: true });
-      if (data) setHolidays(data);
-    } catch (e) {
+      const holidaysRes = await fetch('/api/holidays');
+      const holidaysJson = await holidaysRes.json();
+      if (holidaysJson.data) setHolidays(holidaysJson.data);
+    } catch (e: any) {
       console.error(e);
+      alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + e.message);
     }
   };
 
@@ -284,30 +290,30 @@ export default function AdminSettingsPage() {
     if (!confirm(confirmMsg)) return;
 
     try {
-      let query = supabase.from('holidays').delete();
-
+      let url = '/api/holidays?';
       if (isAll) {
-        // Delete everything
-        const { error } = await query.neq('id', '00000000-0000-0000-0000-000000000000'); // Fake condition to delete all
-        if (error) throw error;
-        setHolidays([]);
+        url += 'all=true';
       } else if (groupKey) {
-        // Delete by description (our group key)
-        const { error } = await query.eq('description', groupKey);
-        if (error) throw error;
-        setHolidays((prev) => prev.filter((h) => h.description !== groupKey));
+        url += `description=${encodeURIComponent(groupKey)}`;
       } else {
-        // Standard delete by ID
-        const { error } = await query.eq('id', id);
-        if (error) throw error;
-        setHolidays((prev) => prev.filter((h) => h.id !== id));
+        url += `id=${id}`;
+      }
+
+      const response = await fetch(url, { method: 'DELETE' });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to delete');
       }
 
       // Refresh to be sure
-      const { data } = await supabase.from('holidays').select('*').order('holiday_date', { ascending: true });
-      if (data) setHolidays(data);
-    } catch (e) {
-      alert(locale === 'th' ? 'เกิดข้อผิดพลาดในการลบ' : 'An error occurred during deletion');
+      const holidaysRes = await fetch('/api/holidays');
+      const holidaysJson = await holidaysRes.json();
+      if (holidaysJson.data) setHolidays(holidaysJson.data);
+      else if (isAll) setHolidays([]);
+    } catch (e: any) {
+      console.error(e);
+      alert((locale === 'th' ? 'เกิดข้อผิดพลาดในการลบ: ' : 'An error occurred during deletion: ') + e.message);
     }
   };
 
