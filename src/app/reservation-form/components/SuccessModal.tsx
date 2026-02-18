@@ -41,6 +41,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
   const { locale } = useNavigation();
   const { t } = useTranslation(locale);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Effect: แสดง Confetti เมื่อเปิด Modal
   useEffect(() => {
@@ -165,14 +166,39 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
           {/* Reservation Details Card */}
           <div className="px-6 pb-6">
             <div className="bg-muted rounded-2xl p-6 space-y-4 border border-border">
-              {/* Booking Code */}
-              <div className="flex items-start gap-4">
+              {/* Booking Code with Copy Feature */}
+              <div className="flex items-start gap-4 group/copy">
                 <Icon name="IdentificationIcon" size={22} className="text-accent mt-0.5" variant="solid" />
                 <div className="flex-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{t('success.code')}</p>
-                  <p className="text-xl font-black text-primary bg-primary/10 px-4 py-1.5 rounded-xl border border-primary/30 inline-block tracking-widest shadow-glow-sm">
-                    {activeReservation.bookingCode || activeReservation.id.slice(0, 8)}
-                  </p>
+                  <div className="relative inline-flex items-center">
+                    <button
+                      onClick={() => {
+                        const code = activeReservation.bookingCode || activeReservation.id.slice(0, 8);
+                        navigator.clipboard.writeText(code);
+                        setCopiedCode(true);
+                        setTimeout(() => setCopiedCode(false), 2000);
+                      }}
+                      className="
+                        text-xl font-black text-primary bg-primary/10 px-4 py-1.5 rounded-xl border border-primary/30 
+                        flex items-center gap-3 transition-all hover:bg-primary/20 active:scale-95 
+                        tracking-widest shadow-glow-sm hover:shadow-glow-md group
+                      "
+                      title={locale === 'th' ? 'คลิกเพื่อคัดลอก' : 'Click to copy'}
+                    >
+                      {activeReservation.bookingCode || activeReservation.id.slice(0, 8)}
+                      {copiedCode ? (
+                        <Icon name="CheckIcon" size={18} className="text-success animate-in zoom-in spin-in-90 duration-300" variant="solid" />
+                      ) : (
+                        <Icon name="DocumentDuplicateIcon" size={18} className="text-primary/50 group-hover:text-primary transition-colors" />
+                      )}
+                    </button>
+                    {copiedCode && (
+                      <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-success text-success-foreground text-[10px] font-black px-2 py-1 rounded shadow-lg animate-in fade-in slide-in-from-bottom-2">
+                        {locale === 'th' ? 'คัดลอกแล้ว!' : 'COPIED!'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
