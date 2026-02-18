@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { getClientIp } from '@/lib/ratelimit';
 
 /**
  * Change Password for Currently Logged-in User
@@ -72,6 +73,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 error: updateError.message
             }, { status: 400 });
+        }
+
+        // 📝 Audit Log: Change Password
+        try {
+            const clientIp = getClientIp(request);
+            await supabase.from('audit_logs').insert([{
+                user_id: user.id,
+                action: 'change_password',
+                entity: 'auth.users',
+                entity_id: user.id,
+                payload: { email: user.email },
+                ip_address: clientIp
+            }]);
+        } catch (auditError) {
+            console.error('Audit log error:', auditError);
         }
 
         return NextResponse.json({
