@@ -206,6 +206,39 @@ export const adminT = (key: string, locale: Locale): string => {
         'floorplan.instructions.entrance': { th: '* คลิกที่ตำแหน่งเพื่อปักหมุดประตูทางเข้าหรือ VIP', en: '* Click to mark entrance or VIP' },
         'floorplan.entrance.label': { th: 'ทางเข้า', en: 'Entrance' },
 
+        // Admin Floor Plan (New Standard Keys)
+        'admin.floorPlan.title': { th: 'จัดการผังร้าน', en: 'Floor Plan Management' },
+        'admin.floorPlan.subtitle': { th: 'ออกแบบและจัดการตำแหน่งโต๊ะในผังร้าน', en: 'Design and manage table layouts' },
+        'admin.floorPlan.tableCount': { th: 'จำนวนโต๊ะทั้งหมด: {count}', en: 'Total Tables: {count}' },
+        'admin.floorPlan.loading': { th: 'กำลังโหลดผังร้าน...', en: 'Loading floor plan...' },
+        'admin.floorPlan.mode.edit': { th: 'แก้ไขตำแหน่ง', en: 'Edit Layout' },
+        'admin.floorPlan.mode.check': { th: 'เช็คสถานะ', en: 'Check Status' },
+        'admin.floorPlan.selectDate': { th: 'เลือกวันที่ตรวจสอบ', en: 'Select Date' },
+        'admin.floorPlan.addTable': { th: 'เพิ่มโต๊ะใหม่', en: 'Add Table' },
+        'admin.floorPlan.save': { th: 'บันทึกตำแหน่ง', en: 'Save Layout' },
+        'admin.floorPlan.saved': { th: 'บันทึกเรียบร้อย', en: 'Saved' },
+        'admin.floorPlan.tips': { th: 'คำแนะนำการใช้งาน', en: 'Tips' },
+        'admin.floorPlan.tip1': { th: 'ลากโต๊ะ (Drag) เพื่อย้ายตำแหน่ง', en: 'Drag tables to move them' },
+        'admin.floorPlan.tip2': { th: 'คลิกที่โต๊ะเพื่อแก้ไขข้อมูล', en: 'Click on a table to edit details' },
+        'admin.floorPlan.tip3': { th: 'กดบันทึกทุกครั้งหลังแก้ไข', en: 'Always save changes after editing' },
+        'admin.floorPlan.bookingDetails': { th: 'รายละเอียดการจอง', en: 'Booking Details' },
+        'admin.floorPlan.editModal.title': { th: 'แก้ไขข้อมูลโต๊ะ', en: 'Edit Table' },
+        'admin.floorPlan.configureSettings': { th: 'จัดการการตั้งค่าโต๊ะ', en: 'Configure table settings' },
+        'admin.floorPlan.editModal.name': { th: 'ชื่อโต๊ะ', en: 'Table Name' },
+        'admin.floorPlan.editModal.capacity': { th: 'ความจุ (ท่าน)', en: 'Capacity (Pax)' },
+        'admin.floorPlan.editModal.zone': { th: 'โซน', en: 'Zone' },
+        'admin.floorPlan.editModal.shape': { th: 'รูปร่าง', en: 'Shape' },
+        'admin.floorPlan.editModal.confirmDelete': { th: 'คุณแน่ใจหรือไม่ที่จะลบโต๊ะนี้?', en: 'Are you sure you want to delete this table?' },
+        'admin.floorPlan.editModal.delete': { th: 'ลบโต๊ะ', en: 'Delete Table' },
+        'admin.floorPlan.editModal.update': { th: 'อัพเดทข้อมูล', en: 'Update Table' },
+        'admin.floorPlan.zone.indoor': { th: 'ห้องแอร์ (Indoor)', en: 'Indoor' },
+        'admin.floorPlan.zone.outdoor': { th: 'โซนด้านนอก (Outdoor)', en: 'Outdoor' },
+        'admin.floorPlan.zone.vip': { th: 'ห้อง VIP', en: 'VIP Room' },
+        'admin.floorPlan.shapes.rect': { th: 'สี่เหลี่ยม', en: 'Rectangle' },
+        'admin.floorPlan.shapes.circle': { th: 'วงกลม', en: 'Circle' },
+
+
+
         // Settings
         'settings.title': { th: 'ตั้งค่าระบบ', en: 'System Settings' },
         'settings.hours.title': { th: 'เวลาทำการ', en: 'Business Hours' },
@@ -280,6 +313,10 @@ export const adminT = (key: string, locale: Locale): string => {
         'admin.feedback.list.date': { th: 'วันที่ส่ง', en: 'Date Submitted' },
         'admin.feedback.list.empty': { th: 'ยังไม่มีความคิดเห็น', en: 'No feedback yet' },
         'admin.feedback.list.error': { th: 'ไม่สามารถโหลดข้อมูลได้', en: 'Failed to load feedback' },
+        'admin.feedback.stats.total': { th: 'จำนวนความคิดเห็นทั้งหมด', en: 'Total Feedback' },
+        'admin.feedback.stats.rating': { th: 'คะแนนเฉลี่ย', en: 'Average Rating' },
+        'admin.feedback.empty.title': { th: 'ยังไม่มีความคิดเห็น', en: 'No feedback yet' },
+        'admin.feedback.empty.desc': { th: 'ความคิดเห็นจากลูกค้าจะปรากฏที่นี่', en: 'Customer reviews will appear here.' },
     };
 
     return translations[key]?.[locale] || key;
