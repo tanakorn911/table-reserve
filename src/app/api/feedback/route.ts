@@ -172,39 +172,6 @@ export async function GET(request: NextRequest) {
             ? (avgData.reduce((sum, f) => sum + f.rating, 0) / avgData.length).toFixed(1)
             : null;
 
-        // This section seems to be from a different file, but I'll add it here as per instruction.
-        // Assuming 'today', 'locale', 'stats', 'insight', 'insightsCache' are defined elsewhere or placeholders.
-        // If this is truly meant for *this* file, it's out of context for a GET feedback list.
-        // However, I must follow the instruction faithfully.
-        // Update cache
-        // ... cache logic ...
-
-        // 📝 Audit Log: Generate AI Insights
-        try {
-            const clientIp = getClientIp(request);
-            // Also need to get auth user if possible, but insights can be viewed by anyone or staff
-            // For now, log the action with the IP
-            await supabase.from('audit_logs').insert([{
-                user_id: null, // Public or semi-public endpoint
-                action: 'generate_ai_insight',
-                entity: 'ai',
-                entity_id: 'today', // Placeholder for actual ID
-                payload: { date: 'today', locale: 'en', stats: {} }, // Placeholder for actual data
-                ip_address: clientIp
-            }]);
-        } catch (auditError) {
-            console.error('Audit log error:', auditError);
-        }
-
-        // The return statement below is also from the AI insight snippet,
-        // which conflicts with the original GET feedback return.
-        // I will keep the original GET feedback return and place the AI audit log
-        // where it was indicated, assuming the user wants to add this audit log
-        // to *this* file, even if its context is for AI insights.
-        // If the user intended to add this to a separate AI API file,
-        // the instruction should have specified that.
-        // For now, I will only add the audit log and keep the original return.
-
         return NextResponse.json({
             success: true,
             data,
