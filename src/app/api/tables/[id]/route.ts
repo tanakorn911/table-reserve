@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { getClientIp } from '@/lib/ratelimit';
 
 // PUT /api/tables/[id] - Update a table
 // PUT: อัปเดตข้อมูลโต๊ะ (เฉพาะ Admin)
@@ -28,6 +29,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // 📝 Audit Log: Update Table
+    try {
+      const clientIp = getClientIp(request);
+      await supabase.from('audit_logs').insert([{
+        user_id: user.id,
+        action: 'update_table',
+        entity: 'tables',
+        entity_id: id,
+        payload: body,
+        ip_address: clientIp
+      }]);
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
     }
 
     return NextResponse.json({ data });
@@ -59,6 +75,21 @@ export async function DELETE(
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // 📝 Audit Log: Delete Table
+    try {
+      const clientIp = getClientIp(request);
+      await supabase.from('audit_logs').insert([{
+        user_id: user.id,
+        action: 'delete_table',
+        entity: 'tables',
+        entity_id: id,
+        payload: { id },
+        ip_address: clientIp
+      }]);
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
     }
 
     return NextResponse.json({ success: true });
