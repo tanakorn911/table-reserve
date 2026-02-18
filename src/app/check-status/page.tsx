@@ -306,7 +306,7 @@ export default function CheckStatusPage() {
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
               ></div>
 
-              <div className={`relative bg-card border ${statusInfo.border} rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200`}>
+              <div className={`relative bg-card border ${statusInfo.border} rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200`}>
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors z-10"
