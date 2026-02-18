@@ -5,6 +5,7 @@ import type { CreateReservationInput } from '@/types/database.types';
 import { sendLineNotification, sendEmailConfirmation } from '@/lib/notifications';
 import { reservationRateLimiter, checkRateLimit, getClientIp } from '@/lib/ratelimit';
 import { withRetry } from '@/lib/supabase/retry';
+import { getReservationSettings } from '@/lib/settings';
 
 // GET /api/reservations - Get reservations (Public/Protected hybrid)
 // GET: ดึงข้อมูลการจอง (ใช้ร่วมกันทั้ง Public และ Admin)
@@ -147,12 +148,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Party size must be between 1 and 50' }, { status: 400 });
     }
 
+    // --- FETCH SETTINGS ---
+    const { dining_duration, buffer_time } = await getReservationSettings();
+    const totalDuration = dining_duration + buffer_time;
+
     // Check if table is already booked for this date and time
     // ตรวจสอบว่าโต๊ะว่างหรือไม่ในช่วงเวลานั้น
     if (body.table_number) {
-      // 90 mins dining + 15 mins buffer = 105 mins total block
-      // ระยะเวลาทาน 90 นาที + พักโต๊ะ 15 นาที
-      const totalDuration = 90 + 15;
 
       // Convert requested time to minutes
       const [reqHour, reqMinute] = body.reservation_time.split(':').map(Number);
@@ -185,8 +187,8 @@ export async function POST(request: NextRequest) {
           {
             error:
               locale === 'th'
-                ? 'โต๊ะนี้มีรายการจองอื่นแล้วในช่วงเวลาดังกล่าว (รวมเวลาพักโต๊ะ 105 นาที)'
-                : 'Table is already booked during this time slot (including 105 min buffer)',
+                ? `โต๊ะนี้มีรายการจองอื่นแล้วในช่วงเวลาดังกล่าว (รวมเวลาพักโต๊ะ ${totalDuration} นาที)`
+                : `Table is already booked during this time slot (including ${totalDuration} min buffer)`,
           },
           { status: 409 }
         );
