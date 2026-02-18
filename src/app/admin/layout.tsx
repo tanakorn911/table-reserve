@@ -88,6 +88,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       tables: 'header.tables',
       settings: 'header.settings',
       'floor-plan': 'header.floorPlan',
+      'advertisements': 'header.advertisements',
     };
 
     return adminT(titleMap[lastSegment] || lastSegment, locale);

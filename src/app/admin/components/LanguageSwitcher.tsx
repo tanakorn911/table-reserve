@@ -215,6 +215,7 @@ export const adminT = (key: string, locale: Locale): string => {
         'common.error': { th: 'ข้อผิดพลาด', en: 'Error' },
 
         // Advertisements
+        'header.advertisements': { th: 'จัดการโฆษณา', en: 'Advertisements Management' },
         'admin.advertisements.title': { th: 'จัดการโฆษณา', en: 'Manage Advertisements' },
         'admin.advertisements.subtitle': { th: 'เพิ่ม แก้ไข และลบโฆษณาที่แสดงบนเว็บไซต์', en: 'Add, edit, and remove advertisements displayed on the website' },
         'admin.advertisements.form.addNew': { th: 'เพิ่มโฆษณาใหม่', en: 'Add New Advertisement' },
