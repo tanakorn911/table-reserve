@@ -2,7 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { useTranslation } from '@/lib/i18n';
+import { useAdminLocale, adminT as t } from './LanguageSwitcher';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  LinkIcon,
+  PhotoIcon,
+  XMarkIcon,
+  CheckIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from '@heroicons/react/24/outline';
 
 type Ad = {
   id: string | number;
@@ -14,27 +26,34 @@ type Ad = {
 };
 
 export default function AdminAdvertisements() {
-  const { t } = useTranslation();
-  // State variables for managing ads and form inputs
-  // ตัวแปร State สำหรับจัดการรายการโฆษณาและข้อมูลฟอร์ม
+  const locale = useAdminLocale();
+
+  // State variables
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Form states
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentAdId, setCurrentAdId] = useState<string | number | null>(null);
   const [title, setTitle] = useState('');
+  const [link, setLink] = useState('');
+  const [imageUrl, setImageUrl] = useState(''); // Direct URL
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [link, setLink] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
 
   const supabase = createClientSupabaseClient();
 
-  // Fetch advertisements from the API
-  // ฟังก์ชันดึงข้อมูลโฆษณาทั้งหมดจาก API
   const fetchAds = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/ads');
       const json = await res.json();
       if (json.error) {
+        alert(json.error);
         setError(json.error);
         setAds([]);
       } else {
@@ -43,7 +62,9 @@ export default function AdminAdvertisements() {
       }
     } catch (err) {
       console.error(err);
-      setError(t('admin.advertisements.error.connect'));
+      const errorMsg = t('admin.advertisements.error.connect', locale);
+      alert(errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -51,144 +72,269 @@ export default function AdminAdvertisements() {
 
   useEffect(() => {
     fetchAds();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('admin-ads-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'advertisements' },
+        () => {
+          fetchAds();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  // Handle form submission to create a new ad
-  // ฟังก์ชันสร้างโฆษณาใหม่ (Upload รูปภาพ -> ได้ URL -> บันทึกข้อมูลลง DB)
-  const createAd = async (e: React.FormEvent) => {
+  // Auto-clear success/error messages after 5 seconds
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+
+  // Clear form
+  const resetForm = () => {
+    setTitle('');
+    setLink('');
+    setImageUrl('');
+    setSelectedFile(null);
+    setImagePreview(null);
+    setIsEditing(false);
+    setCurrentAdId(null);
+    setImageMode('upload');
+  };
+
+  const handleEdit = (ad: Ad) => {
+    setIsEditing(true);
+    setCurrentAdId(ad.id);
+    setTitle(ad.title);
+    setLink(ad.link || '');
+    setImageUrl(ad.image_url);
+    setImagePreview(ad.image_url);
+    setImageMode('url');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
-    // Validation: ตรวจสอบความถูกต้องของข้อมูล
-    if (!title || title.trim().length === 0) {
-      setError(t('admin.advertisements.error.fill'));
+    if (!title.trim()) {
+      alert(t('admin.advertisements.error.fill', locale));
       return;
     }
 
-    if (!selectedFile) {
-      setError(t('admin.advertisements.error.file'));
+    if (imageMode === 'upload' && !selectedFile && !isEditing) {
+      alert(t('admin.advertisements.error.file', locale));
+      return;
+    }
+
+    if (imageMode === 'url' && !imageUrl.trim()) {
+      alert(t('admin.advertisements.error.fillURL', locale) || 'Please enter image URL');
       return;
     }
 
     setUploading(true);
     try {
-      // 1. Upload image to Supabase Storage
-      // 1. อัปโหลดรูปภาพไปยัง Supabase Storage
-      const ext = selectedFile.name.split('.').pop();
-      const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      let finalImageUrl = imageUrl;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('advertisements')
-        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+      // Only upload if in upload mode and a file is selected
+      if (imageMode === 'upload' && selectedFile) {
+        const ext = selectedFile.name.split('.').pop();
+        const filePath = `advertisements/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-      if (uploadError) {
-        console.error('Upload error', uploadError);
-        setError(uploadError.message || t('alert.uploadFailed'));
-        setUploading(false);
-        return;
+        const { error: uploadError } = await supabase.storage
+          .from('advertisements')
+          .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+
+        if (uploadError) {
+          throw new Error(uploadError.message);
+        }
+
+        const { data: publicData } = supabase.storage.from('advertisements').getPublicUrl(filePath);
+        finalImageUrl = publicData.publicUrl;
       }
 
-      // 2. Get Public URL
-      // 2. ขอ URL สาธารณะของรูปภาพ
-      const { data: publicData } = await supabase.storage.from('advertisements').getPublicUrl(filePath);
-      const publicUrl = (publicData as any)?.publicUrl;
-      if (!publicUrl) {
-        setError(t('alert.uploadFailed'));
-        setUploading(false);
-        return;
-      }
+      const payload = {
+        id: currentAdId,
+        title: title.trim(),
+        image_url: finalImageUrl,
+        link: link.trim() || null,
+        active: true,
+      };
 
-      // 3. Save ad data to Database via API
-      // 3. บันทึกข้อมูลโฆษณาผ่าน API
       const res = await fetch('/api/ads', {
-        method: 'POST',
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), image_url: publicUrl, link }),
+        body: JSON.stringify(payload),
       });
+
       const json = await res.json();
       if (res.ok) {
-        // Reset form on success
-        // ล้างค่าฟอร์มเมื่อสำเร็จ
-        setTitle('');
-        setSelectedFile(null);
-        setImagePreview(null);
-        setLink('');
+        const successMsg = isEditing ? t('admin.advertisements.success.updated', locale) : t('admin.advertisements.success.created', locale);
+        alert(successMsg);
+        setSuccess(successMsg);
+        resetForm();
         fetchAds();
       } else {
-        setError(json.error || t('alert.failed'));
+        const errorMsg = json.error || t('alert.failed', locale);
+        alert(errorMsg);
+        setError(errorMsg);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError(t('admin.advertisements.error.connect'));
+      const errorMsg = err.message || t('admin.advertisements.error.connect', locale);
+      alert(errorMsg);
+      setError(errorMsg);
     } finally {
       setUploading(false);
     }
   };
 
-  // Handle ad deletion
-  // ฟังก์ชันลบโฆษณา (ลบจาก DB และ Storage ผ่าน API)
   const deleteAd = async (id: string | number) => {
-    if (!confirm(t('admin.advertisements.confirm.delete'))) return;
+    if (!confirm(t('admin.advertisements.confirm.delete', locale))) return;
     try {
       const res = await fetch('/api/ads', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-      const json = await res.json();
       if (res.ok) {
         fetchAds();
+        const successMsg = t('admin.advertisements.success.deleted', locale);
+        alert(successMsg);
+        setSuccess(successMsg);
       } else {
-        setError(json.error || t('alert.failed'));
+        const json = await res.json();
+        const errorMsg = json.error || t('alert.failed', locale);
+        alert(errorMsg);
+        setError(errorMsg);
       }
     } catch (err) {
       console.error(err);
-      setError(t('admin.advertisements.error.connect'));
+      const errorMsg = t('admin.advertisements.error.connect', locale);
+      alert(errorMsg);
+      setError(errorMsg);
     }
   };
 
-  const [error, setError] = useState<string | null>(null);
+  const toggleActive = async (ad: Ad) => {
+    try {
+      const res = await fetch('/api/ads', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...ad,
+          active: ad.active === false ? true : false
+        }),
+      });
+      if (res.ok) {
+        fetchAds();
+      } else {
+        const json = await res.json();
+        alert(json.error || t('alert.failed', locale));
+      }
+    } catch (err) {
+      console.error(err);
+      alert(t('admin.advertisements.error.connect', locale));
+    }
+  };
 
   return (
-    <div className="space-y-8">
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-        <h2 className="text-xl font-black text-primary uppercase tracking-tight mb-6">
-          {t('admin.advertisements.title')}
-        </h2>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Form Card */}
+      <div className="bg-card border border-border rounded-3xl p-8 shadow-warm-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <PhotoIcon className="w-32 h-32" />
+        </div>
 
-        <form onSubmit={createAd} className="space-y-4 max-w-xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {isEditing && (
+          <div className="flex items-center gap-4 mb-8 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <PencilIcon className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-foreground tracking-tight">
+                {t('admin.advertisements.editTitle', locale)}
+              </h2>
+              <p className="text-xs text-muted-foreground font-medium">
+                {t('admin.advertisements.updateSubtitle', locale)}
+              </p>
+            </div>
+            <button
+              onClick={resetForm}
+              className="ml-auto text-sm font-bold text-muted-foreground hover:text-foreground flex items-center gap-2 bg-background/50 backdrop-blur-sm px-4 py-2 rounded-xl border border-border shadow-sm"
+            >
+              <XMarkIcon className="w-4 h-4" />
+              {t('admin.advertisements.cancelEdit', locale)}
+            </button>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                {t('admin.advertisements.form.title')}
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] px-1">
+                {t('admin.advertisements.form.title', locale)}
               </label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t('admin.advertisements.form.title')}
-                className="w-full bg-muted border border-border rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder={t('admin.advertisements.form.titlePlaceholder', locale)}
+                className="w-full bg-muted/50 border-2 border-border rounded-2xl p-4 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                {t('admin.advertisements.form.link')}
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] px-1">
+                {t('admin.advertisements.form.link', locale)}
               </label>
               <input
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                placeholder="https://..."
-                className="w-full bg-muted border border-border rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                placeholder={t('admin.advertisements.form.linkPlaceholder', locale)}
+                className="w-full bg-muted/50 border-2 border-border rounded-2xl p-4 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg"
               />
+              <p className="text-[10px] text-muted-foreground font-medium px-1">
+                {t('admin.advertisements.form.linkHint', locale)}
+              </p>
             </div>
           </div>
 
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
-                {t('admin.advertisements.form.image')}
-              </label>
+          <div className="space-y-4">
+            <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] px-1">
+              {t('admin.advertisements.form.imageContent', locale)}
+            </label>
+
+            <div className="flex gap-2 p-1 bg-muted rounded-2xl w-fit">
+              <button
+                type="button"
+                onClick={() => setImageMode('upload')}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${imageMode === 'upload' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {t('admin.advertisements.form.uploadFile', locale)}
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageMode('url')}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${imageMode === 'url' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {t('admin.advertisements.form.directUrl', locale)}
+              </button>
+            </div>
+
+            {imageMode === 'upload' ? (
               <div className="flex items-center gap-4">
-                <label className="cursor-pointer bg-primary/10 text-primary border border-primary/20 px-6 py-3 rounded-xl font-bold hover:bg-primary/20 transition-all flex items-center gap-2">
+                <label className="cursor-pointer group flex items-center justify-center gap-4 w-full md:w-auto px-8 py-4 bg-muted/30 border-2 border-dashed border-border rounded-2xl hover:border-primary/50 hover:bg-primary/5 transition-all outline-none">
                   <input
                     type="file"
                     accept="image/*"
@@ -198,99 +344,212 @@ export default function AdminAdvertisements() {
                       if (f) {
                         const url = URL.createObjectURL(f);
                         setImagePreview(url);
-                      } else {
-                        setImagePreview(null);
+                        setImageUrl(''); // Clear URL if uploading
                       }
                     }}
                     className="hidden"
                   />
-                  <span>{selectedFile ? selectedFile.name : t('admin.advertisements.form.selectFile')}</span>
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <PhotoIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-bold text-foreground truncate max-w-[200px]">
+                    {selectedFile ? selectedFile.name : t('admin.advertisements.form.selectFile', locale)}
+                  </span>
                 </label>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-1">
+                <input
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setImagePreview(e.target.value);
+                    setSelectedFile(null); // Clear file if URL used
+                  }}
+                  placeholder={t('admin.advertisements.form.urlPlaceholder', locale)}
+                  className="w-full bg-muted/50 border-2 border-border rounded-2xl p-4 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold"
+                />
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground font-medium px-1">
+              {t('admin.advertisements.form.imageHint', locale)}
+            </p>
 
             {imagePreview && (
-              <div className="relative w-full aspect-video md:w-80 overflow-hidden rounded-2xl border-4 border-muted shadow-lg">
+              <div className="relative w-full max-w-xl aspect-video overflow-hidden rounded-[2rem] border-4 border-muted shadow-warm-xl group">
                 <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => { setSelectedFile(null); setImagePreview(null); }}
-                  className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full hover:bg-black transition-all"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedFile(null); setImagePreview(null); setImageUrl(''); }}
+                    className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-all scale-75 group-hover:scale-100 duration-300"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          <div className="pt-2">
+          <div className="flex items-center gap-4 pt-4 border-t border-border">
             <button
               type="submit"
               disabled={uploading}
-              className="w-full md:w-auto bg-primary text-primary-foreground px-10 py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-primary-foreground px-12 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              {uploading ? t('admin.advertisements.form.uploading') : t('admin.advertisements.form.submit')}
+              {uploading ? (
+                <>
+                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  {t('admin.advertisements.form.processing', locale)}
+                </>
+              ) : (
+                <>
+                  <CheckIcon className="w-5 h-5" />
+                  {isEditing ? t('admin.advertisements.form.saveChanges', locale) : t('admin.advertisements.form.submit', locale)}
+                </>
+              )}
             </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-8 py-4 rounded-2xl font-bold text-muted-foreground border-2 border-border hover:bg-muted/50 transition-all"
+              >
+                {t('admin.advertisements.form.discard', locale)}
+              </button>
+            )}
           </div>
         </form>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-2">
-          {t('admin.advertisements.list.title')}
-          <span className="text-xs font-normal text-muted-foreground lowercase">({ads.length})</span>
-        </h3>
+      {/* List Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black text-foreground uppercase tracking-tight flex items-center gap-3 px-2">
+            {t('admin.advertisements.list.title', locale)}
+            <span className="text-sm font-bold px-3 py-1 bg-muted rounded-full text-muted-foreground lowercase">
+              {ads.length} {t('admin.advertisements.list.itemsCount', locale)}
+            </span>
+          </h3>
+          <button
+            onClick={fetchAds}
+            className="p-2 text-muted-foreground hover:text-primary transition-colors"
+            title="Refresh"
+          >
+            <ArrowPathIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-2xl flex flex-col gap-2">
-            <div className="font-bold flex items-center gap-2 text-sm uppercase">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {t('admin.advertisements.error.title')}
-            </div>
-            <div className="text-sm">{error}</div>
+          <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-2">
+            <XMarkIcon className="w-6 h-6 flex-shrink-0" />
+            <div className="font-bold text-sm tracking-tight">{error}</div>
           </div>
         )}
 
-        {loading && <div className="text-center py-12 text-muted-foreground animate-pulse">{t('common.loading')}</div>}
+        {success && (
+          <div className="p-4 bg-green-500/10 border border-green-500/20 text-green-500 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-2">
+            <CheckIcon className="w-6 h-6 flex-shrink-0" />
+            <div className="font-bold text-sm tracking-tight">{success}</div>
+          </div>
+        )}
+
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-muted/30 aspect-video rounded-3xl animate-pulse border border-border"></div>
+            ))}
+          </div>
+        )}
 
         {!loading && ads.length === 0 && !error && (
-          <div className="text-center py-20 bg-muted/30 border border-dashed border-border rounded-3xl text-muted-foreground">
-            {t('admin.advertisements.list.empty')}
+          <div className="text-center py-32 bg-muted/20 border-4 border-dashed border-border rounded-[3rem] text-muted-foreground group">
+            <PhotoIcon className="w-16 h-16 mx-auto mb-4 opacity-20 group-hover:opacity-40 transition-opacity" />
+            <p className="text-lg font-bold">{t('admin.advertisements.list.empty', locale)}</p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {ads.map((ad) => (
-            <div key={String(ad.id)} className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+            <div key={String(ad.id)} className="group bg-card border-2 border-border/60 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-warm-xl hover:border-primary/30 transition-all duration-500">
               <div className="relative aspect-video overflow-hidden">
-                <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <div className="text-white font-bold truncate w-full">{ad.title}</div>
+                <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
+                  <div className="text-white">
+                    <div className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">{t('admin.advertisements.list.cardLabel', locale)}</div>
+                    <div className="text-xl font-black truncate w-full leading-tight">{ad.title}</div>
+                  </div>
+                </div>
+
+                {/* ID Badge */}
+                <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/20">
+                  ID: {String(ad.id).substring(0, 6)}
                 </div>
               </div>
-              <div className="p-4 flex items-center justify-between gap-4">
-                <div className="flex-1 truncate">
+
+              <div className="p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${ad.active !== false ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-gray-400'}`}></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                    {ad.active !== false ? t('admin.advertisements.status.live', locale) : t('admin.advertisements.status.inactive', locale)}
+                  </span>
+                </div>
+
+                <div className="h-12 flex flex-col justify-center">
                   {ad.link ? (
-                    <a href={ad.link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 100-2H5z" />
-                      </svg>
-                      {ad.link}
+                    <a
+                      href={ad.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-bold text-primary bg-primary/5 p-2 rounded-xl flex items-center gap-2 hover:bg-primary/10 transition-colors truncate"
+                    >
+                      <LinkIcon className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{ad.link}</span>
                     </a>
                   ) : (
-                    <span className="text-xs text-muted-foreground italic">No link</span>
+                    <span className="text-xs text-muted-foreground italic font-medium px-2 flex items-center gap-2">
+                      <XMarkIcon className="w-4 h-4" />
+                      {t('admin.advertisements.list.noLink', locale)}
+                    </span>
                   )}
                 </div>
-                <button
-                  onClick={() => deleteAd(ad.id)}
-                  className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg transition-all"
-                >
-                  {t('admin.advertisements.list.delete')}
-                </button>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    onClick={() => toggleActive(ad)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${ad.active !== false
+                      ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 shadow-sm border border-amber-500/20'
+                      : 'bg-green-500/10 text-green-600 hover:bg-green-500/20 shadow-sm border border-green-500/20'
+                      }`}
+                    title={ad.active !== false ? 'Turn Off' : 'Turn On'}
+                  >
+                    {ad.active !== false ? (
+                      <>
+                        <EyeSlashIcon className="w-4 h-4" />
+                        {t('admin.advertisements.status.inactive', locale)}
+                      </>
+                    ) : (
+                      <>
+                        <EyeIcon className="w-4 h-4" />
+                        {t('admin.advertisements.status.live', locale)}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(ad)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-muted text-foreground hover:bg-muted/80 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-border"
+                  >
+                    <PencilIcon className="w-4 h-4" />
+                    {t('admin.advertisements.list.edit', locale)}
+                  </button>
+                  <button
+                    onClick={() => deleteAd(ad.id)}
+                    className="flex-none p-3 text-red-500 hover:text-white hover:bg-red-500 bg-red-500/5 border border-red-500/10 rounded-2xl transition-all"
+                    title="Delete"
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
