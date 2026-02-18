@@ -13,6 +13,7 @@ import {
   HashtagIcon,
   BuildingStorefrontIcon,
   XMarkIcon,
+  DocumentDuplicateIcon,
   StarIcon as StarOutline,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
@@ -38,6 +39,7 @@ export default function CheckStatusPage() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false); // สถานะกำลังส่งรีวิว
   const [feedbackSuccess, setFeedbackSuccess] = useState(false); // สถานะส่งรีวิวสำเร็จ
   const [feedbackError, setFeedbackError] = useState(''); // เก็บข้อความ Error ของรีวิว
+  const [copiedCode, setCopiedCode] = useState(false); // สถานะการคัดลอกรหัสจอง
 
   // ฟังก์ชันแปลงเวลารูปแบบ HH:mm เป็นรูปแบบที่แสดงผลสวยงาม (เช่น 18:30 น. หรือ 6:30 PM)
   const formatTime = (time: string) => {
@@ -337,7 +339,28 @@ export default function CheckStatusPage() {
                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                         {t('checkStatus.label.code')}
                       </p>
-                      <p className="text-lg font-bold text-primary">{reservation.short_id}</p>
+                      <div className="relative group">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(reservation.short_id);
+                            setCopiedCode(true);
+                            setTimeout(() => setCopiedCode(false), 2000);
+                          }}
+                          className="flex items-center gap-2 text-lg font-bold text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1 rounded-lg border border-primary/20 transition-all active:scale-95 group/btn"
+                        >
+                          {reservation.short_id}
+                          {copiedCode ? (
+                            <CheckCircleIcon className="w-4 h-4 text-green-500 animate-in zoom-in spin-in-90" />
+                          ) : (
+                            <DocumentDuplicateIcon className="w-4 h-4 text-primary/40 group-hover/btn:text-primary transition-colors" />
+                          )}
+                        </button>
+                        {copiedCode && (
+                          <span className="absolute -top-8 left-0 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-lg animate-in fade-in slide-in-from-bottom-2">
+                            {locale === 'th' ? 'คัดลอกแล้ว!' : 'COPIED!'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
