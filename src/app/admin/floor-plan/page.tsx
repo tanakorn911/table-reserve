@@ -569,7 +569,7 @@ export default function FloorPlanAdminPage() {
           ref={scrollRef}
           {...events}
           className={`flex-1 overflow-auto cursor-grab active:cursor-grabbing ${pageTheme.cardBg} select-none`}
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: 'pan-y' }}
         >
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
