@@ -5,7 +5,7 @@ import FloorPlan from '@/components/floor-plan/FloorPlan';
 import { Table, TableShape } from '@/types/tables';
 import Icon from '@/components/ui/AppIcon';
 import { useTranslation } from '@/lib/i18n';
-import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useAdminLocale, adminT } from '@/app/admin/components/LanguageSwitcher';
 import AdminTimeGrid from '../components/AdminTimeGrid';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { useDraggableScroll } from '@/hooks/useDraggableScroll';
@@ -611,10 +611,12 @@ export default function FloorPlanAdminPage() {
               <Icon name="MapIcon" size={32} className={resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-600'} />
             </div>
             <div>
-              <h1 className={`text-2xl font-black ${pageTheme.text} tracking-tight`}>
-                {t('admin.floorPlan.title')}
+              <h1 className={`text-2xl font-black tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-700'}`}>
+                {adminT('admin.floorPlan.title', locale)}
               </h1>
-              <p className={`text-sm ${pageTheme.textSecondary} mt-0.5 font-medium`}>{t('admin.floorPlan.subtitle')}</p>
+              <p className={`text-sm mt-0.5 font-medium ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                {adminT('admin.floorPlan.subtitle', locale)}
+              </p>
             </div>
           </div>
 
