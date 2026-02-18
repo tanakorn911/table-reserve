@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { withRetry } from '@/lib/supabase/retry';
 import { getCache, setCache, invalidateCache } from '@/lib/cache';
+import { getClientIp } from '@/lib/ratelimit';
 
 const CACHE_KEY = 'api:tables';
 const CACHE_TTL = 60 * 1000; // 60 วินาที
@@ -120,6 +121,22 @@ export async function POST(request: NextRequest) {
     }
 
     invalidateCache(CACHE_KEY); // ล้าง cache เมื่อเพิ่มโต๊ะใหม่
+
+    // 📝 Audit Log: Create Table
+    try {
+      const clientIp = getClientIp(request);
+      await supabase.from('audit_logs').insert([{
+        user_id: user.id,
+        action: 'create_table',
+        entity: 'tables',
+        entity_id: data.id,
+        payload: validatedData,
+        ip_address: clientIp
+      }]);
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
+    }
+
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
     console.error('Server error:', error);
