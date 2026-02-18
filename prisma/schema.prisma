@@ -115,6 +115,20 @@ model Advertisement {
   @@schema("public")
 }
 
+model AuditLog {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String?   @db.Uuid
+  action     String
+  entity     String
+  entity_id  String?
+  payload    Json?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  ip_address String?   @db.VarChar(64)
+
+  @@map("audit_logs")
+  @@schema("public")
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model audit_log_entries {
