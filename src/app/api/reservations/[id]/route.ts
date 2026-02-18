@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { UpdateReservationInput } from '@/types/database.types';
 import { sendLineNotification } from '@/lib/notifications';
+import { getClientIp } from '@/lib/ratelimit';
 
 // GET /api/reservations/[id] - Get a single reservation
 // GET: ดึงข้อมูลการจอง 1 รายการ
@@ -151,6 +152,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         console.error('Notification error', e);
       }
     })();
+    // 📝 Audit Log: Update Reservation
+    try {
+      const clientIp = getClientIp(request);
+      await supabase.from('audit_logs').insert([{
+        user_id: user.id,
+        action: 'admin_update_reservation',
+        entity: 'reservations',
+        entity_id: id,
+        payload: body,
+        ip_address: clientIp
+      }]);
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
+    }
 
     return NextResponse.json({ data });
   } catch (error) {
@@ -230,6 +245,20 @@ export async function DELETE(
         console.error('Notification error', e);
       }
     })();
+    // 📝 Audit Log: Delete Reservation
+    try {
+      const clientIp = getClientIp(request);
+      await supabase.from('audit_logs').insert([{
+        user_id: user.id,
+        action: 'admin_delete_reservation',
+        entity: 'reservations',
+        entity_id: id,
+        payload: { id, guest_name: existingData.guest_name, date: existingData.reservation_date },
+        ip_address: clientIp
+      }]);
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
+    }
 
     return NextResponse.json({
       message: 'Reservation deleted successfully',
