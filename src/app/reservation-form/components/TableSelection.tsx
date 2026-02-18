@@ -104,7 +104,7 @@ const TableSelection: React.FC<TableSelectionProps> = ({
             ref={scrollRef}
             {...events} // Spread mouse events for drag scrolling
             className="overflow-x-auto cursor-grab active:cursor-grabbing no-scrollbar select-none"
-            style={{ maxHeight: '600px', touchAction: 'none' }} // จำกัดความสูง
+            style={{ maxHeight: '600px', touchAction: 'pan-y' }} // จำกัดความสูง และอนุญาตให้เลื่อนขึ้นลงหน้าเว็บได้บนมือถือ
           >
             <div className="p-4 min-w-[1200px]"> {/* บังคับความกว้างเพื่อให้เมาส์ลากได้ (Drag-to-Scroll) */}
               <FloorPlan
