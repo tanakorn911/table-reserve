@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp } from '@/lib/ratelimit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -179,8 +180,6 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
             const result = await generateWithRetry();
             const insight = result.response.text().trim();
 
-            // Update cache
-            // อัปเดตแคชด้วยข้อมูลใหม่
             insightsCache = {
                 insight,
                 stats,
@@ -188,6 +187,21 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
                 date: today,
                 locale
             };
+
+            // 📝 Audit Log: Generate AI Insights
+            try {
+                const clientIp = getClientIp(request);
+                await supabase.from('audit_logs').insert([{
+                    user_id: null,
+                    action: 'generate_ai_insight',
+                    entity: 'ai',
+                    entity_id: today,
+                    payload: { date: today, locale, stats },
+                    ip_address: clientIp
+                }]);
+            } catch (auditError) {
+                console.error('Audit log error:', auditError);
+            }
 
             return NextResponse.json({
                 success: true,
@@ -197,6 +211,7 @@ Please provide a friendly, interesting short summary with appropriate emojis. Do
                     generatedAt: insightsCache.generatedAt,
                 }
             });
+
 
         } catch (error: any) {
             // Handle Rate Limit gracefully by returning stats without AI text
