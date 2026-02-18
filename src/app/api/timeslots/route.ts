@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { getReservationSettings } from '@/lib/settings';
 
 // In-memory store for time slot holds (in production, use Redis or database)
 // ใช้ตัวแปร Global เพื่อเก็บสถานะการ Hold ชั่วคราว (ใน Production ควรใช้ Redis)
@@ -67,7 +68,8 @@ function generateTimeSlots(
   reservations: any[],
   openingHours: any,
   totalTables: number,
-  currentSessionId: string | null = null
+  currentSessionId: string | null = null,
+  durationMinutes: number = 105
 ) {
   const dateObj = new Date(date + 'T00:00:00');
   const dayOfWeek = dateObj.getDay();
@@ -90,7 +92,7 @@ function generateTimeSlots(
 
   // 105-minute block = 90 min dining + 15 min buffer
   // ระยะเวลา 1 บล็อกการจอง (105 นาที)
-  const DURATION_MINUTES = 105;
+  const DURATION_MINUTES = durationMinutes;
 
   let currentMinutes = openHour * 60 + openMin;
   let endMinutes = closeHour * 60 + closeMin;
@@ -134,7 +136,7 @@ function generateTimeSlots(
       const [dbH, dbM] = dbTime.split(':').map(Number);
       const dbMinutes = dbH * 60 + dbM;
 
-      // Overlap check: |TimeA - TimeB| < 105 mins
+      // Overlap check: |TimeA - TimeB| < DURATION_MINUTES
       // ตรวจสอบการซ้อนทับของเวลา
       if (Math.abs(dbMinutes - currentMinutes) < DURATION_MINUTES) {
         if (r.table_number) {
@@ -209,7 +211,18 @@ export async function GET(request: NextRequest) {
     // 1. Business Hours
     const businessHours = await getBusinessHours(supabase);
 
-    // 2. Tables Count
+    // 2. Check Holidays
+    const { data: holiday } = await supabase
+      .from('holidays')
+      .select('id')
+      .eq('holiday_date', date)
+      .maybeSingle();
+
+    if (holiday) {
+      return NextResponse.json({ slots: [], isHoliday: true });
+    }
+
+    // 3. Tables Count
     const { count, error: countError } = await supabase
       .from('tables')
       .select('*', { count: 'exact', head: true });
@@ -217,21 +230,25 @@ export async function GET(request: NextRequest) {
     // Use count if available and > 0, else fallback to 5
     const totalTables = count !== null && count > 0 ? count : TOTAL_TABLES;
 
-    // 3. Reservations
+    // 4. Reservations
     const { data: reservations, error } = await supabase
       .from('reservations')
       .select('reservation_time, table_number')
       .eq('reservation_date', date)
       .in('status', ['confirmed', 'pending']);
 
-    // 4. Generate Slots
+    // 5. Reservation Settings
+    const { dining_duration, buffer_time } = await getReservationSettings();
+
+    // 6. Generate Slots
     // สร้าง Slots พร้อมสถานะ
     const slots = generateTimeSlots(
       date,
       reservations || [],
       businessHours,
       totalTables,
-      sessionId
+      sessionId,
+      dining_duration + buffer_time
     );
 
     return NextResponse.json({ slots });
@@ -263,11 +280,12 @@ export async function POST(request: NextRequest) {
       const { count } = await supabase.from('tables').select('*', { count: 'exact', head: true });
       const totalTables = count !== null && count > 0 ? count : TOTAL_TABLES;
 
-      // 2. Check DB Reservations for this time slot (90+15 min overlap)
+      // 2. Check DB Reservations for this time slot (dynamic overlap)
       // ตรวจสอบว่าเต็มแล้วหรือยัง
       const [reqH, reqM] = time.split(':').map(Number);
       const reqMinutes = reqH * 60 + reqM;
-      const DURATION = 105;
+      const { dining_duration, buffer_time } = await getReservationSettings();
+      const DURATION = dining_duration + buffer_time;
 
       const { data: reservations } = await supabase
         .from('reservations')
