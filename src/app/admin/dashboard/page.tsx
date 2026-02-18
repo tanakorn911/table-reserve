@@ -14,9 +14,8 @@ import {
   TrashIcon,
   HomeIcon,
 } from '@heroicons/react/24/outline';
-import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
+import { useAdminLocale, adminT as t } from '@/app/admin/components/LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
-import { useTranslation } from '@/lib/i18n';
 import AIInsightsCard from '@/app/admin/components/AIInsightsCard';
 import {
   BarChart,
@@ -55,7 +54,6 @@ interface Reservation {
 export default function DashboardPage() {
   const locale = useAdminLocale();
   const { resolvedAdminTheme } = useAdminTheme();
-  const { t } = useTranslation(locale);
 
   // State เก็บสถิติต่างๆ
   const [stats, setStats] = useState({
@@ -182,6 +180,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      alert(locale === 'th' ? 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่' : 'Failed to connect to database. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -219,11 +218,7 @@ export default function DashboardPage() {
 
   // ฟังก์ชันลบข้อมูลการจองทั้งหมดของวันนี้ (สำหรับทดสอบหรือเริ่มวันใหม่)
   const handleClearDay = async () => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const confirmMsg = locale === 'th'
-      ? `ยืนยันการเคลียร์รายการจองวันที่ ${todayStr}?\n\n⚠️ แนะนำให้ Export CSV ก่อนลบ!`
-      : `Confirm clearing reservations for ${todayStr}?\n\n⚠️ Recommended to Export CSV first!`;
-
+    const confirmMsg = t('admin.dashboard.confirmClear', locale);
     if (!confirm(confirmMsg)) return;
 
     setClearing(true);
@@ -258,7 +253,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className={`text-2xl font-black tracking-tight ${resolvedAdminTheme === 'dark' ? 'text-yellow-400' : 'text-amber-700'}`}>
-              {t('admin.dashboard.title')}
+              {t('admin.dashboard.title', locale)}
             </h1>
             <p className={`text-sm mt-0.5 font-medium ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               {new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
@@ -279,7 +274,7 @@ export default function DashboardPage() {
             className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowDownTrayIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">{locale === 'th' ? 'Export CSV' : 'Export CSV'}</span>
+            <span className="hidden sm:inline">{t('admin.dashboard.exportCSV', locale)}</span>
           </button>
           <button
             onClick={handleClearDay}
@@ -287,7 +282,7 @@ export default function DashboardPage() {
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <TrashIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">{clearing ? '...' : (locale === 'th' ? 'เคลียร์วันนี้' : 'Clear Today')}</span>
+            <span className="hidden sm:inline">{clearing ? '...' : t('admin.dashboard.clearToday', locale)}</span>
           </button>
         </div>
       </div>
@@ -301,7 +296,7 @@ export default function DashboardPage() {
               <CalendarIcon className="w-5 h-5 text-blue-600" />
             </div>
           </div>
-          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'การจองวันนี้' : 'Today\'s Bookings'}</p>
+          <p className="text-sm text-gray-500 font-medium">{t('admin.dashboard.stats.todayBookings', locale)}</p>
           <p className="text-3xl font-black text-gray-900 mt-1">{stats.todayTotal}</p>
         </div>
 
@@ -313,11 +308,11 @@ export default function DashboardPage() {
             </div>
             {stats.todayPending > 0 && (
               <span className="text-xs font-bold text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded-full animate-pulse">
-                {locale === 'th' ? 'ต้องดำเนินการ' : 'Action needed'}
+                {t('admin.dashboard.stats.actionNeeded', locale)}
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'รอยืนยัน' : 'Pending'}</p>
+          <p className="text-sm text-gray-500 font-medium">{t('admin.dashboard.stats.pending', locale)}</p>
           <p className={`text-3xl font-black mt-1 ${stats.todayPending > 0 ? 'text-yellow-700' : 'text-gray-900'}`}>{stats.todayPending}</p>
         </div>
 
@@ -328,9 +323,9 @@ export default function DashboardPage() {
               <UsersIcon className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'ลูกค้าที่จะมา' : 'Expected Guests'}</p>
+          <p className="text-sm text-gray-500 font-medium">{t('admin.dashboard.stats.expectedGuests', locale)}</p>
           <p className="text-3xl font-black text-gray-900 mt-1">{stats.todayPax}</p>
-          <p className="text-xs text-gray-400 mt-1">{locale === 'th' ? 'คน (ยืนยันแล้ว)' : 'guests (confirmed)'}</p>
+          <p className="text-xs text-gray-400 mt-1">{t('admin.dashboard.stats.confirmedLabel', locale)}</p>
         </div>
 
         {/* Tables Booked: โต๊ะที่จอง */}
@@ -340,9 +335,9 @@ export default function DashboardPage() {
               <TableCellsIcon className="w-5 h-5 text-green-600" />
             </div>
           </div>
-          <p className="text-sm text-gray-500 font-medium">{locale === 'th' ? 'โต๊ะที่จองแล้ว' : 'Tables Booked'}</p>
+          <p className="text-sm text-gray-500 font-medium">{t('admin.dashboard.stats.tablesBooked', locale)}</p>
           <p className="text-3xl font-black text-gray-900 mt-1">{stats.bookedTables}</p>
-          <p className="text-xs text-gray-400 mt-1">{locale === 'th' ? `จาก ${stats.totalTables} โต๊ะ` : `of ${stats.totalTables} tables`}</p>
+          <p className="text-xs text-gray-400 mt-1">{t('admin.dashboard.stats.ofTables', locale).replace('{total}', String(stats.totalTables))}</p>
         </div>
       </div>
 
@@ -355,21 +350,21 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{locale === 'th' ? 'ความหนาแน่นรายชั่วโมง' : 'Peak Occupancy'}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t('admin.dashboard.peak.title', locale)}</h2>
               <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
-                {locale === 'th' ? 'จำนวนลูกค้าคาดการณ์ในแต่ละช่วงเวลา' : 'Forecasted guests for today'}
+                {t('admin.dashboard.peak.subtitle', locale)}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
-              <span className="text-[10px] font-bold text-gray-500 uppercase">{locale === 'th' ? 'จำนวนลูกค้า (Pax)' : 'Guests'}</span>
+              <span className="text-[10px] font-bold text-gray-500 uppercase">{t('admin.dashboard.peak.guestsLabel', locale)}</span>
             </div>
           </div>
 
           <div className="flex-1 min-h-[300px] -ml-5">
             {hourlyPaxData.length === 0 ? (
               <div className="h-full flex items-center justify-center text-gray-400 text-sm italic">
-                {locale === 'th' ? 'ไม่มีข้อมูลการจองในวันนี้' : 'No data for today'}
+                {t('admin.dashboard.peak.noData', locale)}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -405,18 +400,18 @@ export default function DashboardPage() {
           <div className="mt-6 pt-5 border-t border-gray-100">
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <h3 className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">{locale === 'th' ? 'สถานะโต๊ะวันนี้' : 'Table Status'}</h3>
+                <h3 className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">{t('admin.dashboard.tableStatus.title', locale)}</h3>
                 <div className="space-y-1.5 text-center">
                   <div className="flex items-center justify-center gap-8">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                      <span className="text-xs font-bold text-gray-600 uppercase tracking-tighter">{locale === 'th' ? 'ว่าง' : 'Available'}</span>
+                      <span className="text-xs font-bold text-gray-600 uppercase tracking-tighter">{t('admin.dashboard.tableStatus.available', locale)}</span>
                       <span className="text-lg font-black text-gray-900 ml-1">{stats.totalTables - stats.bookedTables}</span>
                     </div>
                     <div className="w-px h-8 bg-gray-100"></div>
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                      <span className="text-xs font-bold text-gray-600 uppercase tracking-tighter">{locale === 'th' ? 'จองแล้ว' : 'Booked'}</span>
+                      <span className="text-xs font-bold text-gray-600 uppercase tracking-tighter">{t('admin.dashboard.tableStatus.booked', locale)}</span>
                       <span className="text-lg font-black text-gray-900 ml-1">{stats.bookedTables}</span>
                     </div>
                   </div>
@@ -430,9 +425,9 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col h-full">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{locale === 'th' ? 'ลำดับการจอง' : "Who's Next?"}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t('admin.dashboard.whosNext.title', locale)}</h2>
               <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-tighter font-bold">
-                {locale === 'th' ? 'ใครจะมาถึงในลำดับถัดไป' : 'Arrival priority'}
+                {t('admin.dashboard.whosNext.subtitle', locale)}
               </p>
             </div>
             <Link href="/admin/reservations" className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
@@ -444,7 +439,7 @@ export default function DashboardPage() {
             {recentReservations.length === 0 ? (
               <div className="py-12 text-center text-gray-400">
                 <CalendarIcon className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-                <p className="text-xs">{locale === 'th' ? 'ยังไม่มีการจองวันนี้' : 'No bookings'}</p>
+                <p className="text-xs">{t('admin.dashboard.whosNext.noBookings', locale)}</p>
               </div>
             ) : (
               <div className="relative border-l border-gray-100 ml-2 space-y-4 pb-2">
@@ -469,7 +464,7 @@ export default function DashboardPage() {
                             <span className={`text-xs font-black ${isComingSoon ? 'text-blue-700' : 'text-gray-900'}`}>{r.reservation_time.substring(0, 5)}</span>
                             <p className="font-bold text-[13px] text-gray-900 leading-tight mt-0.5">{r.guest_name}</p>
                             <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500 font-bold uppercase">
-                              <span>{r.party_size} {locale === 'th' ? 'คน' : 'pax'}</span>
+                              <span>{r.party_size} {t('admin.dashboard.whosNext.paxLabel', locale)}</span>
                               <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                               <span>{r.table_name || '-'}</span>
                             </div>
