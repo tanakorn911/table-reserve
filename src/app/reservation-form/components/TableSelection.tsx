@@ -104,7 +104,7 @@ const TableSelection: React.FC<TableSelectionProps> = ({
             ref={scrollRef}
             {...events} // Spread mouse events for drag scrolling
             className="overflow-x-auto cursor-grab active:cursor-grabbing no-scrollbar select-none"
-            style={{ maxHeight: '600px', touchAction: 'pan-y' }} // จำกัดความสูง และอนุญาตให้เลื่อนขึ้นลงหน้าเว็บได้บนมือถือ
+            style={{ maxHeight: '600px', touchAction: 'pan-y' }} // อนุญาตให้เลื่อนหน้าเว็บแนวดิ่งได้บนมือถือ
           >
             <div className="p-4 min-w-[1200px]"> {/* บังคับความกว้างเพื่อให้เมาส์ลากได้ (Drag-to-Scroll) */}
               <FloorPlan
@@ -115,7 +115,7 @@ const TableSelection: React.FC<TableSelectionProps> = ({
                 bookedTables={bookedTablesData}
                 partySize={partySize}
                 width={1200}
-                height={500}
+                height={850}
                 locale={locale}
                 theme="light" // ปรับให้เข้ากับหน้าจองที่เป็น Light theme ส่วนใหญ่
               />
