@@ -241,6 +241,21 @@ const ReservationWizard = () => {
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
+
+        // ล็อคเบอร์โทรให้กรอกได้แค่ตัวเลขและไม่เกิน 10 ตัว
+        if (name === 'phone') {
+            const numericValue = value.replace(/\D/g, '').slice(0, 10);
+            setFormData((prev) => ({ ...prev, [name]: numericValue }));
+            return;
+        }
+
+        // ล็อคชื่อ-นามสกุล ให้กรอกได้เฉพาะตัวอักษรไทย อังกฤษ ช่องว่าง . -
+        if (name === 'fullName') {
+            const filteredValue = value.replace(/[^a-zA-Z\u0e00-\u0e7f\s.-]/g, '');
+            setFormData((prev) => ({ ...prev, [name]: filteredValue }));
+            return;
+        }
+
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
@@ -252,7 +267,7 @@ const ReservationWizard = () => {
                 alert(t('validation.fillAll'));
                 return;
             }
-            if (parseInt(formData.guests) > 10) {
+            if (parseInt(formData.guests) > 6) {
                 alert(t('validation.guests.invalid'));
                 return;
             }
@@ -275,6 +290,27 @@ const ReservationWizard = () => {
         // ตรวจสอบข้อมูลจำเป็น
         if (!formData.fullName || !formData.phone || !slipFile) {
             alert(t('validation.attachSlip'));
+            return;
+        }
+
+        // ตรวจสอบเบอร์โทรต้องมี 10 หลัก
+        if (formData.phone.length !== 10) {
+            alert(locale === 'th' ? 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก' : 'Please enter a 10-digit phone number');
+            return;
+        }
+
+        // ตรวจสอบชื่อ-นามสกุล (3-60 ตัวอักษร และต้องมีเว้นวรรค)
+        const trimmedName = formData.fullName.trim();
+        if (trimmedName.length < 3) {
+            alert(t('validation.name.short'));
+            return;
+        }
+        if (trimmedName.length > 60) {
+            alert(locale === 'th' ? 'ชื่อยาวเกินไป (สูงสุด 60 ตัวอักษร)' : 'Name too long (max 60 characters)');
+            return;
+        }
+        if (!trimmedName.includes(' ')) {
+            alert(t('validation.name.invalid'));
             return;
         }
 
@@ -463,7 +499,7 @@ const ReservationWizard = () => {
                                             value={formData.guests}
                                             onChange={handleChange}
                                             min={1}
-                                            max={10}
+                                            max={6}
                                             name="guests"
                                             id="guests"
                                         />
@@ -566,7 +602,7 @@ const ReservationWizard = () => {
                                                     {t('table.clickToSelect')}
                                                 </div>
                                             </div>
-                                            <div className="overflow-x-auto pb-4 -mx-4 md:mx-0 scrollbar-hide relative touch-pan-x">
+                                            <div className="overflow-x-auto pb-4 -mx-4 md:mx-0 scrollbar-hide relative touch-auto">
                                                 <div className="min-w-[800px] md:min-w-0 px-4 md:px-0">
                                                     <FloorPlan
                                                         mode="select"
@@ -628,6 +664,7 @@ const ReservationWizard = () => {
                                                 name="fullName"
                                                 value={formData.fullName}
                                                 onChange={handleChange}
+                                                maxLength={60}
                                                 required
                                                 id="fullName"
                                             />
@@ -635,8 +672,10 @@ const ReservationWizard = () => {
                                                 label={t('form.phone')}
                                                 placeholder={t('form.placeholder.phone')}
                                                 name="phone"
+                                                type="tel"
                                                 value={formData.phone}
                                                 onChange={handleChange}
+                                                maxLength={10}
                                                 required
                                                 id="phone"
                                             />
