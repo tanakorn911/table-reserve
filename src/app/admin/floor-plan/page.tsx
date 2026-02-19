@@ -162,14 +162,22 @@ const EditModal = ({ table, isOpen, onClose, onSave, onDelete, t }: EditModalPro
                   type="number"
                   name="capacity"
                   value={formData.capacity || 2}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val)) {
+                      setFormData((prev) => ({ ...prev, capacity: Math.min(6, Math.max(1, val)) }));
+                    } else {
+                      setFormData((prev) => ({ ...prev, capacity: 1 }));
+                    }
+                  }}
                   min={1}
+                  max={6}
                   className={`w-full px-10 py-3 rounded-xl border-2 focus:outline-none focus:ring-4 ${themeColors.focusRing} font-bold text-center transition-all appearance-none ${themeColors.input}`}
                 />
                 <button
                   type="button"
                   onClick={() =>
-                    setFormData((prev) => ({ ...prev, capacity: (prev.capacity || 0) + 1 }))
+                    setFormData((prev) => ({ ...prev, capacity: Math.min(6, (prev.capacity || 0) + 1) }))
                   }
                   className={`absolute right-1 top-1 w-8 h-full flex items-center justify-center rounded-lg transition-colors ${resolvedAdminTheme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-400 hover:text-black hover:bg-gray-200'}`}
                 >
@@ -271,6 +279,26 @@ export default function FloorPlanAdminPage() {
   const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
   const [checkTime, setCheckTime] = useState('18:00');
   const [bookedTables, setBookedTables] = useState<any[]>([]);
+  const [displayMode, setDisplayMode] = useState<'map' | 'list'>('map');
+
+  // Helper functions for translation
+  const getLocalizedZone = (zone: string) => {
+    switch (zone?.toLowerCase()) {
+      case 'indoor': return t('admin.floorPlan.zone.indoor');
+      case 'outdoor': return t('admin.floorPlan.zone.outdoor');
+      case 'vip': return t('admin.floorPlan.zone.vip');
+      default: return zone;
+    }
+  };
+
+  const getLocalizedShape = (shape: string) => {
+    switch (shape?.toLowerCase()) {
+      case 'rectangle': return t('admin.floorPlan.shapes.rect');
+      case 'circle': return t('admin.floorPlan.shapes.circle');
+      case 'round-rect': return t('admin.floorPlan.shapes.roundRect');
+      default: return shape;
+    }
+  };
 
   // Draggable Scroll Hook
   const { ref: scrollRef, events } = useDraggableScroll();
@@ -361,34 +389,16 @@ export default function FloorPlanAdminPage() {
   }, [viewMode, checkDate, checkTime]);
 
   // ฟังก์ชันอัพเดทข้อมูลโต๊ะ (แก้ไขชื่อ, ขนาด etc.)
-  const handleTableUpdate = async (updatedTable: Table) => {
-    // เช็คชื่อซ้ำ
+  const handleTableUpdate = (updatedTable: Table) => {
+    // เช็คชื่อซ้ำ (เฉพาะกรณีเปลี่ยนชื่อจริงๆ)
     const isDuplicate = tables.some(t => t.name.toLowerCase() === updatedTable.name.toLowerCase() && t.id !== updatedTable.id);
     if (isDuplicate) {
-      alert(locale === 'th' ? 'ชื่อโต๊ะนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น' : 'Table name already exists, please use another name');
+      // ไม่ Alert ถี่เกินไปตอนลาก แต่กันไว้ใน state
       return;
     }
 
     setTables((prev) => prev.map((t) => (t.id === updatedTable.id ? updatedTable : t)));
-
-    try {
-      await fetch(`/api/tables/${updatedTable.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: updatedTable.name,
-          capacity: updatedTable.capacity,
-          shape: updatedTable.shape,
-          zone: updatedTable.zone,
-          x: updatedTable.x,
-          y: updatedTable.y,
-          width: 80,
-          height: 80,
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to save table update', error);
-    }
+    // 💡 ลบ API call ออกจากตรงนี้ เพื่อไม่ให้ยิงรัวๆ ตอนลากโต๊ะ (ย้ายไปรวมที่ปุ่มบันทึกทีเดียว)
   };
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
@@ -551,12 +561,12 @@ export default function FloorPlanAdminPage() {
   };
 
   return (
-    <div className={`h-full md:h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto overflow-y-auto md:overflow-hidden ${pageTheme.bg}`}>
+    <div className={`min-h-screen md:h-[calc(100vh-theme(spacing.20))] flex flex-col md:flex-row gap-6 p-4 md:p-6 max-w-[1600px] mx-auto overflow-y-auto md:overflow-hidden ${pageTheme.bg}`}>
       {/* 
         Main Canvas (พื้นที่แสดงผังร้าน)
         บนมือถือจะอยู่ด้านบน (order-1)
       */}
-      <div className={`flex-1 order-1 md:order-2 ${pageTheme.card} rounded-2xl shadow-sm border overflow-hidden flex flex-col relative group min-h-[500px] md:min-h-0`}>
+      <div className={`flex-1 order-2 ${pageTheme.card} rounded-2xl shadow-sm border overflow-hidden flex flex-col relative group min-h-[500px] md:min-h-0`}>
         {/* ตัวนับจำนวนโต๊ะ */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           <div className={`${pageTheme.counter} backdrop-blur px-4 py-2 rounded-xl border text-[13px] font-black shadow-lg flex items-center gap-2`}>
@@ -568,7 +578,7 @@ export default function FloorPlanAdminPage() {
         <div
           ref={scrollRef}
           {...events}
-          className={`flex-1 overflow-auto cursor-grab active:cursor-grabbing ${pageTheme.cardBg} select-none`}
+          className={`flex-1 overflow-auto cursor-grab active:cursor-grabbing ${pageTheme.cardBg} select-none no-scrollbar`}
           style={{ touchAction: 'pan-y' }}
         >
           {isLoading ? (
@@ -580,13 +590,14 @@ export default function FloorPlanAdminPage() {
                 </span>
               </div>
             </div>
-          ) : (
-            <div className="min-w-[1200px] h-full p-4 md:p-8 pb-32">
+          ) : displayMode === 'map' ? (
+            <div className="p-2 md:p-4 min-w-[1200px] md:min-w-0 md:w-full md:h-full flex flex-col">
               <FloorPlan
                 mode={viewMode === 'edit' ? 'edit' : 'view'}
                 tables={tables}
                 onTableUpdate={handleTableUpdate}
-                height={850}
+                width={typeof window !== 'undefined' && window.innerWidth >= 768 ? '100%' : 1200}
+                height={typeof window !== 'undefined' && window.innerWidth >= 768 ? '100%' : 950}
                 onTableEdit={setEditingTable}
                 bookedTables={bookedTables}
                 locale={locale}
@@ -599,12 +610,69 @@ export default function FloorPlanAdminPage() {
                 }}
               />
             </div>
+          ) : (
+            /* Table List View for Admin */
+            <div className="p-6 overflow-y-auto h-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-32">
+                {tables.map((table) => (
+                  <div
+                    key={table.id}
+                    className={`${resolvedAdminTheme === 'dark' ? 'bg-gray-700/50 border-gray-600' : 'bg-white border-gray-200'} rounded-2xl p-5 border shadow-sm transition-all hover:shadow-md group`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`w-12 h-12 ${resolvedAdminTheme === 'dark' ? 'bg-gray-600' : 'bg-gray-100'} rounded-xl flex items-center justify-center border font-black text-lg ${pageTheme.text}`}>
+                        {table.name.replace(/\D/g, '') || table.name}
+                      </div>
+                    </div>
+
+                    <h4 className={`font-bold ${pageTheme.text} mb-1`}>{table.name}</h4>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
+                        <Icon name="UserIcon" size={14} />
+                        <span>{table.capacity} {t('common.people')}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
+                        <Icon name="MapPinIcon" size={14} />
+                        <span>{getLocalizedZone(table.zone)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
+                        <Icon name="Square2StackIcon" size={14} />
+                        <span>{getLocalizedShape(table.shape)}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setEditingTable(table)}
+                      className={`mt-4 w-full py-2.5 rounded-xl text-xs font-bold border transition-all ${resolvedAdminTheme === 'dark'
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-600'
+                        : 'border-blue-200 text-blue-600 bg-blue-50/50 hover:bg-blue-600 hover:text-white hover:border-blue-600'
+                        }`}
+                    >
+                      {t('common.edit')}
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add Table Button in List */}
+                {viewMode === 'edit' && (
+                  <button
+                    onClick={() => addTable('rectangle')}
+                    className={`min-h-[200px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-3 transition-all ${pageTheme.dashedBorder}`}
+                  >
+                    <div className={`p-3 rounded-full border-2 ${pageTheme.dashedIcon}`}>
+                      <Icon name="PlusIcon" size={24} className={pageTheme.textSecondary} />
+                    </div>
+                    <span className={`font-bold ${pageTheme.dashedText}`}>{t('admin.floorPlan.addTable')}</span>
+                  </button>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
 
       {/* Sidebar / Toolbar ด้านซ้าย (หรือล่างในมือถือ) */}
-      <div className="w-full md:w-[400px] flex flex-col gap-4 order-2 md:order-1 md:overflow-y-auto md:pr-2">
+      <div className="w-full md:w-[400px] flex flex-col gap-4 order-1 md:overflow-y-auto md:pr-2">
         <div className={`${pageTheme.card} rounded-2xl shadow-sm border p-6 flex flex-col gap-6`}>
           <div className="flex items-center gap-4 mb-6">
             <div className={`p-3 rounded-2xl border transition-all duration-300 ${resolvedAdminTheme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-amber-100 border-amber-200'}`}>
@@ -617,6 +685,35 @@ export default function FloorPlanAdminPage() {
               <p className={`text-sm mt-0.5 font-medium ${resolvedAdminTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 {adminT('admin.floorPlan.subtitle', locale)}
               </p>
+            </div>
+          </div>
+
+          {/* Display View Switcher: สลับระหว่างมุมมองแผนผังกับมุมมองรายการ */}
+          <div className="space-y-3">
+            <div className={`text-xs font-bold ${pageTheme.textSecondary} uppercase tracking-widest`}>
+              {t('admin.floorPlan.displayView')}
+            </div>
+            <div className={`flex ${pageTheme.modeSwitch} p-1.5 rounded-2xl shadow-inner`}>
+              <button
+                onClick={() => setDisplayMode('map')}
+                className={`flex-1 min-w-max py-2.5 px-4 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${displayMode === 'map'
+                  ? pageTheme.modeActive
+                  : pageTheme.modeInactive
+                  }`}
+              >
+                <Icon name="MapIcon" size={16} />
+                {t('admin.floorPlan.view.map')}
+              </button>
+              <button
+                onClick={() => setDisplayMode('list')}
+                className={`flex-1 min-w-max py-2.5 px-4 text-[13px] font-black rounded-xl transition-all flex items-center justify-center gap-2 ${displayMode === 'list'
+                  ? pageTheme.modeActive
+                  : pageTheme.modeInactive
+                  }`}
+              >
+                <Icon name="ListBulletIcon" size={16} />
+                {t('admin.floorPlan.view.list')}
+              </button>
             </div>
           </div>
 
