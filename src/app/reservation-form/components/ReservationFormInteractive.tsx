@@ -210,7 +210,7 @@ const ReservationFormInteractive = () => {
 
   const guestOptions = [
     { value: '', label: t('form.guests.placeholder') },
-    ...Array.from({ length: 10 }, (_, i) => ({
+    ...Array.from({ length: 6 }, (_, i) => ({
       value: String(i + 1),
       label: `${i + 1} ${t('form.guests.label')}`,
     })),
@@ -220,18 +220,28 @@ const ReservationFormInteractive = () => {
   // ตรวจสอบข้อมูลนำเข้าตามกฎทางธุรกิจ (Business Rules)
   const validateField = (name: keyof FormData, value: string): string | undefined => {
     switch (name) {
-      case 'fullName':
-        if (!value.trim()) return t('validation.name.required');
+      case 'fullName': {
+        const trimmed = value.trim();
+        if (!trimmed) return t('validation.name.required');
+
+        // ตรวจสอบความยาว
+        if (trimmed.length < 3) return t('validation.name.short');
+        if (trimmed.length > 60) return locale === 'th' ? 'ชื่อยาวเกินไป (สูงสุด 60 ตัวอักษร)' : 'Name too long (max 60 characters)';
+
         // ต้องมีทั้งชื่อและนามสกุล (ตรวจสอบจากการเว้นวรรค)
-        if (!value.trim().includes(' ')) return t('validation.name.invalid');
-        if (value.trim().length < 2) return t('validation.name.short');
+        if (!trimmed.includes(' ')) return t('validation.name.invalid');
+
+        // ตรวจสอบอักขระที่ไม่ได้รับอนุญาต
+        const nameRegex = /^[a-zA-Z\u0e00-\u0e7f\s.-]+$/;
+        if (!nameRegex.test(trimmed)) return locale === 'th' ? 'ชื่อมีตัวอักษรที่ไม่ได้รับอนุญาต' : 'Name contains invalid characters';
+
         return undefined;
+      }
 
       case 'phone': {
         if (!value.trim()) return t('validation.phone.required');
-        // รองรับเบอร์โทรศัพท์หลากรูปแบบ (0xx-xxx-xxxx, 0xxxxxxxxx)
-        const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-        if (!phoneRegex.test(value.replace(/\s/g, ''))) return t('validation.phone.invalid');
+        // ต้องมี 10 หลัก
+        if (value.replace(/\D/g, '').length !== 10) return t('validation.phone.invalid');
         return undefined;
       }
 
@@ -243,8 +253,8 @@ const ReservationFormInteractive = () => {
 
       case 'guests':
         if (!value) return t('validation.guests.required');
-        // จำกัดจำนวนแขกสูงสุด 10 ท่านต่อการจองผ่านเว็บ
-        if (parseInt(value) > 10) return t('validation.guests.invalid');
+        // จำกัดจำนวนแขกสูงสุด 6 ท่านต่อการจองผ่านเว็บ
+        if (parseInt(value) > 6) return t('validation.guests.invalid');
         return undefined;
 
       case 'date':
@@ -279,12 +289,29 @@ const ReservationFormInteractive = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Real-time validation: ตรวจสอบความถูกต้องทันทีถ้าเคยสัมผัส field นั้นแล้ว
-    if (touched[name as keyof FormTouched]) {
-      const error = validateField(name as keyof FormData, value);
-      setErrors((prev) => ({ ...prev, [name]: error }));
+    // ล็อคเบอร์โทรให้กรอกได้แค่ตัวเลขและไม่เกิน 10 ตัว
+    if (name === 'phone') {
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+
+      if (touched.phone) {
+        const error = validateField('phone', numericValue);
+        setErrors((prev) => ({ ...prev, phone: error }));
+      }
+      return;
+    }
+
+    // ล็อคชื่อ-นามสกุล ให้กรอกได้เฉพาะตัวอักษรไทย อังกฤษ ช่องว่าง . -
+    if (name === 'fullName') {
+      const filteredValue = value.replace(/[^a-zA-Z\u0e00-\u0e7f\s.-]/g, '');
+      setFormData((prev) => ({ ...prev, [name]: filteredValue }));
+
+      if (touched.fullName) {
+        const error = validateField('fullName', filteredValue);
+        setErrors((prev) => ({ ...prev, fullName: error }));
+      }
+      return;
     }
   };
 
@@ -507,7 +534,7 @@ const ReservationFormInteractive = () => {
                     success={
                       touched.fullName && !errors.fullName && formData.fullName.trim() !== ''
                     }
-                    maxLength={50}
+                    maxLength={60}
                   />
                 </FormField>
 
@@ -529,7 +556,7 @@ const ReservationFormInteractive = () => {
                     placeholder={t('form.placeholder.phone')}
                     error={touched.phone && !!errors.phone}
                     success={touched.phone && !errors.phone && formData.phone.trim() !== ''}
-                    pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                    maxLength={10}
                   />
                 </FormField>
 
@@ -573,7 +600,7 @@ const ReservationFormInteractive = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     min={1}
-                    max={10}
+                    max={6}
                     error={touched.guests && !!errors.guests}
                     success={touched.guests && !errors.guests && formData.guests !== ''}
                   />
