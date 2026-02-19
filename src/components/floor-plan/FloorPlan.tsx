@@ -17,8 +17,8 @@ interface FloorPlanProps {
     selectedTableId?: number | null; // ID ของโต๊ะที่ถูกเลือกอยู่
     bookedTables?: { id: number; time: string }[]; // รายการโต๊ะที่ถูกจองแล้ว
     partySize?: number; // จำนวนลูกค้า (ใช้กรองโต๊ะที่นั่งไม่พอ)
-    width?: number; // ความกว้างของแผนผัง
-    height?: number; // ความสูงของแผนผัง
+    width?: number | string; // ความกว้างของแผนผัง
+    height?: number | string; // ความสูงของแผนผัง
     locale?: string; // ภาษา (ถ้าต้องการ Force)
     theme?: 'light' | 'dark'; // ธีม (Light/Dark)
 }
@@ -40,8 +40,8 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     selectedTableId,
     bookedTables = [],
     partySize,
-    width = 800,
-    height = 600,
+    width = '100%',
+    height = '100%',
     locale: propLocale,
     theme = 'dark',
 }) => {
@@ -102,54 +102,92 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
         if (draggingTableId === null || mode !== 'edit' || !containerRef.current || !onTableUpdate)
             return;
 
-        // ป้องกันการเลือกข้อความขณะลาก
         e.preventDefault();
-
         const containerRect = containerRef.current.getBoundingClientRect();
         const mouseX = e.clientX - containerRect.left;
         const mouseY = e.clientY - containerRect.top;
 
-        // คำนวณตำแหน่งใหม่
-        let newLeftPx = mouseX - dragOffset.x;
-        let newTopPx = mouseY - dragOffset.y;
+        updateTablePosition(mouseX, mouseY, containerRect);
+    };
 
-        // จำกัดขอบเขตไม่ให้ลากตกขอบ (Boundary Constraints)
+    // ฟังก์ชันจบการลาก (Mouse Up)
+    const handleMouseUp = () => {
+        setDraggingTableId(null);
+        dragStartRef.current = null;
+    };
+
+    // --- Touch Handlers for Mobile ---
+    const handleTouchStart = (e: React.TouchEvent, table: Table) => {
+        if (mode !== 'edit' || !containerRef.current) return;
+
+        // Prevent default only if we are actually dragging a table to allow scrolling otherwise
+        const touch = e.touches[0];
+        const containerRect = containerRef.current.getBoundingClientRect();
+
+        const tableLeftPx = (table.x / 100) * containerRect.width;
+        const tableTopPx = (table.y / 100) * containerRect.height;
+
+        const clickX = touch.clientX - containerRect.left;
+        const clickY = touch.clientY - containerRect.top;
+
+        setDragOffset({
+            x: clickX - tableLeftPx,
+            y: clickY - tableTopPx,
+        });
+        setDraggingTableId(table.id);
+        dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+
+        // Don't stop propagation completely or it might break other things, 
+        // but we need to prevent default scrolling while dragging
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (draggingTableId === null || mode !== 'edit' || !containerRef.current || !onTableUpdate)
+            return;
+
+        // CRITICAL: Prevent page scroll while dragging a table
+        if (e.cancelable) e.preventDefault();
+
+        const touch = e.touches[0];
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const mouseX = touch.clientX - containerRect.left;
+        const mouseY = touch.clientY - containerRect.top;
+
+        updateTablePosition(mouseX, mouseY, containerRect);
+    };
+
+    const handleTouchEnd = () => {
+        setDraggingTableId(null);
+        dragStartRef.current = null;
+    };
+
+    const updateTablePosition = (inputX: number, inputY: number, containerRect: DOMRect) => {
+        let newLeftPx = inputX - dragOffset.x;
+        let newTopPx = inputY - dragOffset.y;
+
         newLeftPx = Math.max(0, Math.min(newLeftPx, containerRect.width - 50));
         newTopPx = Math.max(0, Math.min(newTopPx, containerRect.height - 50));
 
-        // แปลงกลับเป็นค่าเปอร์เซ็นต์ (%)
         const newX = (newLeftPx / containerRect.width) * 100;
         const newY = (newTopPx / containerRect.height) * 100;
 
-        // Snap to grid (จัดให้ตรงแนวทีละ 2.5%)
         const snap = 2.5;
         const snappedX = Math.round(newX / snap) * snap;
         const snappedY = Math.round(newY / snap) * snap;
 
         const table = tables.find((t) => t.id === draggingTableId);
         if (table) {
-            // 🛡️ Logic ตรวจจับโซนอัตโนมัติ (Auto-Zone Detection)
             let detectedZone = 'Indoor';
-            if (snappedX > 70) {
-                detectedZone = 'Outdoor'; // ด้านขวาเป็น Outdoor
-            } else if (snappedX >= 6 && snappedX <= 44 && snappedY >= 46 && snappedY <= 94) {
-                detectedZone = 'VIP'; // พื้นที่มุมซ้ายล่างเป็น VIP
-            }
+            if (snappedX > 70) detectedZone = 'Outdoor';
+            else if (snappedX >= 6 && snappedX <= 44 && snappedY >= 46 && snappedY <= 94) detectedZone = 'VIP';
 
-            // ส่งค่า Update กลับไปที่ Parent Component
             onTableUpdate({
                 ...table,
                 x: Number(snappedX.toFixed(2)),
                 y: Number(snappedY.toFixed(2)),
-                zone: detectedZone, // อัปเดตโซนอัตโนมัติ
+                zone: detectedZone,
             });
         }
-    };
-
-    // ฟังก์ชันจบการลาก (Mouse Up)
-    const handleMouseUp = (e: MouseEvent, table?: Table) => {
-        setDraggingTableId(null);
-        dragStartRef.current = null;
     };
 
     // ฟังก์ชันคำนวณ Class CSS หลักของโต๊ะตามสถานะต่างๆ
@@ -329,7 +367,10 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     };
 
     return (
-        <div className="w-full flex flex-col">
+        <div
+            className="w-full flex flex-col"
+            style={{ height: typeof height === 'number' ? `${height}px` : height }}
+        >
             {/* แท็บเลือกโซน (แสดงด้านบน) */}
             {zones.length > 0 && (
                 <div className={`flex gap-2 mb-4 overflow-x-auto pb-2 border-b ${themeColors.zoneTabs} no-scrollbar`}>
@@ -377,11 +418,16 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
             {/* Container แผนผังหลัก (พื้นที่วางโต๊ะ) */}
             <div
                 ref={containerRef}
-                className={`relative border-4 rounded-3xl overflow-hidden shadow-2xl cursor-default group ${themeColors.container}`}
-                style={{ height: `${height}px`, width: '100%', minWidth: '800px' }}
+                className={`relative border-4 rounded-3xl overflow-hidden shadow-2xl cursor-default group flex-1 ${themeColors.container}`}
+                style={{
+                    width: typeof width === 'number' ? `${width}px` : width,
+                    touchAction: 'pan-y'
+                }}
                 onMouseMove={handleMouseMove}
-                onMouseUp={() => handleMouseUp}
-                onMouseLeave={() => setDraggingTableId(null)}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
             >
                 {/* ภาพพื้นหลังแผนผัง (Floor Background Layers) */}
                 <div className="absolute inset-0 pointer-events-none">
@@ -477,7 +523,9 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                                 height: `${table.height || 40}px`,
                             }}
                             onMouseDown={(e) => handleMouseDown(e, table)}
-                            onMouseUp={(e) => handleMouseUp(e, table)}
+                            onMouseUp={handleMouseUp}
+                            onTouchStart={(e) => handleTouchStart(e, table)}
+                            onTouchEnd={handleTouchEnd}
                             onClick={() => {
                                 // Logic การเลือกโต๊ะ
                                 if (mode === 'select') {
