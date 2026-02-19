@@ -44,6 +44,7 @@ export default function AdminAdvertisements() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
+  const [togglingId, setTogglingId] = useState<string | number | null>(null);
 
   const supabase = createClientSupabaseClient();
 
@@ -229,6 +230,7 @@ export default function AdminAdvertisements() {
   };
 
   const toggleActive = async (ad: Ad) => {
+    setTogglingId(ad.id);
     try {
       const res = await fetch('/api/ads', {
         method: 'PUT',
@@ -239,7 +241,7 @@ export default function AdminAdvertisements() {
         }),
       });
       if (res.ok) {
-        fetchAds();
+        await fetchAds();
       } else {
         const json = await res.json();
         alert(json.error || t('alert.failed', locale));
@@ -247,6 +249,8 @@ export default function AdminAdvertisements() {
     } catch (err) {
       console.error(err);
       alert(t('admin.advertisements.error.connect', locale));
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -454,7 +458,7 @@ export default function AdminAdvertisements() {
           </div>
         )}
 
-        {loading && (
+        {loading && ads.length === 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-muted/30 aspect-video rounded-3xl animate-pulse border border-border"></div>
@@ -491,7 +495,7 @@ export default function AdminAdvertisements() {
                 <div className="flex items-center gap-3">
                   <div className={`w-3 h-3 rounded-full ${ad.active !== false ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-gray-400'}`}></div>
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                    {ad.active !== false ? t('admin.advertisements.status.live', locale) : t('admin.advertisements.status.inactive', locale)}
+                    {ad.active !== false ? t('admin.advertisements.status.on', locale) : t('admin.advertisements.status.off', locale)}
                   </span>
                 </div>
 
@@ -517,21 +521,24 @@ export default function AdminAdvertisements() {
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     onClick={() => toggleActive(ad)}
+                    disabled={togglingId === ad.id}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${ad.active !== false
                       ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 shadow-sm border border-amber-500/20'
                       : 'bg-green-500/10 text-green-600 hover:bg-green-500/20 shadow-sm border border-green-500/20'
-                      }`}
+                      } disabled:opacity-50`}
                     title={ad.active !== false ? 'Turn Off' : 'Turn On'}
                   >
-                    {ad.active !== false ? (
+                    {togglingId === ad.id ? (
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                    ) : ad.active !== false ? (
                       <>
                         <EyeSlashIcon className="w-4 h-4" />
-                        {t('admin.advertisements.status.inactive', locale)}
+                        {t('admin.advertisements.status.off', locale)}
                       </>
                     ) : (
                       <>
                         <EyeIcon className="w-4 h-4" />
-                        {t('admin.advertisements.status.live', locale)}
+                        {t('admin.advertisements.status.on', locale)}
                       </>
                     )}
                   </button>
