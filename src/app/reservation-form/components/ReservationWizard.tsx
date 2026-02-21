@@ -169,16 +169,12 @@ const ReservationWizard = () => {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'tables' },
                 (payload) => {
-                    console.log('📢 Realtime Table Change detected:', payload);
                     fetchTables(); // Refetch เมื่อมีการเพิ่ม/แก้ไข/ลบโต๊ะ
                 }
             )
-            .subscribe((status) => {
-                console.log('📡 Table Realtime Subscription status:', status);
-            });
+            .subscribe();
 
         return () => {
-            console.log('🔌 Cleaning up Table Realtime channel');
             supabase.removeChannel(channel);
         };
     }, [fetchTables, supabase]);
