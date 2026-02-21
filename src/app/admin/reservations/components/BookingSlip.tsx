@@ -3,12 +3,16 @@ import React from 'react';
 interface BookingSlipProps {
   reservation: any;
   ref: any;
+  staffInfo?: {
+    staff_id: string;
+    full_name: string;
+  } | null;
 }
 
 // BookingSlip Component
 // คอมโพเนนต์สำหรับแสดงใบจอง (ใช้สำหรับการพิมพ์)
 export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
-  ({ reservation }, ref) => {
+  ({ reservation, staffInfo }, ref) => {
     if (!reservation) return null;
 
     // Format Date/Time helper
@@ -90,6 +94,20 @@ export const BookingSlip = React.forwardRef<HTMLDivElement, BookingSlipProps>(
             <p className="text-sm italic">"{reservation.special_requests}"</p>
           </div>
         )}
+
+        {/* Staff Info */}
+        {/* ข้อมูลพนักงานผู้ออกใบจอง */}
+        <div className="mb-4 border-b-2 border-dashed border-black pb-4">
+          <p className="font-bold text-xs text-gray-500 mb-1">ISSUED BY / ออกโดย</p>
+          {staffInfo ? (
+            <div className="text-sm">
+              <p className="font-bold">{staffInfo.full_name}</p>
+              <p className="text-xs text-gray-600">ID: {staffInfo.staff_id}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 italic">-</p>
+          )}
+        </div>
 
         {/* Footer */}
         {/* ส่วนท้าย (คำขอบคุณ, เวลาที่พิมพ์) */}
