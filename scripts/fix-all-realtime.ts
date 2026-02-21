@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🚀 Starting Comprehensive Realtime configuration fix...');
 
-    const tables = ['advertisements', 'reservations', 'feedback'];
+    const tables = ['advertisements', 'reservations', 'feedback', 'holidays'];
 
     try {
         // 1. Check if 'supabase_realtime' publication exists
