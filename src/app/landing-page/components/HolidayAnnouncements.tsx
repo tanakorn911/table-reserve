@@ -42,15 +42,17 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
     // 2. วนลูปเพื่อจัดกลุ่ม
     sorted.forEach((h) => {
       const prev = groups[groups.length - 1]; // กลุ่มล่าสุดที่สร้าง
-      const currDate = new Date(h.holiday_date + 'T00:00:00');
+      const [y, m, d] = h.holiday_date.split('-').map(Number);
+      const currDate = new Date(y, m - 1, d, 12, 0, 0);
 
       // เงื่อนไขการรวมกลุ่ม:
       // - ต้องมีกลุ่มก่อนหน้า
       // - รายละเอียด (Description) ต้องเหมือนกัน
       // - วันที่ต้องต่อเนื่องกัน (ต่างกัน 1 วัน)
       if (prev && prev.description === h.description) {
-        const lastDate = new Date(prev.endDate + 'T00:00:00');
-        const diffDays = (currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24);
+        const [py, pm, pd] = prev.endDate.split('-').map(Number);
+        const lastDate = new Date(py, pm - 1, pd, 12, 0, 0);
+        const diffDays = Math.round((currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
 
         if (diffDays === 1) {
           prev.endDate = h.holiday_date; // ขยายวันสิ้นสุดของกลุ่มเดิม
@@ -71,7 +73,8 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
 
   // Helper Function: จัดรูปแบบการแสดงผลวันที่ (เช่น 12 ม.ค.)
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00'); // เติมเวลาเพื่อป้องกัน Timezone shift
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d, 12, 0, 0); // เติมเวลาเพื่อป้องกัน Timezone shift
     return date.toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
       day: 'numeric',
       month: 'short',
@@ -80,7 +83,8 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
 
   // Helper Function: หาชื่อวันย่อ (เช่น จ., อ. หรือ Mon, Tue)
   const getDayName = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d, 12, 0, 0);
     return date.toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
       weekday: 'short',
     });
@@ -92,7 +96,7 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
         <div className="flex flex-col lg:flex-row items-center gap-6 max-w-5xl mx-auto">
 
           {/* 1. Icon Section: ไอคอนปฏิทินสีแดง */}
-          <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-200">
+          <div className="shrink-0 w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-200">
             <Icon name="CalendarDaysIcon" size={32} className="text-white" />
           </div>
 
@@ -105,7 +109,7 @@ const HolidayAnnouncements: React.FC<HolidayAnnouncementsProps> = ({ holidays })
           </div>
 
           {/* 3. Holiday Cards Section: รายการวันหยุด */}
-          <div className="flex flex-wrap justify-center lg:justify-end gap-3 flex-[2]">
+          <div className="flex flex-wrap justify-center lg:justify-end gap-3 flex-2">
             {groupedHolidays.map((group, idx) => (
               <div
                 key={idx}
