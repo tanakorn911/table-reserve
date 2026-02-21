@@ -262,7 +262,11 @@ export default function AdminSettingsPage() {
 
       if (!response.ok) {
         const err = await response.json();
-        alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + (err.error || 'Unknown error'));
+        if (response.status === 409) {
+          alert(locale === 'th' ? 'เกิดข้อผิดพลาด: วันที่บางวันถูกตั้งเป็นวันหยุดไปแล้ว' : 'Error: Some dates are already holidays');
+        } else {
+          alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + (err.error || 'Unknown error'));
+        }
         return;
       }
 

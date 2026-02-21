@@ -388,17 +388,52 @@ export default function FloorPlanAdminPage() {
     }
   }, [viewMode, checkDate, checkTime]);
 
-  // ฟังก์ชันอัพเดทข้อมูลโต๊ะ (แก้ไขชื่อ, ขนาด etc.)
+  // ฟังก์ชันอัพเดทตำแหน่งโต๊ะ (ใช้ตอนลาก — อัพเดทแค่ state ไม่เรียก API)
   const handleTableUpdate = (updatedTable: Table) => {
-    // เช็คชื่อซ้ำ (เฉพาะกรณีเปลี่ยนชื่อจริงๆ)
     const isDuplicate = tables.some(t => t.name.toLowerCase() === updatedTable.name.toLowerCase() && t.id !== updatedTable.id);
     if (isDuplicate) {
-      // ไม่ Alert ถี่เกินไปตอนลาก แต่กันไว้ใน state
+      return;
+    }
+    setTables((prev) => prev.map((t) => (t.id === updatedTable.id ? updatedTable : t)));
+  };
+
+  // ฟังก์ชันบันทึกรายละเอียดโต๊ะจาก Modal (เรียก API ทันที)
+  const handleTableSaveFromModal = async (updatedTable: Table) => {
+    const isDuplicate = tables.some(t => t.name.toLowerCase() === updatedTable.name.toLowerCase() && t.id !== updatedTable.id);
+    if (isDuplicate) {
+      alert(locale === 'th' ? 'ชื่อโต๊ะซ้ำ กรุณาเปลี่ยนชื่อ' : 'Duplicate table name');
       return;
     }
 
+    // อัพเดท state ก่อน (ให้ UI เปลี่ยนทันที)
     setTables((prev) => prev.map((t) => (t.id === updatedTable.id ? updatedTable : t)));
-    // 💡 ลบ API call ออกจากตรงนี้ เพื่อไม่ให้ยิงรัวๆ ตอนลากโต๊ะ (ย้ายไปรวมที่ปุ่มบันทึกทีเดียว)
+
+    // เรียก API บันทึกลง DB
+    try {
+      const response = await fetch(`/api/tables/${updatedTable.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: updatedTable.name,
+          capacity: updatedTable.capacity,
+          shape: updatedTable.shape,
+          zone: updatedTable.zone,
+          description: updatedTable.description,
+          x: updatedTable.x,
+          y: updatedTable.y,
+          width: updatedTable.width || 80,
+          height: updatedTable.height || 80,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        alert(err.error || 'Failed to update table');
+      }
+    } catch (error) {
+      console.error('Failed to save table:', error);
+      alert(locale === 'th' ? 'ไม่สามารถบันทึกได้' : 'Failed to save');
+    }
   };
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
@@ -445,10 +480,15 @@ export default function FloorPlanAdminPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            name: t.name,
+            capacity: t.capacity,
+            shape: t.shape,
+            zone: t.zone,
+            description: t.description,
             x: t.x,
             y: t.y,
-            width: 80,
-            height: 80,
+            width: t.width || 80,
+            height: t.height || 80,
           }),
         })
       );
@@ -852,7 +892,7 @@ export default function FloorPlanAdminPage() {
         table={editingTable}
         isOpen={!!editingTable}
         onClose={() => setEditingTable(null)}
-        onSave={handleTableUpdate}
+        onSave={handleTableSaveFromModal}
         onDelete={deleteTable}
         t={t}
       />

@@ -20,6 +20,7 @@ import { useAdminTheme } from '@/contexts/AdminThemeContext';
 import { useTranslation } from '@/lib/i18n';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useDraggableScroll } from '@/hooks/useDraggableScroll';
+import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 
 export default function AdminReservationsPage() {
   const locale = useAdminLocale();
@@ -48,6 +49,14 @@ export default function AdminReservationsPage() {
   const [printReservation, setPrintReservation] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Staff ID Dialog State (สำหรับถามรหัสพนักงานก่อนปริ้น)
+  const [showStaffIdDialog, setShowStaffIdDialog] = useState(false);
+  const [staffIdInput, setStaffIdInput] = useState('');
+  const [staffIdError, setStaffIdError] = useState('');
+  const [staffIdLoading, setStaffIdLoading] = useState(false);
+  const [pendingPrintReservation, setPendingPrintReservation] = useState<any>(null);
+  const [printStaffInfo, setPrintStaffInfo] = useState<{ staff_id: string; full_name: string } | null>(null);
+
   // Draggable Scroll Hook
   const { ref: scrollRef, events } = useDraggableScroll();
 
@@ -64,10 +73,56 @@ export default function AdminReservationsPage() {
   useEffect(() => {
     if (printReservation && printRef.current) {
       handlePrint();
-      // Reset after print dialog opens (optional, but good for UX)
-      // setTimeout(() => setPrintReservation(null), 1000);
     }
   }, [printReservation, handlePrint]);
+
+  // ฟังก์ชันเปิด dialog ถามรหัสพนักงานก่อนปริ้น
+  const openPrintDialog = (reservation: any) => {
+    setPendingPrintReservation(reservation);
+    setStaffIdInput('');
+    setStaffIdError('');
+    setPrintStaffInfo(null);
+    setShowStaffIdDialog(true);
+  };
+
+  // ฟังก์ชันยืนยันรหัสพนักงานและเริ่มปริ้น
+  const confirmStaffAndPrint = async () => {
+    if (!staffIdInput.trim()) {
+      setStaffIdError(locale === 'th' ? 'กรุณากรอกรหัสพนักงาน' : 'Please enter staff ID');
+      return;
+    }
+
+    setStaffIdLoading(true);
+    setStaffIdError('');
+
+    try {
+      const supabase = createClientSupabaseClient();
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('staff_id, full_name, role')
+        .eq('staff_id', staffIdInput.trim())
+        .single();
+
+      if (error || !profile) {
+        setStaffIdError(locale === 'th' ? 'ไม่พบรหัสพนักงานนี้ในระบบ' : 'Staff ID not found');
+        setStaffIdLoading(false);
+        return;
+      }
+
+      // ตั้งค่าข้อมูลพนักงานและเริ่มปริ้น
+      const staffData = {
+        staff_id: profile.staff_id || staffIdInput.trim(),
+        full_name: profile.full_name || '-',
+      };
+      setPrintStaffInfo(staffData);
+      setPrintReservation(pendingPrintReservation);
+      setShowStaffIdDialog(false);
+    } catch (err) {
+      setStaffIdError(locale === 'th' ? 'เกิดข้อผิดพลาด' : 'An error occurred');
+    } finally {
+      setStaffIdLoading(false);
+    }
+  };
 
   // ฟังก์ชันดึงข้อมูลการจองจาก API
   // แสดง loading เฉพาะครั้งแรก, ครั้งต่อไปจะ update แบบ background (ไม่กระพริบ)
@@ -543,7 +598,7 @@ export default function AdminReservationsPage() {
                     <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-1">
                         <button
-                          onClick={() => setPrintReservation(reservation)}
+                          onClick={() => openPrintDialog(reservation)}
                           className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
                           title={t('admin.reservations.actions.print')}
                         >
@@ -675,7 +730,7 @@ export default function AdminReservationsPage() {
               <div className="flex items-center justify-between pt-2">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setPrintReservation(reservation)}
+                    onClick={() => openPrintDialog(reservation)}
                     className="p-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 border border-gray-200 transition-colors"
                   >
                     <PrinterIcon className="w-5 h-5" />
@@ -734,8 +789,80 @@ export default function AdminReservationsPage() {
       />
 
       <div className="hidden">
-        <BookingSlip ref={printRef} reservation={printReservation} />
+        <BookingSlip ref={printRef} reservation={printReservation} staffInfo={printStaffInfo} />
       </div>
+
+      {/* Staff ID Dialog - ถามรหัสพนักงานก่อนปริ้น */}
+      {showStaffIdDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                {locale === 'th' ? '🖨️ ยืนยันก่อนพิมพ์' : '🖨️ Confirm before print'}
+              </h3>
+              <button
+                onClick={() => setShowStaffIdDialog(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              >
+                <XMarkIconSolid className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              {locale === 'th'
+                ? 'กรุณากรอกรหัสพนักงานเพื่อบันทึกผู้ออกใบจอง'
+                : 'Please enter your staff ID to record who issued this slip'}
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                {locale === 'th' ? 'รหัสพนักงาน' : 'Staff ID'}
+              </label>
+              <input
+                type="text"
+                value={staffIdInput}
+                onChange={(e) => { setStaffIdInput(e.target.value); setStaffIdError(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && confirmStaffAndPrint()}
+                placeholder={locale === 'th' ? 'เช่น ST-0001' : 'e.g. ST-0001'}
+                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg text-gray-900 font-bold text-center text-lg tracking-wider placeholder-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                autoFocus
+              />
+              {staffIdError && (
+                <p className="text-xs text-red-500 font-bold mt-1.5">⚠️ {staffIdError}</p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowStaffIdDialog(false)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 border border-gray-200 transition-colors"
+              >
+                {locale === 'th' ? 'ยกเลิก' : 'Cancel'}
+              </button>
+              <button
+                onClick={confirmStaffAndPrint}
+                disabled={staffIdLoading}
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {staffIdLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>{locale === 'th' ? 'ตรวจสอบ...' : 'Checking...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <PrinterIcon className="w-4 h-4" />
+                    <span>{locale === 'th' ? 'พิมพ์ใบจอง' : 'Print Slip'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
