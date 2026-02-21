@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from './components/AdminSidebar';
 import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { ArrowRightOnRectangleIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, Bars3Icon, UserCircleIcon } from '@heroicons/react/24/outline';
 import LanguageSwitcher, { useAdminLocale, adminT } from './components/LanguageSwitcher';
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext';
 import AdminThemeToggle from './components/AdminThemeToggle';
@@ -15,6 +15,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = createClientSupabaseClient();
   const [roleName, setRoleName] = useState(''); // ชื่อ Role ของผู้ใช้ปัจจุบัน
+  const [userName, setUserName] = useState(''); // ชื่อผู้ใช้ปัจจุบัน
   const [isLoading, setIsLoading] = useState(true); // สถานะการโหลดข้อมูล User
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // สถานะเปิด/ปิด Sidebar (Mobile)
   const locale = useAdminLocale(); // ภาษาที่เลือกใช้ใน Admin
@@ -36,9 +37,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           // ดึงข้อมูล Role จากตาราง profiles หรือ user_metadata
           const { data: profile } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, full_name, email')
             .eq('id', user.id)
             .single();
+
+          // ตั้งค่าชื่อผู้ใช้ (ใช้ full_name, ถ้าไม่มีให้ใช้ email)
+          setUserName(profile?.full_name || profile?.email || user.email || '');
 
           const currentRole = profile?.role || user.user_metadata?.role;
 
@@ -120,10 +124,26 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
           {/* ขวา: Role, Theme, Language, Logout */}
           <div className="flex items-center gap-3">
-            {/* Role Tag (แสดงเฉพาะ Desktop) */}
-            <span className={`hidden sm:inline-block text-[10px] md:text-sm font-bold px-2 md:px-3 py-1 rounded-full border whitespace-nowrap ${themeClasses.roleTag}`}>
-              {roleName || adminT('header.role.checking', locale)}
-            </span>
+            {/* ชื่อผู้ใช้ + Role Tag (แสดงเฉพาะ Desktop) */}
+            <div className={`hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl border transition-all ${resolvedAdminTheme === 'dark'
+                ? 'bg-gray-700/50 border-gray-600/50'
+                : 'bg-gray-50 border-gray-200'
+              }`}>
+              <UserCircleIcon className={`w-8 h-8 flex-shrink-0 ${resolvedAdminTheme === 'dark' ? 'text-yellow-400/80' : 'text-amber-500/80'
+                }`} />
+              <div className="flex flex-col leading-tight">
+                {userName && (
+                  <span className={`text-sm font-semibold whitespace-nowrap ${resolvedAdminTheme === 'dark' ? 'text-gray-100' : 'text-gray-800'
+                    }`}>
+                    {userName}
+                  </span>
+                )}
+                <span className={`text-[11px] font-medium whitespace-nowrap ${resolvedAdminTheme === 'dark' ? 'text-yellow-400/70' : 'text-amber-600/70'
+                  }`}>
+                  {roleName || adminT('header.role.checking', locale)}
+                </span>
+              </div>
+            </div>
 
             {/* Theme & Language Toggle */}
             <AdminThemeToggle size="sm" />
