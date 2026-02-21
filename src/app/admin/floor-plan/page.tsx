@@ -276,7 +276,7 @@ export default function FloorPlanAdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [viewMode, setViewMode] = useState<'edit' | 'check'>('edit'); // โหมด: แก้ไข หรือ ตรวจสอบ
-  const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
+  const [checkDate, setCheckDate] = useState(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }));
   const [checkTime, setCheckTime] = useState('18:00');
   const [bookedTables, setBookedTables] = useState<any[]>([]);
   const [displayMode, setDisplayMode] = useState<'map' | 'list'>('map');

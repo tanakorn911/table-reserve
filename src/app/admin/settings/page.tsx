@@ -77,6 +77,9 @@ export default function AdminSettingsPage() {
   const [holidayEndDate, setHolidayEndDate] = useState('');
   const [holidayDesc, setHolidayDesc] = useState('');
   const [holidaysLoading, setHolidaysLoading] = useState(true);
+  const [editingHolidayGroup, setEditingHolidayGroup] = useState<string | null>(null);
+  const [editHolidayDesc, setEditHolidayDesc] = useState('');
+  const [editingHolidayIds, setEditingHolidayIds] = useState<string[] | null>(null);
 
   const supabase = createClientSupabaseClient();
 
@@ -238,16 +241,30 @@ export default function AdminSettingsPage() {
     if (!holidayDate) return;
 
     try {
+      if (editingHolidayIds) {
+        // Mode Edit: Delete old records first
+        const delRes = await fetch(`/api/holidays?ids=${editingHolidayIds.join(',')}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!delRes.ok) throw new Error('Failed to remove old holiday records');
+      }
+
       const datesToInsert = [];
 
       if (holidayEndDate && holidayEndDate > holidayDate) {
         // Range mode
-        const start = new Date(holidayDate + 'T00:00:00');
-        const end = new Date(holidayEndDate + 'T00:00:00');
+        const [yS, mS, dS] = holidayDate.split('-').map(Number);
+        const [yE, mE, dE] = holidayEndDate.split('-').map(Number);
+        const start = new Date(yS, mS - 1, dS, 12, 0, 0);
+        const end = new Date(yE, mE - 1, dE, 12, 0, 0);
 
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
           datesToInsert.push({
-            holiday_date: d.toISOString().split('T')[0],
+            holiday_date: `${year}-${month}-${day}`,
             description: holidayDesc,
           });
         }
@@ -269,10 +286,11 @@ export default function AdminSettingsPage() {
         return;
       }
 
-      alert(locale === 'th' ? 'เพิ่มวันหยุดเรียบร้อย' : 'Holiday added successfully');
-      setHolidayDate('');
-      setHolidayEndDate('');
-      setHolidayDesc('');
+      alert(editingHolidayIds 
+        ? (locale === 'th' ? 'แก้ไขวันหยุดเรียบร้อย' : 'Holiday updated successfully')
+        : (locale === 'th' ? 'เพิ่มวันหยุดเรียบร้อย' : 'Holiday added successfully'));
+      
+      handleCancelEditHoliday();
 
       // Refresh
       const holidaysRes = await fetch('/api/holidays');
@@ -284,8 +302,25 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleDeleteHoliday = async (id: string, groupKey?: string) => {
-    const isAll = id === 'all';
+  const handleStartEditHoliday = (group: any) => {
+    setHolidayDate(group.startDate);
+    setHolidayEndDate(group.endDate);
+    setHolidayDesc(group.description || '');
+    setEditingHolidayIds(group.ids);
+    
+    // Smooth scroll to top of holiday section or form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEditHoliday = () => {
+    setHolidayDate('');
+    setHolidayEndDate('');
+    setHolidayDesc('');
+    setEditingHolidayIds(null);
+  };
+
+  const handleDeleteHoliday = async (holidayIdOrIds: string, groupKey?: string) => {
+    const isAll = holidayIdOrIds === 'all';
     const confirmMsg = isAll
       ? (locale === 'th' ? 'ต้องการล้างข้อมูลวันหยุดทั้งหมดใช่หรือไม่?' : 'Are you sure you want to clear all holidays?')
       : (locale === 'th' ? 'ต้องการลบกลุ่มวันหยุดนี้ใช่หรือไม่?' : 'Are you sure you want to delete this holiday group?');
@@ -296,10 +331,12 @@ export default function AdminSettingsPage() {
       let url = '/api/holidays?';
       if (isAll) {
         url += 'all=true';
+      } else if (holidayIdOrIds.includes(',')) {
+        url += `ids=${holidayIdOrIds}`;
       } else if (groupKey) {
         url += `description=${encodeURIComponent(groupKey)}`;
       } else {
-        url += `id=${id}`;
+        url += `id=${holidayIdOrIds}`;
       }
 
       const response = await fetch(url, { method: 'DELETE', credentials: 'include' });
@@ -320,6 +357,42 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // แก้ไขชื่อกลุ่มวันหยุด
+  const handleEditHoliday = async (oldDescription: string) => {
+    if (editHolidayDesc.trim() === oldDescription) {
+      setEditingHolidayGroup(null);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/holidays', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          oldDescription: oldDescription,
+          newDescription: editHolidayDesc.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update');
+      }
+
+      // Refresh
+      const holidaysRes = await fetch('/api/holidays');
+      const holidaysJson = await holidaysRes.json();
+      if (holidaysJson.data) setHolidays(holidaysJson.data);
+
+      setEditingHolidayGroup(null);
+      alert(locale === 'th' ? 'แก้ไขวันหยุดเรียบร้อย' : 'Holiday updated successfully');
+    } catch (e: any) {
+      console.error(e);
+      alert((locale === 'th' ? 'เกิดข้อผิดพลาด: ' : 'Error: ') + e.message);
+    }
+  };
+
   // Helper function to group consecutive holiday dates
   const getGroupedHolidays = () => {
     if (holidays.length === 0) return [];
@@ -329,11 +402,13 @@ export default function AdminSettingsPage() {
 
     sorted.forEach((h, i) => {
       const prev = groups[groups.length - 1];
-      const currDate = new Date(h.holiday_date);
+      const [y, m, d] = h.holiday_date.split('-').map(Number);
+      const currDate = new Date(y, m - 1, d, 12, 0, 0);
 
       if (prev && prev.description === h.description) {
-        const lastDate = new Date(prev.endDate);
-        const diffDays = (currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24);
+        const [py, pm, pd] = prev.endDate.split('-').map(Number);
+        const lastDate = new Date(py, pm - 1, pd, 12, 0, 0);
+        const diffDays = Math.round((currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
 
         if (diffDays === 1) {
           prev.endDate = h.holiday_date;
@@ -860,38 +935,89 @@ export default function AdminSettingsPage() {
                   className="px-4 py-3 bg-white border border-red-100 rounded-xl text-base font-medium w-full focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all shadow-sm"
                 />
               </div>
-              <button
-                onClick={handleAddHoliday}
-                className="col-span-2 mt-2 py-4 bg-red-600 text-white font-black rounded-xl text-sm uppercase tracking-[0.2em] hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-600/20 flex items-center justify-center gap-2"
-              >
-                <CalendarDaysIcon className="w-5 h-5" />
-                {locale === 'th' ? 'ยืนยันเพิ่มวันหยุด' : 'Confirm Add Holiday'}
-              </button>
+              <div className="col-span-2 flex gap-2">
+                <button
+                  onClick={handleAddHoliday}
+                  className={`flex-1 mt-2 py-4 ${editingHolidayIds ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'} text-white font-black rounded-xl text-sm uppercase tracking-[0.2em] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2`}
+                >
+                  {editingHolidayIds ? <PencilIcon className="w-5 h-5" /> : <CalendarDaysIcon className="w-5 h-5" />}
+                  {editingHolidayIds 
+                    ? (locale === 'th' ? 'บันทึกการแก้ไข' : 'Save Changes')
+                    : (locale === 'th' ? 'ยืนยันเพิ่มวันหยุด' : 'Confirm Add Holiday')}
+                </button>
+                {editingHolidayIds && (
+                  <button
+                    onClick={handleCancelEditHoliday}
+                    className="mt-2 px-6 py-4 bg-gray-200 text-gray-600 font-black rounded-xl text-sm uppercase transition-all hover:bg-gray-300"
+                  >
+                    {locale === 'th' ? 'ยกเลิก' : 'Cancel'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {getGroupedHolidays().map((group, idx) => (
-                <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between hover:border-red-200 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-red-100 text-red-700 w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
-                      <span className="text-sm font-black">{group.count}</span>
+                <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 hover:border-red-200 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="bg-red-100 text-red-700 w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
+                        <span className="text-sm font-black">{group.count}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900">
+                          {group.startDate === group.endDate
+                            ? group.startDate
+                            : `${group.startDate} ถึง ${group.endDate}`}
+                        </p>
+                        {editingHolidayGroup === group.description ? (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <input
+                              type="text"
+                              value={editHolidayDesc}
+                              onChange={(e) => setEditHolidayDesc(e.target.value)}
+                              className="px-2 py-1 text-xs border border-red-200 rounded-md w-full focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleEditHoliday(group.description);
+                                if (e.key === 'Escape') setEditingHolidayGroup(null);
+                              }}
+                            />
+                            <button
+                              onClick={() => handleEditHoliday(group.description)}
+                              className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 font-bold shrink-0"
+                            >
+                              {locale === 'th' ? 'บันทึก' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => setEditingHolidayGroup(null)}
+                              className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded-md hover:bg-gray-300 font-bold shrink-0"
+                            >
+                              {locale === 'th' ? 'ยกเลิก' : 'Cancel'}
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-600 font-medium">{group.description || (locale === 'th' ? 'ไม่ระบุสาเหตุ' : 'No reason')}</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">
-                        {group.startDate === group.endDate
-                          ? group.startDate
-                          : `${group.startDate} ถึง ${group.endDate}`}
-                      </p>
-                      <p className="text-xs text-gray-600 font-medium">{group.description || (locale === 'th' ? 'ไม่ระบุสาเหตุ' : 'No reason')}</p>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <button
+                        onClick={() => handleStartEditHoliday(group)}
+                        className={`p-2 ${editingHolidayIds && editingHolidayIds[0] === group.ids[0] ? 'text-blue-600 bg-blue-50' : 'text-blue-500 hover:bg-blue-50'} rounded-lg transition-all`}
+                        title={locale === 'th' ? 'แก้ไขวันหยุด' : 'Edit holiday'}
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteHoliday(group.ids.join(','))}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title={locale === 'th' ? 'ลบวันหยุดนี้' : 'Delete this holiday'}
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDeleteHoliday(group.ids[0], group.description)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                    title={locale === 'th' ? 'ลบวันหยุดนี้' : 'Delete this holiday'}
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
                 </div>
               ))}
               {getGroupedHolidays().length === 0 && (
