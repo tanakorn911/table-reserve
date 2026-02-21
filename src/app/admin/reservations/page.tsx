@@ -203,6 +203,7 @@ export default function AdminReservationsPage() {
       const response = await fetch(`/api/reservations/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -230,6 +231,7 @@ export default function AdminReservationsPage() {
     try {
       const response = await fetch(`/api/reservations/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -259,6 +261,7 @@ export default function AdminReservationsPage() {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 

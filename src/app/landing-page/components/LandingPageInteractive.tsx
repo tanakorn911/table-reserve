@@ -264,7 +264,7 @@ const LandingPageInteractive: React.FC = () => {
     // ฟังก์ชันดึงรายการวันหยุดจาก Supabase
     const fetchHolidays = async () => {
       try {
-        const today = new Date().toISOString().split('T')[0]; // วันที่ปัจจุบันรูปแบบ YYYY-MM-DD
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // วันที่ปัจจุบันรูปแบบ YYYY-MM-DD
         // Query วันหยุดที่มีวันที่ >= วันนี้ เรียงตามวันที่
         const { data } = await supabase
           .from('holidays')

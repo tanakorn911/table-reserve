@@ -131,6 +131,9 @@ export async function middleware(request: NextRequest) {
             // ✅ อนุญาต: จัดการการจอง (Confirm/Cancel/Check-in)
             if (path.startsWith('/api/reservations')) return response;
 
+            // ✅ อนุญาต: จัดการ Feedback (ดูและลบรีวิวจากลูกค้า)
+            if (path.startsWith('/api/feedback')) return response;
+
             // ❌ ห้าม: แก้ไขผังโต๊ะ, ตั้งค่าร้าน, หรือจัดการโฆษณา
             if (path.startsWith('/api/tables') || path.startsWith('/api/settings') || path.startsWith('/api/advertisements')) {
                 return NextResponse.json({ error: 'Permission Denied: Admin role required' }, { status: 403 });

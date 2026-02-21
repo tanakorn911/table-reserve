@@ -86,10 +86,7 @@ export default function DashboardPage() {
   // ฟังก์ชันดึงข้อมูล Dashboard ทั้งหมด
   const fetchDashboardData = async () => {
     try {
-      // คำนวณวันที่ปัจจุบัน (ตามเวลาไทย UTC+7)
-      const now = new Date();
-      const thailandTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-      const todayStr = thailandTime.toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
       // ดึงข้อมูลการจองทั้งหมด
       const allRes = await fetch('/api/reservations');
@@ -190,7 +187,7 @@ export default function DashboardPage() {
   const handleExportCSV = () => {
     if (allReservations.length === 0) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     const headers = ['ID', 'Guest Name', 'Phone', 'Party Size', 'Date', 'Time', 'Status', 'Table'];
     const rows = allReservations.map(r => [
       r.id,
@@ -225,7 +222,7 @@ export default function DashboardPage() {
     try {
       // วนลบทีละรายการ (TODO: ควรทำ API สำหรับ Bulk Delete)
       for (const r of allReservations) {
-        await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' });
+        await fetch(`/api/reservations/${r.id}`, { method: 'DELETE', credentials: 'include' });
       }
       await fetchDashboardData();
     } catch (error) {
@@ -448,7 +445,7 @@ export default function DashboardPage() {
                   const [h, m] = r.reservation_time.split(':').map(Number);
                   const resTime = new Date();
                   resTime.setHours(h, m, 0);
-                  const isComingSoon = r.reservation_date === new Date().toISOString().split('T')[0] &&
+                  const isComingSoon = r.reservation_date === new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) &&
                     resTime.getTime() > now.getTime() &&
                     (resTime.getTime() - now.getTime()) < 3600000; // น้อยกว่า 1 ชม.
 

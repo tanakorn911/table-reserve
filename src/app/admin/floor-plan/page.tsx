@@ -276,7 +276,7 @@ export default function FloorPlanAdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [viewMode, setViewMode] = useState<'edit' | 'check'>('edit'); // โหมด: แก้ไข หรือ ตรวจสอบ
-  const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
+  const [checkDate, setCheckDate] = useState(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }));
   const [checkTime, setCheckTime] = useState('18:00');
   const [bookedTables, setBookedTables] = useState<any[]>([]);
   const [displayMode, setDisplayMode] = useState<'map' | 'list'>('map');
@@ -447,6 +447,7 @@ export default function FloorPlanAdminPage() {
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -479,6 +480,7 @@ export default function FloorPlanAdminPage() {
         fetch(`/api/tables/${t.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             name: t.name,
             capacity: t.capacity,
@@ -519,6 +521,7 @@ export default function FloorPlanAdminPage() {
       const response = await fetch('/api/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: newName,
           capacity: 4,
@@ -544,7 +547,7 @@ export default function FloorPlanAdminPage() {
   // ฟังก์ชันลบโต๊ะ
   const deleteTable = async (id: number) => {
     try {
-      await fetch(`/api/tables/${id}`, { method: 'DELETE' });
+      await fetch(`/api/tables/${id}`, { method: 'DELETE', credentials: 'include' });
       setTables((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
       console.error(err);
