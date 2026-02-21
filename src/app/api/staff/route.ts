@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
         const { error: profileError } = await supabase
             .from('profiles')
-            .insert([profileData]);
+            .upsert([profileData]);
 
         if (profileError) {
             console.error('Profile creation error:', profileError);

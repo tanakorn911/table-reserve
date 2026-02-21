@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { createClientSupabaseClient } from '@/lib/supabase/client';
 import { useAdminLocale } from '@/app/admin/components/LanguageSwitcher';
 import { useAdminTheme } from '@/contexts/AdminThemeContext';
 
@@ -16,7 +15,6 @@ interface PasswordChangeModalProps {
 export default function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProps) {
     const { resolvedAdminTheme } = useAdminTheme();
     const locale = useAdminLocale();
-    const supabase = createClientSupabaseClient();
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -50,22 +48,24 @@ export default function PasswordChangeModal({ isOpen, onClose }: PasswordChangeM
         setLoading(true);
 
         try {
-            // 1. Re-authenticate to verify current password (Optional but recommended security practice)
-            // 1. ยืนยันตัวตนซ้ำด้วยรหัสผ่านปัจจุบัน (เพื่อความปลอดภัย)
-            // Note: Supabase doesn't have a direct "verify password" without signing in, 
-            // but updateUser with password change handles it if the user is already signed in securely.
-            // However, for strict "Current Password" check, we might need to rely on custom logic or 
-            // just trust that the active session is valid and proceed to update.
-            // For this demo, we'll proceed directly to update.
-
-            // 2. Update password
-            // 2. อัปเดตรหัสผ่านใหม่
-            const { error } = await supabase.auth.updateUser({
-                password: passwordForm.newPassword
+            // เรียก API เพื่อเปลี่ยนรหัสผ่าน (API จะตรวจสอบรหัสผ่านปัจจุบันให้ฝั่ง Server)
+            const res = await fetch('/api/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    currentPassword: passwordForm.currentPassword,
+                    newPassword: passwordForm.newPassword,
+                }),
             });
 
-            if (error) {
-                throw error;
+            const data = await res.json();
+
+            if (!res.ok) {
+                // แสดง error ภาษาไทยถ้ารหัสผ่านปัจจุบันไม่ถูกต้อง
+                if (res.status === 401 && data.error === 'Current password is incorrect') {
+                    throw new Error(locale === 'th' ? 'รหัสผ่านปัจจุบันไม่ถูกต้อง' : 'Current password is incorrect');
+                }
+                throw new Error(data.error || (locale === 'th' ? 'เกิดข้อผิดพลาด' : 'An error occurred'));
             }
 
             alert(locale === 'th' ? 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' : 'Password changed successfully');
