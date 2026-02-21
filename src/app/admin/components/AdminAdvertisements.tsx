@@ -177,6 +177,7 @@ export default function AdminAdvertisements() {
       const res = await fetch('/api/ads', {
         method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
@@ -208,6 +209,7 @@ export default function AdminAdvertisements() {
       const res = await fetch('/api/ads', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id }),
       });
       if (res.ok) {
@@ -235,6 +237,7 @@ export default function AdminAdvertisements() {
       const res = await fetch('/api/ads', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...ad,
           active: ad.active === false ? true : false
