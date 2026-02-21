@@ -103,10 +103,8 @@ function generateTimeSlots(
   }
 
   // Get current time in Thailand (UTC+7)
-  const now = new Date();
-  const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
-  const thailandTime = new Date(utcTime + 7 * 3600000);
-  const todayStr = thailandTime.toISOString().split('T')[0];
+  const thailandTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+  const todayStr = thailandTime.toLocaleDateString('en-CA');
 
   const currentTotalMinutes = thailandTime.getHours() * 60 + thailandTime.getMinutes();
 
