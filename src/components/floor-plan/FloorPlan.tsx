@@ -217,8 +217,8 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                 // ถูกจอง: สีแดงอ่อน, กดไม่ได้
                 base += ' bg-red-100 border-red-300 text-red-700 cursor-not-allowed';
             } else if (isCapacityLow) {
-                // ที่นั่งไม่พอ: สีจางลง
-                base += ' bg-gray-100/50 border-gray-200 text-gray-300 cursor-not-allowed';
+                // ที่นั่งไม่พอ: สีส้ม/เหลือง จางลง + ขอบประ
+                base += ' bg-amber-100/60 border-amber-300/80 text-amber-400 cursor-not-allowed opacity-50';
             } else if (isSelected) {
                 // ถูกเลือก: สีหลัก (Primary), ขยายใหญ่ขึ้น
                 base +=
@@ -413,6 +413,12 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                     <div className="w-4 h-4 bg-[#FEE2E2] border border-[#FCA5A5] rounded"></div>
                     <span>{t('admin.floorPlan.legend.booked')}</span>
                 </div>
+                {partySize && mode === 'select' && (
+                    <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-amber-100 border border-amber-300 rounded opacity-50"></div>
+                        <span>{targetLocale === 'th' ? 'ที่นั่งไม่พอ' : 'Too Small'}</span>
+                    </div>
+                )}
             </div>
 
             {/* Container แผนผังหลัก (พื้นที่วางโต๊ะ) */}
@@ -569,6 +575,13 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
                                     size={24}
                                     className="text-white drop-shadow-md animate-in zoom-in duration-300 absolute -top-2 -right-2 bg-primary rounded-full"
                                 />
+                            )}
+
+                            {/* Badge แสดงที่นั่งไม่พอ */}
+                            {isCapacityLow && !isBooked && (
+                                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap z-30 px-1.5 py-0.5 rounded text-[8px] font-black bg-amber-500 text-white shadow">
+                                    {targetLocale === 'th' ? 'ที่นั่งไม่พอ' : 'Too small'}
+                                </div>
                             )}
                         </div>
                     );

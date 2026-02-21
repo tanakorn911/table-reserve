@@ -134,31 +134,54 @@ const ReservationWizard = () => {
         setMinDate(`${year}-${month}-${day}`);
     }, []);
 
-    // Effect: ดึงข้อมูลโต๊ะทั้งหมดจาก API
-    useEffect(() => {
-        const fetchTables = async () => {
-            try {
-                const response = await fetch('/api/tables');
-                const result = await response.json();
-                if (result.data) {
-                    // จัดรูปแบบข้อมูลโต๊ะและเพิ่มค่า default สำหรับ Layout
-                    const tablesWithLayout = result.data.map((t: any) => ({
-                        ...t,
-                        x: t.x ?? 0,
-                        y: t.y ?? 0,
-                        width: t.width || 80,
-                        height: t.height || 60,
-                        shape: t.shape || 'rectangle',
-                        zone: t.zone || 'Indoor',
-                    }));
-                    setTables(tablesWithLayout);
-                }
-            } catch (error) {
-                console.error('Failed to fetch tables:', error);
+    // ฟังก์ชันดึงข้อมูลโต๊ะทั้งหมดจาก API
+    const fetchTables = useCallback(async () => {
+        try {
+            // ใส่ cache: 'no-store' เพื่อให้ได้ข้อมูลใหม่ล่าสุดเสมอในโหมด Realtime
+            const response = await fetch('/api/tables', { cache: 'no-store' });
+            const result = await response.json();
+            if (result.data) {
+                // จัดรูปแบบข้อมูลโต๊ะและเพิ่มค่า default สำหรับ Layout
+                const tablesWithLayout = result.data.map((t: any) => ({
+                    ...t,
+                    x: t.x ?? 0,
+                    y: t.y ?? 0,
+                    width: t.width || 80,
+                    height: t.height || 60,
+                    shape: t.shape || 'rectangle',
+                    zone: t.zone || 'Indoor',
+                }));
+                setTables(tablesWithLayout);
             }
-        };
-        fetchTables();
+        } catch (error) {
+            console.error('Failed to fetch tables:', error);
+        }
     }, []);
+
+    // Effect: ดึงข้อมูลโต๊ะครั้งแรก + Realtime subscription อัพเดทเมื่อ admin แก้ไขโต๊ะ
+    useEffect(() => {
+        fetchTables();
+
+        // Supabase Realtime: listen การเปลี่ยนแปลงตาราง tables
+        const channel = supabase
+            .channel('tables-realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'tables' },
+                (payload) => {
+                    console.log('📢 Realtime Table Change detected:', payload);
+                    fetchTables(); // Refetch เมื่อมีการเพิ่ม/แก้ไข/ลบโต๊ะ
+                }
+            )
+            .subscribe((status) => {
+                console.log('📡 Table Realtime Subscription status:', status);
+            });
+
+        return () => {
+            console.log('🔌 Cleaning up Table Realtime channel');
+            supabase.removeChannel(channel);
+        };
+    }, [fetchTables, supabase]);
 
     // ฟังก์ชันดึงข้อมูลโต๊ะที่ถูกจองตามวันและเวลาที่เลือก
     const fetchBookedTables = useCallback(async () => {
@@ -168,7 +191,7 @@ const ReservationWizard = () => {
         }
 
         try {
-            const response = await fetch(`/api/reservations?date=${formData.date}`);
+            const response = await fetch(`/api/reservations?date=${formData.date}`, { cache: 'no-store' });
             const result = await response.json();
 
             if (result.data) {
@@ -216,14 +239,28 @@ const ReservationWizard = () => {
         }
     }, [formData.date, formData.time]); // Dependency: date และ time เปลี่ยนต้องเช็คใหม่
 
-    // Effect: โหลดข้อมูลการจองเมื่ออยู่ในขั้นตอนที่ 2 (เลือกโต๊ะ) และ Poll ทุก 10 วินาที
+    // Effect: Realtime subscription อัพเดทโต๊ะที่ถูกจองเมื่อมีการเปลี่ยนแปลงในตาราง reservations
     useEffect(() => {
         if (step === 2) {
-            fetchBookedTables();
-            const interval = setInterval(fetchBookedTables, 10000);
-            return () => clearInterval(interval);
+            fetchBookedTables(); // โหลดครั้งแรกเมื่อเข้า step 2
+
+            // ตั้ง Supabase Realtime subscription
+            const channel = supabase
+                .channel('reservations-realtime')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'reservations' },
+                    () => {
+                        fetchBookedTables(); // Refetch เมื่อมีการเปลี่ยนแปลงใดๆ
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
-    }, [step, fetchBookedTables]);
+    }, [step, fetchBookedTables, supabase]);
 
     // Effect: สร้าง URL สำหรับ Preview รูปสลิป
     useEffect(() => {
