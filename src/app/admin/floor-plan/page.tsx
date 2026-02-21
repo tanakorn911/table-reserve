@@ -412,6 +412,7 @@ export default function FloorPlanAdminPage() {
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -444,6 +445,7 @@ export default function FloorPlanAdminPage() {
         fetch(`/api/tables/${t.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             x: t.x,
             y: t.y,
@@ -479,6 +481,7 @@ export default function FloorPlanAdminPage() {
       const response = await fetch('/api/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: newName,
           capacity: 4,
@@ -504,7 +507,7 @@ export default function FloorPlanAdminPage() {
   // ฟังก์ชันลบโต๊ะ
   const deleteTable = async (id: number) => {
     try {
-      await fetch(`/api/tables/${id}`, { method: 'DELETE' });
+      await fetch(`/api/tables/${id}`, { method: 'DELETE', credentials: 'include' });
       setTables((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
       console.error(err);

@@ -179,6 +179,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/staff', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id: profileId, role: newRole })
       });
 
@@ -214,6 +215,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           key: 'business_hours',
           value: businessHours,
@@ -257,6 +259,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/holidays', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ dates: datesToInsert }),
       });
 
@@ -299,7 +302,7 @@ export default function AdminSettingsPage() {
         url += `id=${id}`;
       }
 
-      const response = await fetch(url, { method: 'DELETE' });
+      const response = await fetch(url, { method: 'DELETE', credentials: 'include' });
 
       if (!response.ok) {
         const err = await response.json();
@@ -419,6 +422,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/staff', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(staffFormData),
       });
 
@@ -456,6 +460,7 @@ export default function AdminSettingsPage() {
     try {
       const response = await fetch(`/api/staff?id=${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -484,6 +489,7 @@ export default function AdminSettingsPage() {
       const response = await fetch('/api/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(newStaffFormData),
       });
 

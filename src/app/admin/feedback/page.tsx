@@ -19,7 +19,7 @@ import { createClientSupabaseClient } from '@/lib/supabase/client';
 // อินเทอร์เฟซสำหรับข้อมูล Feedback แต่ละรายการ
 interface FeedbackItem {
     id: string;
-    reservation_id: string;
+    reservation_id: string; 
     rating: number;
     comment: string | null;
     customer_name: string | null;
@@ -150,6 +150,7 @@ export default function FeedbackPage() {
         try {
             const response = await fetch(`/api/feedback?id=${id}`, {
                 method: 'DELETE',
+                credentials: 'include',
             });
 
             const result = await response.json();

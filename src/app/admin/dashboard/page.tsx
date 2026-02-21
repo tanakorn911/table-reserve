@@ -225,7 +225,7 @@ export default function DashboardPage() {
     try {
       // วนลบทีละรายการ (TODO: ควรทำ API สำหรับ Bulk Delete)
       for (const r of allReservations) {
-        await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' });
+        await fetch(`/api/reservations/${r.id}`, { method: 'DELETE', credentials: 'include' });
       }
       await fetchDashboardData();
     } catch (error) {
