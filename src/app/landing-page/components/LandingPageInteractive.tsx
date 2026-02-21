@@ -284,16 +284,29 @@ const LandingPageInteractive: React.FC = () => {
     fetchHours();
     fetchHolidays();
 
-    // ตั้งเวลาให้เรียกซ้ำทุก 60 วินาที (ลดจาก 30s เพื่อลดภาระ Supabase free tier)
+    // ตั้งเวลาให้เรียก fetchHours ซ้ำทุก 60 วินาที
     const interval = setInterval(() => {
       fetchHours();
-      fetchHolidays();
     }, 60000);
 
-    // Cleanup: ยกเลิก interval และ set flag เมื่อ unmount
+    // Supabase Realtime: Subscribe ตาราง holidays เพื่ออัปเดตแบบ Real-time
+    const holidayChannel = supabase
+      .channel('holidays-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'holidays' },
+        () => {
+          // เมื่อมีการเปลี่ยนแปลงใดๆ (INSERT, UPDATE, DELETE) → ดึงข้อมูลใหม่
+          fetchHolidays();
+        }
+      )
+      .subscribe();
+
+    // Cleanup: ยกเลิก interval, unsubscribe channel และ set flag เมื่อ unmount
     return () => {
       isMounted = false;
       clearInterval(interval);
+      supabase.removeChannel(holidayChannel);
     };
   }, [supabase, locale, dayNames, t]);
 
@@ -381,11 +394,11 @@ const LandingPageInteractive: React.FC = () => {
         heroImageAlt={landingData.heroImageAlt}
       />
 
+      {/* 2. Holiday Announcements: ประกาศวันหยุด (Real-time, แสดงเฉพาะเมื่อมีข้อมูล) */}
+      {holidays.length > 0 && <HolidayAnnouncements holidays={holidays} />}
+
       {/* Advertisement Banner: แสดงโฆษณาที่เปิดใช้งาน (active) */}
       <AdvertisementBanner />
-
-      {/* 2. Holiday Announcements: ประกาศวันหยุด (แสดงเฉพาะเมื่อมีข้อมูล) */}
-      {holidays.length > 0 && <HolidayAnnouncements holidays={holidays} />}
 
       {/* 3. Opening Hours: ตารางเวลาเปิด-ปิด */}
       <OpeningHours schedule={landingData.schedule} />
