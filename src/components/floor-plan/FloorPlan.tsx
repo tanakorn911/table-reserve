@@ -181,7 +181,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
             if (snappedX > 70) detectedZone = 'Outdoor';
             else if (snappedX >= 6 && snappedX <= 44 && snappedY >= 46 && snappedY <= 94) detectedZone = 'VIP';
 
-            onTableUpdate({
+            onTableUpdate?.({
                 ...table,
                 x: Number(snappedX.toFixed(2)),
                 y: Number(snappedY.toFixed(2)),
