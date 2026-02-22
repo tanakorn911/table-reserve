@@ -195,11 +195,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // To prevent Bx (booking_code) duplication, generate it with high uniqueness
+    const generateUniqueCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return `BX-${result}`;
+    };
+
     const { data, error } = await supabase
       .from('reservations')
       .insert({
         ...body,
         status: 'pending',
+        booking_code: generateUniqueCode(),
       })
       .select()
       .single();

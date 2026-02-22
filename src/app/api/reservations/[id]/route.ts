@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { UpdateReservationInput } from '@/types/database.types';
 import { sendLineNotification } from '@/lib/notifications';
 import { getClientIp } from '@/lib/ratelimit';
+import { getReservationSettings } from '@/lib/settings';
 
 // GET /api/reservations/[id] - Get a single reservation
 // GET: ดึงข้อมูลการจอง 1 รายการ
@@ -72,6 +73,63 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         { error: 'Invalid status. Must be one of: pending, confirmed, cancelled, completed' },
         { status: 400 }
       );
+    }
+
+    // --- FETCH EXISTING RESERVATION TO CHECK FOR OVERLAP ---
+    const { data: currentRes, error: currentResError } = await supabase
+      .from('reservations')
+      .select('reservation_date, reservation_time, table_number, status')
+      .eq('id', id)
+      .single();
+
+    if (currentResError || !currentRes) {
+      return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
+    }
+
+    // Merge old and new values to check the final targeted state
+    const targetDate = body.reservation_date || currentRes.reservation_date;
+    const targetTime = body.reservation_time || currentRes.reservation_time;
+    const targetTable = body.table_number !== undefined ? body.table_number : currentRes.table_number;
+    const targetStatus = body.status || currentRes.status;
+
+    // Check availability only if it's 'pending' or 'confirmed' and it has a table assigned
+    if (targetTable && ['pending', 'confirmed'].includes(targetStatus)) {
+      const { dining_duration, buffer_time } = await getReservationSettings();
+      const totalDuration = dining_duration + buffer_time;
+
+      const [reqHour, reqMinute] = targetTime.split(':').map(Number);
+      const reqMinutes = reqHour * 60 + reqMinute;
+
+      const { data: existingReservations, error: checkError } = await supabase
+        .from('reservations')
+        .select('id, reservation_time, status')
+        .eq('reservation_date', targetDate)
+        .eq('table_number', targetTable)
+        .in('status', ['confirmed', 'pending'])
+        .neq('id', id); // exclude itself
+
+      if (checkError) {
+        console.error('Error checking availability:', checkError);
+        return NextResponse.json({ error: 'Failed to check availability' }, { status: 500 });
+      }
+
+      const hasOverlap = existingReservations?.some((r) => {
+        const dbTime = r.reservation_time.substring(0, 5); // HH:mm
+        const [dbHour, dbMinute] = dbTime.split(':').map(Number);
+        const dbMinutes = dbHour * 60 + dbMinute;
+
+        // Overlap check: |TimeA - TimeB| < totalDuration
+        return Math.abs(dbMinutes - reqMinutes) < totalDuration;
+      });
+
+      if (hasOverlap) {
+        return NextResponse.json(
+          {
+            error: `ไม่สามารถใช้โต๊ะนี้ได้ เนื่องจากมีรายการจองอื่นแล้วในช่วงเวลาดังกล่าว (Table is already booked during this time slot)`
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Update reservation
