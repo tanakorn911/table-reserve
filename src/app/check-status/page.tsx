@@ -19,6 +19,7 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useTranslation } from '@/lib/i18n';
+import Header from '@/components/common/Header';
 
 // CheckStatusPage: หน้าตรวจสอบสถานะการจองด้วยรหัส Booking Code (BX-XXXXXX)
 // และยังรองรับการเขียนรีวิว (Feedback) หลังจากค้นพบข้อมูลการจองแล้ว
@@ -194,24 +195,9 @@ export default function CheckStatusPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
-      {/* Header / Nav */}
-      <div className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-between border-b border-border">
-        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-            <BuildingStorefrontIcon className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">{t('app.title')}</span>
-        </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary transition-colors"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          {t('success.backHome')}
-        </Link>
-      </div>
+      <Header />
 
-      <div className="max-w-xl mx-auto pt-16 pb-24 px-6">
+      <div className="max-w-xl mx-auto pt-32 pb-24 px-6 md:pt-40">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-foreground mb-4 tracking-tight">
             {locale === 'th' ? (
@@ -303,7 +289,7 @@ export default function CheckStatusPage() {
         {/* Result Modal Popup */}
         {
           isModalOpen && reservation && statusInfo && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
               <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
               ></div>
@@ -442,7 +428,7 @@ export default function CheckStatusPage() {
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             placeholder={t('feedback.comment.placeholder')}
-                            className="w-full bg-white dark:bg-gray-900 border border-border rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none min-h-[80px] resize-none transition-all placeholder:text-muted-foreground/50"
+                            className="w-full bg-background border border-border rounded-xl p-3 text-foreground text-sm focus:ring-2 focus:ring-amber-500 outline-none min-h-[80px] resize-none transition-all placeholder:text-muted-foreground/50"
                           />
 
                           {feedbackError && (
@@ -488,7 +474,7 @@ export default function CheckStatusPage() {
       {/* Loading Overlay */}
       {
         loading && (
-          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
             <div className="w-16 h-16 border-4 border-primary rounded-full border-t-transparent animate-spin mb-4"></div>
             <p className="text-foreground font-bold text-lg animate-pulse">{t('common.loading')}</p>
           </div>
