@@ -180,17 +180,17 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, reservatio
                         setTimeout(() => setCopiedCode(false), 2000);
                       }}
                       className="
-                        text-xl font-black text-primary bg-primary/10 px-4 py-1.5 rounded-xl border border-primary/30 
-                        flex items-center gap-3 transition-all hover:bg-primary/20 active:scale-95 
-                        tracking-widest shadow-glow-sm hover:shadow-glow-md group
+                        text-xl md:text-2xl font-black text-amber-500 dark:text-amber-400 bg-amber-500/10 px-5 py-2 rounded-xl border border-amber-500/20 
+                        flex items-center gap-3 transition-all hover:bg-amber-500/20 active:scale-95 
+                        tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] group
                       "
                       title={locale === 'th' ? 'คลิกเพื่อคัดลอก' : 'Click to copy'}
                     >
                       {activeReservation.bookingCode || activeReservation.id.slice(0, 8)}
                       {copiedCode ? (
-                        <Icon name="CheckIcon" size={18} className="text-success animate-in zoom-in spin-in-90 duration-300" variant="solid" />
+                        <Icon name="CheckIcon" size={20} className="text-success animate-in zoom-in spin-in-90 duration-300" variant="solid" />
                       ) : (
-                        <Icon name="DocumentDuplicateIcon" size={18} className="text-primary/50 group-hover:text-primary transition-colors" />
+                        <Icon name="DocumentDuplicateIcon" size={20} className="text-amber-500/50 group-hover:text-amber-500 transition-colors" />
                       )}
                     </button>
                     {copiedCode && (
