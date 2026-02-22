@@ -116,6 +116,11 @@ export async function sendEmailConfirmation(to: string, reservation: any, locale
     `;
 
   try {
+    // ในช่วงพัฒนา (ไม่มี Custom Domain) Resend จะบังคับให้ส่งเข้าอีเมลตัวเองที่สมัครไว้เท่านั้น
+    // ทดสอบเปลี่ยนอีเมลเป้าหมายถ้าใช้งานโหมด DEV ไปที่อีเมลทดสอบ
+    const isDev = process.env.NODE_ENV === 'development';
+    const targetEmail = isDev ? 'tanakorn488@outlook.com' : to;
+
     // ส่งคำสั่ง POST ไปยัง Resend API เพื่อส่งอีเมล
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -125,8 +130,8 @@ export async function sendEmailConfirmation(to: string, reservation: any, locale
       },
       body: JSON.stringify({
         from: 'Savory Bistro <onboarding@resend.dev>', // ผู้ส่ง (ต้อง verify domain กับ Resend หรือใช้อีเมลทดสอบ)
-        to: [to], // ผู้รับ (array ของอีเมล)
-        subject: subject, // หัวข้ออีเมล
+        to: [targetEmail], // ผู้รับ (array ของอีเมล)
+        subject: isDev && to !== targetEmail ? `[TEST for ${to}] ` + subject : subject, // หัวข้ออีเมล
         html: htmlContent, // เนื้อหา HTML
       }),
     });
@@ -135,7 +140,13 @@ export async function sendEmailConfirmation(to: string, reservation: any, locale
     if (!response.ok) {
       // หากส่งไม่สำเร็จ ให้ log error
       const err = await response.json();
-      console.error('Resend Error:', err);
+      if (err.statusCode === 403 && err.message.includes('verify a domain')) {
+        console.warn('⚠️ [Resend Alert] ไม่สามารถส่งอีเมลไปยัง', to, 'ได้เนื่องจากยังไม่ได้ยืนยันโดเมน กรุณายืนยันโดเมนในเว็บ Resend หรือทดสอบด้วยอีเมล tanakorn488@outlook.com');
+      } else {
+        console.error('Resend Error:', err);
+      }
+    } else {
+      console.log(`✅ ส่งอีเมลยืนยันสำเร็จไปยัง ${targetEmail}`);
     }
   } catch (err) {
     // จับ error กรณี network fail หรืออื่นๆ
