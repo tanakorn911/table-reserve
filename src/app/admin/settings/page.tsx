@@ -290,10 +290,10 @@ export default function AdminSettingsPage() {
         return;
       }
 
-      alert(editingHolidayIds 
+      alert(editingHolidayIds
         ? (locale === 'th' ? 'แก้ไขวันหยุดเรียบร้อย' : 'Holiday updated successfully')
         : (locale === 'th' ? 'เพิ่มวันหยุดเรียบร้อย' : 'Holiday added successfully'));
-      
+
       handleCancelEditHoliday();
 
       // Refresh
@@ -311,7 +311,7 @@ export default function AdminSettingsPage() {
     setHolidayEndDate(group.endDate);
     setHolidayDesc(group.description || '');
     setEditingHolidayIds(group.ids);
-    
+
     // Smooth scroll to top of holiday section or form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -945,7 +945,7 @@ export default function AdminSettingsPage() {
                   className={`flex-1 mt-2 py-4 ${editingHolidayIds ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'} text-white font-black rounded-xl text-sm uppercase tracking-[0.2em] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2`}
                 >
                   {editingHolidayIds ? <PencilIcon className="w-5 h-5" /> : <CalendarDaysIcon className="w-5 h-5" />}
-                  {editingHolidayIds 
+                  {editingHolidayIds
                     ? (locale === 'th' ? 'บันทึกการแก้ไข' : 'Save Changes')
                     : (locale === 'th' ? 'ยืนยันเพิ่มวันหยุด' : 'Confirm Add Holiday')}
                 </button>
@@ -1169,7 +1169,7 @@ const EditStaffModal = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const randomId = 'ST-' + Math.floor(1000 + Math.random() * 9000);
+                    const randomId = Math.floor(100000 + Math.random() * 900000).toString();
                     setStaffFormData((prev: any) => ({ ...prev, staff_id: randomId }));
                   }}
                   className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg border border-gray-300 hover:bg-gray-200"
@@ -1352,12 +1352,12 @@ const AddStaffModal = ({
                 onChange={(e) =>
                   setFormData((prev: any) => ({ ...prev, staff_id: e.target.value }))
                 }
-                placeholder={locale === 'th' ? 'เช่น ST-001' : 'e.g., ST-001'}
+                placeholder={locale === 'th' ? 'เช่น 123456' : 'e.g., 123456'}
               />
               <button
                 type="button"
                 onClick={() => {
-                  const randomId = 'ST-' + Math.floor(1000 + Math.random() * 9000);
+                  const randomId = Math.floor(100000 + Math.random() * 900000).toString();
                   setFormData((prev: any) => ({ ...prev, staff_id: randomId }));
                 }}
                 className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg border border-gray-300 hover:bg-gray-200"
