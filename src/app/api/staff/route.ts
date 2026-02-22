@@ -36,6 +36,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
         }
 
+        if (staff_id) {
+            const { data: existingStaff } = await supabase.from('profiles').select('id').eq('staff_id', staff_id).single();
+            if (existingStaff) {
+                return NextResponse.json({ error: 'รหัสพนักงานนี้มีอยู่ในระบบแล้ว (Staff ID already exists)' }, { status: 400 });
+            }
+        }
+
         // Use service role to create user
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -144,6 +151,13 @@ export async function PUT(request: NextRequest) {
         const { id, email, password, full_name, position, staff_id, role } = body;
 
         if (!id) return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+
+        if (staff_id !== undefined && staff_id !== null && staff_id !== '') {
+            const { data: existingStaff } = await supabase.from('profiles').select('id').eq('staff_id', staff_id).single();
+            if (existingStaff && existingStaff.id !== id) {
+                return NextResponse.json({ error: 'รหัสพนักงานนี้มีอยู่ในระบบแล้ว (Staff ID already exists)' }, { status: 400 });
+            }
+        }
 
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
